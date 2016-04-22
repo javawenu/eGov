@@ -47,16 +47,17 @@ import java.util.List;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.egov.commons.CChartOfAccounts;
-import org.egov.commons.service.CommonsService;
+import org.egov.commons.dao.ChartOfAccountsHibernateDAO;
 import org.egov.dao.budget.BudgetDetailsDAO;
 import org.egov.model.budget.BudgetGroup;
 import org.springframework.beans.factory.annotation.Autowired;
 
 public class WorkProgressAbstractReportService {
     private static final Logger logger = Logger.getLogger(WorkProgressAbstractReportService.class);
-    @Autowired
-    private CommonsService commonsService;
+
     private BudgetDetailsDAO budgetDetailsDAO;
+    @Autowired
+    private ChartOfAccountsHibernateDAO chartOfAccountsHibernateDAO;
 
     public void setBudgetHeadsFromString(final String budgetHeadsStr, final List<String> budgetHeads,
             final List<Long> budgetHeadIds) {
@@ -66,7 +67,7 @@ public class WorkProgressAbstractReportService {
             final String[] budgetHeadsFromString = budgetHeadsStr.split(",");
             for (final String element : budgetHeadsFromString)
                 // Split and obtain only the glcode
-                coaList.addAll(commonsService.getListOfDetailCode(element.split("-")[0]));
+                coaList.addAll(chartOfAccountsHibernateDAO.getListOfDetailCode(element.split("-")[0]));
             budgetHeadList.addAll(budgetDetailsDAO.getBudgetHeadForGlcodeList(coaList));
             final List<Long> budgetHeadIdsLong = new ArrayList<Long>();
             final List<String> budgetHeadIdStr = new ArrayList<String>();
@@ -96,7 +97,7 @@ public class WorkProgressAbstractReportService {
         if (StringUtils.isNotBlank(depositCodesStr)) {
             final String[] depositCodesFromStr = depositCodesStr.split(",");
             for (final String element : depositCodesFromStr)
-                coaList.addAll(commonsService.getListOfDetailCode(element.split("-")[0]));
+                coaList.addAll(chartOfAccountsHibernateDAO.getListOfDetailCode(element.split("-")[0]));
             final List<Long> depositCodeIdsLong = new ArrayList<Long>();
             if (coaList != null && coaList.size() > 0)
                 for (final CChartOfAccounts coa : coaList)
@@ -130,14 +131,6 @@ public class WorkProgressAbstractReportService {
             return result.setScale(decimalPoints, RoundingMode.HALF_UP);
         } else
             return null;
-    }
-
-    public CommonsService getCommonsService() {
-        return commonsService;
-    }
-
-    public void setCommonsService(final CommonsService commonsService) {
-        this.commonsService = commonsService;
     }
 
     public void setBudgetDetailsDAO(final BudgetDetailsDAO budgetDetailsDAO) {

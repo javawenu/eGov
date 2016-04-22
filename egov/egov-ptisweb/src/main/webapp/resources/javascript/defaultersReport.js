@@ -72,6 +72,12 @@ jQuery(document).ready(function() {
 	        dom.get("toDemand").focus();
 			return false;
 		}
+		if(fromDemand>toDemand){
+			dom.get("defaultersReportError").style.display='';
+	        dom.get("defaultersReportError").innerHTML='To Demand should be greather than From Demand';
+	        dom.get("fromDemand").focus();
+			return false;
+		}
 		callAjaxForDefaultersReport();
 	});
 	
@@ -83,6 +89,7 @@ function callAjaxForDefaultersReport() {
 	var fromDemand=jQuery('#fromDemand').val();
 	var toDemand=jQuery('#toDemand').val();
 	var limit=jQuery('#limit').val();
+	var ownerShipType=jQuery('#ownerShipType').val();
 	var today = new Date();
 	var formattedDate = today.getDate()+"/"+(today.getMonth()+1)+"/"+today.getFullYear();
 	
@@ -96,7 +103,8 @@ function callAjaxForDefaultersReport() {
 						wardId : wardId,
 						fromDemand : fromDemand,
 						toDemand : toDemand,
-						limit : limit
+						limit : limit,
+						ownerShipType : ownerShipType
 					}
 				},
 				"sPaginationType" : "bootstrap",
@@ -145,11 +153,23 @@ function callAjaxForDefaultersReport() {
 							"data" : "mobileNumber",
 							"sTitle" : "Mobile Number"
 						}, {
+							"data" : "arrearsFrmInstallment",
+							"sTitle" : "Arrears From Installment" 
+						}, {
+							"data" : "arrearsToInstallment",
+							"sTitle" : "Arrears To Installment"
+						}, {
 							"data" : "arrearsDue",
 							"sTitle" : "Arrears Amount"
-						},  {
+						}, {
+							"data" : "arrearsPenaltyDue",
+							"sTitle" : "Arrears Penalty"
+						}, {
 							"data" : "currentDue",
 							"sTitle" : "Current Amount"
+						},  {
+							"data" : "currentPenaltyDue",
+							"sTitle" : "Current Penalty"
 						}, {
 							"data" : "totalDue",
 							"sTitle" : "Total"

@@ -54,11 +54,13 @@ import java.util.List;
 import java.util.Locale;
 
 import org.apache.log4j.Logger;
-import org.egov.infstr.utils.HibernateUtil;
+import org.egov.infstr.services.PersistenceService;
+import org.egov.model.brs.BrsEntries;
 import org.hibernate.Query;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.exilant.eGov.src.transactions.brs.BrsEntries;
 import com.exilant.exility.common.TaskFailedException;
 import com.exilant.exility.updateservice.PrimaryKeyGenerator;
 
@@ -69,6 +71,10 @@ import com.exilant.exility.updateservice.PrimaryKeyGenerator;
  */
 @Transactional(readOnly = true)
 public class BankEntries {
+ @Autowired
+ @Qualifier("persistenceService")
+ private PersistenceService persistenceService;
+
     private String id = null;
     private int bankAccountId;
     private String refNo = null;
@@ -117,7 +123,7 @@ public class BankEntries {
                     + "VALUES (?,?,?,?,?,?,?,?,?,?)";
             if (LOGGER.isDebugEnabled())
                 LOGGER.debug(insertQuery);
-            pstmt = HibernateUtil.getCurrentSession().createSQLQuery(insertQuery);
+            pstmt = persistenceService.getSession().createSQLQuery(insertQuery);
             pstmt.setString(0, id);
             pstmt.setInteger(1, bankAccountId);
             pstmt.setString(2, refNo);
@@ -170,7 +176,7 @@ public class BankEntries {
         query.append(" where id=?");
         try {
             int i = 1;
-            pstmt = HibernateUtil.getCurrentSession().createSQLQuery(query.toString());
+            pstmt = persistenceService.getSession().createSQLQuery(query.toString());
             if (refNo != null)
                 pstmt.setString(i++, refNo);
             if (type != null)
@@ -203,7 +209,7 @@ public class BankEntries {
             final String updateQuery = "update bankentries  set isreversed=1 where voucherheaderid in(select id from voucherheader where cgn=?)";
             if (LOGGER.isDebugEnabled())
                 LOGGER.debug(updateQuery);
-            pstmt = HibernateUtil.getCurrentSession().createSQLQuery(updateQuery);
+            pstmt = persistenceService.getSession().createSQLQuery(updateQuery);
             pstmt.setString(0, cgNum);
             pstmt.executeUpdate();
         } catch (final Exception e) {
@@ -227,11 +233,11 @@ public class BankEntries {
         Date dt;
         BrsEntries brs;
         try {
-            pstmt = HibernateUtil.getCurrentSession().createSQLQuery(query);
+            pstmt = persistenceService.getSession().createSQLQuery(query);
             pstmt.setString(0, bankAccId);
             rs = pstmt.list();
 
-            for (final Object[] element : rs) {
+           /* for (final Object[] element : rs) {
                 brs = new BrsEntries();
                 brs.setId(element[0].toString());
                 brs.setRefNo(element[1].toString());
@@ -243,7 +249,7 @@ public class BankEntries {
                 brs.setGlCodeId(element[6].toString());
                 brs.setInstrumentHeaderId(element[7].toString());
                 al.add(brs);
-            }
+            }*/
         } catch (final Exception e) {
             LOGGER.error(e.getMessage(), e);
             throw taskExc;
@@ -268,7 +274,7 @@ public class BankEntries {
             LOGGER
             .debug("  DishonoredCheque getChequeDetails instrument  Query is  "
                     + detailsQuery);
-            pstmt = HibernateUtil.getCurrentSession().createSQLQuery(detailsQuery);
+            pstmt = persistenceService.getSession().createSQLQuery(detailsQuery);
             if (bankAccId != null && bankAccId != 0) {
                 count++;
                 pstmt.setLong(count, bankAccId);
@@ -305,8 +311,8 @@ public class BankEntries {
             brs = new BrsEntries();
             brs.setVoucherNumber(element[4].toString());
             brs.setCgnum(element[3].toString());
-            brs.setVoucherHeaderId(element[0].toString());
-            brs.setInstrumentHeaderId(element[1].toString());
+        /*    brs.setVoucherHeaderId(element[0].toString());
+            brs.setInstrumentHeaderId(element[1].toString());*/
             brs.setPayinSlipVHeaderId(element[2].toString());
             brs.setVoucherType(element[5].toString());
             brs.setFundId(element[6].toString());

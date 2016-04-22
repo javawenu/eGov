@@ -109,7 +109,9 @@ public class ReportController {
         ReportOutput reportOutput = null;
         if (null != advertisementPermitDetail) {
             final Map<String, Object> reportParams = buildParametersForReport(request, advertisementPermitDetail);
-            
+            reportParams.put("advertisementtitle",
+                    WordUtils.capitalize(AdvertisementTaxConstants.ADVERTISEMENTPERMITODERTITLE));
+             
             reportInput = new ReportRequest(AdvertisementTaxConstants.PERMITORDER, advertisementPermitDetail,
                     reportParams);
         }
@@ -202,8 +204,8 @@ public class ReportController {
         reportParams.put("subjectMatter",advertisementPermitDetail.getAdvertisementParticular());
         buildMeasurementDetailsForJasper(advertisementPermitDetail, measurement, reportParams, NOTMENTIONED);
         
-        reportParams.put("permitStartDate", advertisementPermitDetail.getPermissionstartdate());
-        reportParams.put("permitEndDate", advertisementPermitDetail.getPermissionenddate());
+        reportParams.put("permitStartDate", formatter.format( advertisementPermitDetail.getPermissionstartdate()));
+        reportParams.put("permitEndDate", formatter.format(advertisementPermitDetail.getPermissionenddate()));
         reportParams.put("currdate", formatter.format(new Date()));
         return reportParams;
     }

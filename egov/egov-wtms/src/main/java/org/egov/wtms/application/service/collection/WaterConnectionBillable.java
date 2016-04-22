@@ -55,16 +55,17 @@ import org.egov.demand.model.EgBillType;
 import org.egov.demand.model.EgDemand;
 import org.egov.infra.admin.master.entity.Module;
 import org.egov.infra.admin.master.service.ModuleService;
-import org.egov.infra.admin.master.service.UserService;
 import org.egov.infra.exception.ApplicationRuntimeException;
 import org.egov.ptis.domain.model.AssessmentDetails;
 import org.egov.ptis.domain.model.BoundaryDetails;
 import org.egov.ptis.domain.model.OwnerName;
+import org.egov.ptis.domain.model.enums.BasicPropertyStatus;
 import org.egov.ptis.domain.service.property.PropertyExternalService;
 import org.egov.wtms.application.entity.WaterConnectionDetails;
 import org.egov.wtms.application.service.ConnectionDemandService;
 import org.egov.wtms.masters.entity.enums.ConnectionStatus;
 import org.egov.wtms.utils.PropertyExtnUtils;
+import org.egov.wtms.utils.WaterTaxUtils;
 import org.egov.wtms.utils.constants.WaterTaxConstants;
 import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -80,6 +81,7 @@ public class WaterConnectionBillable extends AbstractBillable implements Billabl
 
     private static final String STRING_DEPARTMENT_CODE = "REV";
     private static final String STRING_SERVICE_CODE = "WT";
+    private static final String EST_STRING_SERVICE_CODE = "WES";
     public static final String DEFAULT_FUNCTIONARY_CODE = "1";
     public static final String DEFAULT_FUND_SRC_CODE = "01";
     public static final String DEFAULT_FUND_CODE = "01";
@@ -95,8 +97,6 @@ public class WaterConnectionBillable extends AbstractBillable implements Billabl
     @Autowired
     private PropertyExtnUtils propertyExtnUtils;
     @Autowired
-    private UserService userService;
-    @Autowired
     private EgBillDao egBillDAO;
     @Autowired
     private EgDemandDao egDemandDAO;
@@ -105,7 +105,10 @@ public class WaterConnectionBillable extends AbstractBillable implements Billabl
     private ModuleService moduleService;
     @Autowired
     private ConnectionDemandService connectioDemanService;
-
+    
+    @Autowired
+    private WaterTaxUtils waterTaxUtils;
+    
     @Override
     public String getBillPayee() {
         return buildOwnerFullName(getAssessmentDetails().getOwnerNames());
@@ -114,13 +117,13 @@ public class WaterConnectionBillable extends AbstractBillable implements Billabl
     @Override
     public String getBillAddress() {
         final AssessmentDetails assessmentDetails = propertyExtnUtils.getAssessmentDetailsForFlag(
-                getWaterConnectionDetails().getConnection().getPropertyIdentifier(), PropertyExternalService.FLAG_FULL_DETAILS);
+                getWaterConnectionDetails().getConnection().getPropertyIdentifier(), PropertyExternalService.FLAG_FULL_DETAILS,BasicPropertyStatus.ACTIVE);
         return buildAddressDetails(assessmentDetails);
     }
 
     @Override
     public EgDemand getCurrentDemand() {
-        return getWaterConnectionDetails().getDemand();
+        return waterTaxUtils.getCurrentDemand(getWaterConnectionDetails()).getDemand();
     }
 
     @Override
@@ -138,11 +141,8 @@ public class WaterConnectionBillable extends AbstractBillable implements Billabl
     @Override
     public EgBillType getBillType() {
         if (billType == null)
-            if (getUserId() != null && !getUserId().equals("")) {
-                final String loginUser = userService.getUserById(getUserId()).getName();
-                if (!loginUser.equals(WaterTaxConstants.CITIZENUSER))
-                    billType = egBillDAO.getBillTypeByCode(WaterTaxConstants.BILLTYPE_MANUAL);
-            }
+            billType = egBillDAO.getBillTypeByCode(WaterTaxConstants.BILLTYPE_AUTO);
+           
         return billType;
     }
 
@@ -213,6 +213,9 @@ public class WaterConnectionBillable extends AbstractBillable implements Billabl
 
     @Override
     public String getServiceCode() {
+        if (getWaterConnectionDetails().getStatus().getCode().equalsIgnoreCase(WaterTaxConstants.APPLICATION_STATUS_ESTIMATENOTICEGEN))
+            return EST_STRING_SERVICE_CODE;
+        else
         return STRING_SERVICE_CODE;
     }
 
@@ -223,7 +226,7 @@ public class WaterConnectionBillable extends AbstractBillable implements Billabl
         BigDecimal balance = BigDecimal.ZERO;
         for (final Object object : instVsAmt) {
             final Object[] ddObject = (Object[]) object;
-            final BigDecimal dmdAmt = (BigDecimal) ddObject[2];
+            final BigDecimal dmdAmt = new BigDecimal((Double) ddObject[2]);
             BigDecimal collAmt = BigDecimal.ZERO;
             if (ddObject[2] != null)
                 collAmt = new BigDecimal((Double) ddObject[3]);

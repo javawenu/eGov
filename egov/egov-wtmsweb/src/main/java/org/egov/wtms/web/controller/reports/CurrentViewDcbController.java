@@ -43,12 +43,11 @@ package org.egov.wtms.web.controller.reports;
 import static org.egov.demand.model.EgdmCollectedReceipt.RCPT_CANCEL_STATUS;
 
 import java.math.BigDecimal;
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-
-
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -62,14 +61,18 @@ import org.egov.infra.admin.master.entity.Role;
 import org.egov.infra.admin.master.entity.User;
 import org.egov.infra.admin.master.service.UserService;
 import org.egov.infra.utils.EgovThreadLocals;
+import org.hibernate.SQLQuery;
 import org.egov.ptis.domain.model.AssessmentDetails;
+import org.egov.ptis.domain.model.enums.BasicPropertyStatus;
 import org.egov.ptis.domain.service.property.PropertyExternalService;
 import org.egov.wtms.application.entity.WaterConnectionDetails;
 import org.egov.wtms.application.service.CurrentDcbService;
+import org.egov.wtms.application.service.WaterChargesReceiptInfo;
 import org.egov.wtms.application.service.WaterConnectionDetailsService;
 import org.egov.wtms.application.service.collection.WaterConnectionBillable;
 import org.egov.wtms.masters.entity.enums.ConnectionStatus;
 import org.egov.wtms.utils.PropertyExtnUtils;
+import org.egov.wtms.utils.WaterTaxUtils;
 import org.egov.wtms.utils.constants.WaterTaxConstants;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
@@ -89,16 +92,20 @@ public class CurrentViewDcbController {
 
     @Autowired
     private ApplicationContext context;
-    
+
     @Autowired
     private UserService userService;
+    
+    @Autowired
+    private WaterTaxUtils waterTaxUtils;
+    
+
 
     @Autowired(required = true)
     protected WaterConnectionDetailsService waterConnectionDetailsService;
     @Autowired
     private PropertyExtnUtils propertyExtnUtils;
 
-    
     @ModelAttribute("citizenRole")
     public Boolean getCitizenUserRole() {
         Boolean citizenrole = Boolean.FALSE;
@@ -114,7 +121,6 @@ public class CurrentViewDcbController {
         return citizenrole;
     }
 
-
     @ModelAttribute
     public WaterConnectionDetails getWaterConnectionDetails(@PathVariable final String applicationCode) {
         final WaterConnectionDetails waterConnectionDetails = waterConnectionDetailsService
@@ -127,14 +133,25 @@ public class CurrentViewDcbController {
         return waterConnectionDetailsService.getConnectionTypesMap();
     }
 
+    @RequestMapping(value = "/showMigData/{consumerNumber}/{applicationCode}", method = RequestMethod.GET)
+    public String showMigData(final Model model, @PathVariable final String consumerNumber, @PathVariable final String applicationCode,final HttpServletRequest request) throws ParseException {
+        List<WaterChargesReceiptInfo> waterChargesReceiptInfo = new ArrayList<WaterChargesReceiptInfo>();
+    	final SQLQuery query = currentDcbService.getMigratedReceipttDetails(consumerNumber);
+    	waterChargesReceiptInfo = query.list();
+        model.addAttribute("waterChargesReceiptInfo", waterChargesReceiptInfo);
+        model.addAttribute("consumerCode", consumerNumber);
+       return "dcbview-migdata";
+    }
+    
+  
+    
     @RequestMapping(value = "/consumerCodeWis/{applicationCode}", method = RequestMethod.GET)
     public String search(final Model model, @PathVariable final String applicationCode, final HttpServletRequest request) {
         final WaterConnectionDetails waterConnectionDetails = getWaterConnectionDetails(applicationCode);
-        
+
         List<Receipt> cancelRcpt = new ArrayList<Receipt>();
         List<Receipt> activeRcpts = new ArrayList<Receipt>();
         DCBReport dCBReport = new DCBReport();
-  
 
         model.addAttribute("consumerCode", waterConnectionDetails.getApplicationNumber());
 
@@ -142,36 +159,42 @@ public class CurrentViewDcbController {
                 "connectionType",
                 waterConnectionDetailsService.getConnectionTypesMap().get(
                         waterConnectionDetails.getConnectionType().name()));
-        if (waterConnectionDetails.getDemand() != null) {
+        if ( waterTaxUtils.getCurrentDemand(waterConnectionDetails).getDemand() != null) {
             final DCBServiceImpl dcbdemandService = (DCBServiceImpl) context.getBean("dcbdemandService");
             final DCBDisplayInfo dcbDispInfo = currentDcbService.getDcbDispInfo();
-            
+
             final WaterConnectionBillable waterConnectionBillable = (WaterConnectionBillable) context
                     .getBean("waterConnectionBillable");
             final AssessmentDetails assessmentDetails = propertyExtnUtils.getAssessmentDetailsForFlag(
                     waterConnectionDetails.getConnection().getPropertyIdentifier(),
-                    PropertyExternalService.FLAG_FULL_DETAILS);
+                    PropertyExternalService.FLAG_FULL_DETAILS, BasicPropertyStatus.ALL);
             waterConnectionBillable.setWaterConnectionDetails(waterConnectionDetails);
             waterConnectionBillable.setAssessmentDetails(assessmentDetails);
             dcbdemandService.setBillable(waterConnectionBillable);
             dCBReport = dcbdemandService.getCurrentDCBAndReceipts(dcbDispInfo);
-            activeRcpts=populateActiveReceiptsOnly(dCBReport.getReceipts());
-            cancelRcpt= populateCancelledReceiptsOnly(dCBReport.getReceipts());
+            activeRcpts = populateActiveReceiptsOnly(dCBReport.getReceipts());
+            cancelRcpt = populateCancelledReceiptsOnly(dCBReport.getReceipts());
             model.addAttribute("activeRcpts", activeRcpts);
             model.addAttribute("cancelRcpt", cancelRcpt);
             model.addAttribute("totalRcptAmt", calculateReceiptTotal(activeRcpts));
             model.addAttribute("CanceltotalRcptAmt", calculateCancelledReceiptTotal(cancelRcpt));
             model.addAttribute("applicationTypeCode", waterConnectionDetails.getApplicationType().getCode());
             model.addAttribute("dcbReport", dCBReport);
-            BigDecimal waterTaxDueforParent=waterConnectionDetailsService.getTotalAmount(waterConnectionDetails);
-            model.addAttribute("waterTaxDueforParent",waterTaxDueforParent);
-            model.addAttribute("mode", "viewdcb"); 
+            final BigDecimal waterTaxDueforParent = waterConnectionDetailsService.getTotalAmount(waterConnectionDetails);
+            model.addAttribute("waterTaxDueforParent", waterTaxDueforParent);
+            model.addAttribute("mode", "viewdcb");
 
+        }
+        else{
+        	 	model.addAttribute("dcbReport", dCBReport);
+        	 	 model.addAttribute("waterTaxDueforParent", BigDecimal.ZERO);
+        	 	model.addAttribute("mode", "viewdcb");
+        	 	model.addAttribute("applicationTypeCode",waterConnectionDetails.getApplicationType().getCode());
         }
         return "currentDcb-new";
     }
 
-    public BigDecimal calculateReceiptTotal(List<Receipt> activeRcpts) {
+    public BigDecimal calculateReceiptTotal(final List<Receipt> activeRcpts) {
         final List<Receipt> rcpts = new ArrayList<Receipt>();
         BigDecimal totalRcptAmt = BigDecimal.ZERO;
         for (final Receipt r : activeRcpts)
@@ -181,8 +204,8 @@ public class CurrentViewDcbController {
             }
         return totalRcptAmt;
     }
-    
-    public BigDecimal calculateCancelledReceiptTotal(List<Receipt> cancelRcpt) {
+
+    public BigDecimal calculateCancelledReceiptTotal(final List<Receipt> cancelRcpt) {
         final List<Receipt> rcpts = new ArrayList<Receipt>();
         BigDecimal totalRcptAmt = BigDecimal.ZERO;
         for (final Receipt r : cancelRcpt)
@@ -196,8 +219,7 @@ public class CurrentViewDcbController {
     /**
      * This method populates Active receipts only.
      *
-     * @param Map
-     *            <Installment, List<Receipt>> receipts
+     * @param Map <Installment, List<Receipt>> receipts
      * @return List<Receipt>
      */
 
@@ -221,8 +243,7 @@ public class CurrentViewDcbController {
     /**
      * This method populates cancelled receipts only.
      *
-     * @param Map
-     *            <Installment, List<Receipt>> receipts
+     * @param Map <Installment, List<Receipt>> receipts
      * @return List<Receipt>
      */
 

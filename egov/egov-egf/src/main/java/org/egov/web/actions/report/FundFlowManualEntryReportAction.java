@@ -39,6 +39,9 @@
  ******************************************************************************/
 package org.egov.web.actions.report;
 
+
+import org.egov.infstr.services.PersistenceService;
+import org.springframework.beans.factory.annotation.Qualifier;
 import java.io.InputStream;
 import java.math.BigDecimal;
 import java.text.ParseException;
@@ -72,7 +75,8 @@ import org.hibernate.FlushMode;
 import org.hibernate.Query;
 import org.hibernate.criterion.Order;
 import org.hibernate.criterion.Restrictions;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.beans.factory.annotation.Autowired;
+
 
 import com.opensymphony.xwork2.validator.annotations.Validation;
 
@@ -87,7 +91,7 @@ import com.opensymphony.xwork2.validator.annotations.Validation;
 @SuppressWarnings("serial")
 @ParentPackage("egov")
 @Validation
-@Transactional(readOnly = true)
+
 public class FundFlowManualEntryReportAction extends BaseFormAction {
 
     /**
@@ -108,7 +112,13 @@ public class FundFlowManualEntryReportAction extends BaseFormAction {
     private final Map<String, Object> paramMap = new HashMap<String, Object>();
     BigDecimal grandTotal = BigDecimal.ZERO;
     private static final String JASPERPATH = "/reports/templates/manualEntryReport.jasper";
-
+   
+ @Autowired
+ @Qualifier("persistenceService")
+ private PersistenceService persistenceService;
+ @Autowired
+    private EgovMasterDataCaching masterDataCache;
+    
     @Override
     public Object getModel() {
         // TODO Auto-generated method stub
@@ -117,11 +127,10 @@ public class FundFlowManualEntryReportAction extends BaseFormAction {
 
     @Override
     public void prepare() {
-        HibernateUtil.getCurrentSession().setDefaultReadOnly(true);
-        HibernateUtil.getCurrentSession().setFlushMode(FlushMode.MANUAL);
+        persistenceService.getSession().setDefaultReadOnly(true);
+        persistenceService.getSession().setFlushMode(FlushMode.MANUAL);
         super.prepare();
-        final EgovMasterDataCaching masterCache = EgovMasterDataCaching.getInstance();
-        addDropdownData("fundList", masterCache.get("egi-fund"));
+        addDropdownData("fundList", masterDataCache.get("egi-fund"));
         addDropdownData("bankList", Collections.EMPTY_LIST);
         addDropdownData("accNumList", Collections.EMPTY_LIST);
     }
@@ -163,7 +172,7 @@ public class FundFlowManualEntryReportAction extends BaseFormAction {
         } catch (final ParseException e) {
             LOGGER.error("Error in parsing Date ");
         }
-        final Criteria critQuery = HibernateUtil.getCurrentSession().createCriteria(FundFlowBean.class)
+        final Criteria critQuery = persistenceService.getSession().createCriteria(FundFlowBean.class)
 
                 .add(Restrictions.between("reportDate", startdt, enddt))
                 .add(Restrictions.ne("currentReceipt", BigDecimal.ZERO))
@@ -234,7 +243,7 @@ public class FundFlowManualEntryReportAction extends BaseFormAction {
 
     @SuppressWarnings("unchecked")
     public String getUlbName() {
-        final Query query = HibernateUtil.getCurrentSession().createSQLQuery("select name from companydetail");
+        final Query query = persistenceService.getSession().createSQLQuery("select name from companydetail");
         final List<String> result = query.list();
         if (result != null)
             return result.get(0);

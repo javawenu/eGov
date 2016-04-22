@@ -49,14 +49,15 @@ import java.util.Set;
 import javax.validation.constraints.NotNull;
 
 import org.egov.commons.CFunction;
+import org.egov.commons.EgwStatus;
 import org.egov.commons.Functionary;
 import org.egov.commons.Fund;
 import org.egov.commons.Scheme;
 import org.egov.commons.SubScheme;
 import org.egov.infra.admin.master.entity.Boundary;
 import org.egov.infra.admin.master.entity.Department;
+import org.egov.infra.workflow.entity.State;
 import org.egov.infra.workflow.entity.StateAware;
-import org.egov.utils.Constants;
 
 public class BudgetDetail extends StateAware {
     private static final long serialVersionUID = 5908792258911500512L;
@@ -85,7 +86,8 @@ public class BudgetDetail extends StateAware {
     private Long documentNumber;
     private String uniqueNo;
     private BigDecimal planningPercent;
-
+    private EgwStatus status;
+    
     public Set<BudgetReAppropriation> getBudgetReAppropriations() {
         return budgetReAppropriations;
     }
@@ -262,7 +264,7 @@ public class BudgetDetail extends StateAware {
         final List<BudgetReAppropriation> reAppList = new ArrayList<BudgetReAppropriation>();
         budgetReAppropriations = budgetReAppropriations == null ? new HashSet<BudgetReAppropriation>() : budgetReAppropriations;
         for (final BudgetReAppropriation entry : budgetReAppropriations)
-            if (!Constants.END.equalsIgnoreCase(entry.getState().getValue()))
+            if (!entry.getStatus().getDescription().equalsIgnoreCase("Approved"))
                 reAppList.add(entry);
         return reAppList;
     }
@@ -271,9 +273,8 @@ public class BudgetDetail extends StateAware {
         BigDecimal total = BigDecimal.ZERO;
         budgetReAppropriations = budgetReAppropriations == null ? new HashSet<BudgetReAppropriation>() : budgetReAppropriations;
         for (final BudgetReAppropriation entry : budgetReAppropriations)
-            if (Constants.END.equalsIgnoreCase(entry.getState().getValue())
-                    && !entry.getStatus().getDescription().equalsIgnoreCase("Cancelled"))
-                if (entry.getAdditionAmount() != null && !BigDecimal.ZERO.equals(entry.getAdditionAmount()))
+            if (!entry.getStatus().getDescription().equalsIgnoreCase("Cancelled"))
+                if (entry.getAdditionAmount() != null && !(BigDecimal.ZERO.compareTo(entry.getAdditionAmount()) == 0))
                     total = total.add(entry.getAdditionAmount());
                 else
                     total = total.subtract(entry.getDeductionAmount());
@@ -284,10 +285,9 @@ public class BudgetDetail extends StateAware {
         BigDecimal total = BigDecimal.ZERO;
         budgetReAppropriations = budgetReAppropriations == null ? new HashSet<BudgetReAppropriation>() : budgetReAppropriations;
         for (final BudgetReAppropriation entry : budgetReAppropriations)
-            if (Constants.END.equalsIgnoreCase(entry.getState().getValue())
-                    && !entry.getStatus().getDescription().equalsIgnoreCase("Cancelled")
-                    && entry.getState().getCreatedDate().before(asOnDate))
-                if (entry.getAdditionAmount() != null && !BigDecimal.ZERO.equals(entry.getAdditionAmount()))
+            if (!entry.getStatus().getDescription().equalsIgnoreCase("Cancelled")
+                    && entry.getCreatedDate().before(asOnDate))
+                if (entry.getAdditionAmount() != null && !(BigDecimal.ZERO.compareTo(entry.getAdditionAmount()) == 0))
                     total = total.add(entry.getAdditionAmount());
                 else
                     total = total.subtract(entry.getDeductionAmount());
@@ -374,4 +374,17 @@ public class BudgetDetail extends StateAware {
         return getId().toString();
     }
 
+    public void setWfState(State state) {
+        setState(state);
+    }
+
+    public EgwStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(EgwStatus status) {
+        this.status = status;
+    }
+    
+    
 }

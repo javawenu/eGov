@@ -39,50 +39,89 @@
  */
 package org.egov.commons.dao;
 
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 
 import org.egov.commons.Bank;
-import org.egov.infstr.dao.GenericHibernateDAO;
 import org.hibernate.Query;
 import org.hibernate.Session;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 @Repository
-public class BankHibernateDAO extends GenericHibernateDAO {
-
-        @PersistenceContext
-        private EntityManager entityManager;
-        
-        @Override
-        public Session  getCurrentSession() {
-                return entityManager.unwrap(Session.class);
-        }
-    
-	public BankHibernateDAO() {
-		super(Bank.class, null);
+public class BankHibernateDAO {
+	@Transactional
+	public Bank update(final Bank entity) {
+		getCurrentSession().update(entity);
+		return entity;
 	}
 
-	public BankHibernateDAO(final Class persistentClass, final Session session) {
-		super(persistentClass, session);
+	@Transactional
+	public Bank create(final Bank entity) {
+		getCurrentSession().persist(entity);
+		return entity;
+	}
+
+	@Transactional
+	public void delete(Bank entity) {
+		getCurrentSession().delete(entity);
+	}
+
+	public Bank findById(Number id, boolean lock) {
+		return (Bank) getCurrentSession().load(Bank.class, id);
+	}
+
+	public List<Bank> findAll() {
+		return (List<Bank>) getCurrentSession().createCriteria(Bank.class)
+				.list();
+	}
+
+	@PersistenceContext
+	private EntityManager entityManager;
+
+	public Session getCurrentSession() {
+		return entityManager.unwrap(Session.class);
 	}
 
 	public Bank getBankByCode(final String bankCode) {
-		final Query qry = getCurrentSession().createQuery("from Bank where code=:bankCode");
+		final Query qry = getCurrentSession().createQuery(
+				"from Bank where code=:bankCode");
 		qry.setString("bankCode", bankCode);
 		return (Bank) qry.uniqueResult();
 	}
-	
+
 	public Bank getBankByName(final String bankCode) {
-		final Query qry = getCurrentSession().createQuery("from Bank where name=:bankName");
+		final Query qry = getCurrentSession().createQuery(
+				"from Bank where name=:bankName");
 		qry.setString("bankName", bankCode);
 		return (Bank) qry.uniqueResult();
 	}
-	
+
 	public List<Bank> getAllBanks() {
-		final Query qry = getCurrentSession().createQuery("from Bank order by code");
+		final Query qry = getCurrentSession().createQuery(
+				"from Bank order by code");
 		return qry.list();
 	}
+
+	public List<Bank> getAllBankHavingBranchAndAccounts() {
+		Set<Bank> ss = new LinkedHashSet<Bank>();
+		List<Bank> bankList = new ArrayList<Bank>();
+
+		Query createQuery = getCurrentSession().createQuery(
+				"select   b from Bank b , Bankbranch bb , Bankaccount ba WHERE bb.bank=b and ba.bankbranch=bb and b.isactive=true "
+						+ "order by upper(b.name)");
+		List<Bank> list = (List<Bank>)createQuery.list();
+		if(list!=null && !list.isEmpty())
+		{
+			ss.addAll(list);
+			bankList.addAll(ss);
+		}
+		return bankList;
+	}
+
 }

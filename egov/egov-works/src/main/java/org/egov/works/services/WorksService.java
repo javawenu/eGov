@@ -24,16 +24,16 @@
     In addition to the terms of the GPL license to be adhered to in using this
     program, the following additional terms are to be complied with:
 
-	1) All versions of this program, verbatim or modified must carry this
-	   Legal Notice.
+        1) All versions of this program, verbatim or modified must carry this
+           Legal Notice.
 
-	2) Any misrepresentation of the origin of the material is prohibited. It
-	   is required that all modified versions of this material be marked in
-	   reasonable ways as different from the original version.
+        2) Any misrepresentation of the origin of the material is prohibited. It
+           is required that all modified versions of this material be marked in
+           reasonable ways as different from the original version.
 
-	3) This license does not grant any rights to any user of the program
-	   with regards to rights under trademark law for use of the trade names
-	   or trademarks of eGovernments Foundation.
+        3) This license does not grant any rights to any user of the program
+           with regards to rights under trademark law for use of the trade names
+           or trademarks of eGovernments Foundation.
 
   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
  */
@@ -44,6 +44,7 @@ import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -51,6 +52,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.egov.commons.Accountdetailkey;
@@ -58,7 +60,9 @@ import org.egov.commons.Accountdetailtype;
 import org.egov.commons.CFinancialYear;
 import org.egov.commons.EgwStatus;
 import org.egov.commons.Fund;
-import org.egov.commons.service.CommonsService;
+import org.egov.commons.dao.AccountdetailkeyHibernateDAO;
+import org.egov.commons.dao.AccountdetailtypeHibernateDAO;
+import org.egov.commons.dao.EgwStatusHibernateDAO;
 import org.egov.eis.entity.Assignment;
 import org.egov.eis.entity.Employee;
 import org.egov.eis.service.AssignmentService;
@@ -71,8 +75,6 @@ import org.egov.infra.exception.ApplicationException;
 import org.egov.infra.utils.EgovThreadLocals;
 import org.egov.infra.workflow.entity.StateAware;
 import org.egov.infstr.services.PersistenceService;
-import org.egov.masters.dao.AccountdetailtypeHibernateDAO;
-import org.egov.masters.dao.MastersDAOFactory;
 import org.egov.pims.commons.DeptDesig;
 import org.egov.pims.commons.Designation;
 import org.egov.pims.commons.Position;
@@ -87,13 +89,17 @@ public class WorksService {
     @Autowired
     private AppConfigValueService appConfigValuesService;
     @Autowired
-    private CommonsService commonsService;
+    private EgwStatusHibernateDAO egwStatusHibernateDAO;
     private PersistenceService persistenceService;
     private final SimpleDateFormat dateFormatter = new SimpleDateFormat("dd-MMM-yyyy", Locale.getDefault());
     @Autowired
     private EmployeeService employeeService;
     @Autowired
     private AssignmentService assignmentService;
+    @Autowired
+    private AccountdetailtypeHibernateDAO accountdetailtypeHibernateDAO;
+    @Autowired
+    private AccountdetailkeyHibernateDAO accountdetailkeyHibernateDAO;
 
     /**
      * This method will return the value in AppConfigValue table for the given module and key.
@@ -124,8 +130,7 @@ public class WorksService {
     }
 
     public Accountdetailtype getAccountdetailtypeByName(final String name) {
-        final AccountdetailtypeHibernateDAO accDtlTypeDao = MastersDAOFactory.getDAOFactory().getAccountdetailtypeDAO();
-        return accDtlTypeDao.getAccountdetailtypeByName(name);
+        return accountdetailtypeHibernateDAO.getAccountdetailtypeByName(name);
     }
 
     public Double getConfigval() {
@@ -203,7 +208,7 @@ public class WorksService {
                 } else
                     statList.add(stat);
         }
-        return commonsService.getStatusListByModuleAndCodeList(objType, statList);
+        return egwStatusHibernateDAO.getStatusListByModuleAndCodeList(objType, statList);
     }
 
     public void createAccountDetailKey(final Long id, final String type) {
@@ -213,11 +218,7 @@ public class WorksService {
         adk.setDetailkey(id.intValue());
         adk.setDetailname(accountdetailtype.getAttributename());
         adk.setAccountdetailtype(accountdetailtype);
-        commonsService.createAccountdetailkey(adk);
-    }
-
-    public void setCommonsService(final CommonsService commonsService) {
-        this.commonsService = commonsService;
+        accountdetailkeyHibernateDAO.create(adk);
     }
 
     public List getWorksRoles() {
@@ -1232,6 +1233,16 @@ public class WorksService {
         final DecimalFormat formatter = new DecimalFormat("0.00");
         formatter.setDecimalSeparatorAlwaysShown(true);
         return formatter.format(rounded);
+    }
+
+    @SuppressWarnings("unchecked")
+    public Collection<String> getStatusNameDetails(final String[] statusNames) {
+        return CollectionUtils.select(Arrays.asList(statusNames), statusName -> (String) statusName != null);
+    }
+
+    @SuppressWarnings("unchecked")
+    public Collection<Date> getStatusDateDetails(final Date[] statusDates) {
+        return CollectionUtils.select(Arrays.asList(statusDates), statusDate -> (Date) statusDate != null);
     }
 
 }

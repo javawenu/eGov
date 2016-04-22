@@ -38,6 +38,20 @@
 #   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
 #-------------------------------------------------------------------------------*/
 $(document).ready(function(){
+	
+	$('#statusdiv').hide();
+	var activeDiv = $('#reqAttr').val();
+	if (activeDiv =='false'){
+		$('#statusdiv').hide();
+	     $('#addnewid').hide();
+		}
+	
+	else if(activeDiv=='true'){
+			$('#statusdiv').show();
+			$('#addnewid').show();
+		}
+	
+	
 	$( "#categoryName" ).focusout(function() {
 	    textValue =  $.trim($(this).val());
 	    if(textValue ==''){
@@ -47,3 +61,26 @@ $(document).ready(function(){
 	    }
 	});
  });
+
+$("#resetid").click(function(){
+	$("#categoryMasterform")[0].reset();
+	window.open("/wtms/masters/categoryMaster/", "_self");
+	});
+	
+$('#listid').click(function() {
+	window.open("/wtms/masters/categoryMaster/list", "_self");
+ });
+
+$('#addnewid').click(function() {
+	window.open("/wtms/masters/categoryMaster/", "_self");
+});
+
+function addNew()
+{
+	window.open("/wtms/masters/categoryMaster/", "_self");
+}
+
+function edit(connectionCategory)
+{
+	window.open("/wtms/masters/categoryMaster/"+connectionCategory, "_self");
+}

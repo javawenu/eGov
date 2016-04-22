@@ -261,4 +261,37 @@
         <put-attribute name="body" value="/WEB-INF/views/masters/taxrates/taxRates-view.jsp"/>
     </definition>
     
-</tiles-definitions>
+    <definition name="curretInstDCB-form" extends="base_layout">
+        <put-attribute name="page-title" value="lbl.hdr.currInstDCB" cascade="true"/>
+        <put-attribute name="body" value="/WEB-INF/views/reports/curretInstDCB-form.jsp"/>
+    </definition>
+         <definition name="bcDailyCollectionReport-form" extends="base_layout">
+    	<put-attribute name="page-title" value="lbl.bcCollectorDaily.report.title" cascade="true"/>
+    	<put-attribute name="body" value="/WEB-INF/views/reports/bcDailyCollectionReport-form.jsp"/>
+    </definition>
+
+	<definition name="ulbWiseCollectionReport-form" extends="base_layout">
+    	<put-attribute name="page-title" value="lbl.ulbWiseDailyColl.report.title" cascade="true"/>
+    	<put-attribute name="body" value="/WEB-INF/views/reports/ulbWiseCollectionReport-form.jsp"/>
+    </definition>
+    
+    <definition name="writeOff-form" extends="base_layout">
+    	<put-attribute name="page-title" value="lbl.writeOff.title" cascade="true"/>
+    	<put-attribute name="body" value="/WEB-INF/views/transactions/writeOff/writeOff-form.jsp"/>
+     </definition>
+     
+      <definition name="ownerdetails-form" extends="base_layout">
+    	<put-attribute name="page-title" value="lbl.ownerdetail.title" cascade="true"/>
+    	<put-attribute name="body" value="/WEB-INF/views/transactions/editOwner/ownerdetails-form.jsp"/>
+    </definition>
+       <definition name="ulbWiseDcbReport-form" extends="base_layout">
+    	<put-attribute name="page-title" value="lbl.uldDCbDaily.report.title" cascade="true"/>
+    	<put-attribute name="body" value="/WEB-INF/views/reports/ulbWiseDcbReport-form.jsp"/>
+    </definition>
+    
+      <definition name="ownerdetails-success" extends="base_layout">
+    	<put-attribute name="page-title" value="lbl.ownerdetail.title" cascade="true"/>
+    	<put-attribute name="body" value="/WEB-INF/views/transactions/editOwner/ownerdetails-success.jsp"/>
+    </definition>
+    
+</tiles-definitions> 

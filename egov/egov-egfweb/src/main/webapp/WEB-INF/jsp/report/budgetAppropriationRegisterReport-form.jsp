@@ -1,49 +1,49 @@
-<!--  #-------------------------------------------------------------------------------
-# eGov suite of products aim to improve the internal efficiency,transparency, 
-#      accountability and the service delivery of the government  organizations.
-#   
-#       Copyright (C) <2015>  eGovernments Foundation
-#   
-#       The updated version of eGov suite of products as by eGovernments Foundation 
-#       is available at http://www.egovernments.org
-#   
-#       This program is free software: you can redistribute it and/or modify
-#       it under the terms of the GNU General Public License as published by
-#       the Free Software Foundation, either version 3 of the License, or
-#       any later version.
-#   
-#       This program is distributed in the hope that it will be useful,
-#       but WITHOUT ANY WARRANTY; without even the implied warranty of
-#       MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#       GNU General Public License for more details.
-#   
-#       You should have received a copy of the GNU General Public License
-#       along with this program. If not, see http://www.gnu.org/licenses/ or 
-#       http://www.gnu.org/licenses/gpl.html .
-#   
-#       In addition to the terms of the GPL license to be adhered to in using this
-#       program, the following additional terms are to be complied with:
-#   
-#   	1) All versions of this program, verbatim or modified must carry this 
-#   	   Legal Notice.
-#   
-#   	2) Any misrepresentation of the origin of the material is prohibited. It 
-#   	   is required that all modified versions of this material be marked in 
-#   	   reasonable ways as different from the original version.
-#   
-#   	3) This license does not grant any rights to any user of the program 
-#   	   with regards to rights under trademark law for use of the trade names 
-#   	   or trademarks of eGovernments Foundation.
-#   
-#     In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
-#-------------------------------------------------------------------------------  -->
+<!--
+  ~ eGov suite of products aim to improve the internal efficiency,transparency,
+  ~    accountability and the service delivery of the government  organizations.
+  ~
+  ~     Copyright (C) <2015>  eGovernments Foundation
+  ~
+  ~     The updated version of eGov suite of products as by eGovernments Foundation
+  ~     is available at http://www.egovernments.org
+  ~
+  ~     This program is free software: you can redistribute it and/or modify
+  ~     it under the terms of the GNU General Public License as published by
+  ~     the Free Software Foundation, either version 3 of the License, or
+  ~     any later version.
+  ~
+  ~     This program is distributed in the hope that it will be useful,
+  ~     but WITHOUT ANY WARRANTY; without even the implied warranty of
+  ~     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  ~     GNU General Public License for more details.
+  ~
+  ~     You should have received a copy of the GNU General Public License
+  ~     along with this program. If not, see http://www.gnu.org/licenses/ or
+  ~     http://www.gnu.org/licenses/gpl.html .
+  ~
+  ~     In addition to the terms of the GPL license to be adhered to in using this
+  ~     program, the following additional terms are to be complied with:
+  ~
+  ~         1) All versions of this program, verbatim or modified must carry this
+  ~            Legal Notice.
+  ~
+  ~         2) Any misrepresentation of the origin of the material is prohibited. It
+  ~            is required that all modified versions of this material be marked in
+  ~            reasonable ways as different from the original version.
+  ~
+  ~         3) This license does not grant any rights to any user of the program
+  ~            with regards to rights under trademark law for use of the trade names
+  ~            or trademarks of eGovernments Foundation.
+  ~
+  ~   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
+  -->
 <%@ taglib prefix="s" uri="/WEB-INF/tags/struts-tags.tld"%>
 <%@ taglib prefix="egov" tagdir="/WEB-INF/tags"%>
 <head>
 <script type="text/javascript"
-	src="${pageContext.request.contextPath}/resources/javascript/contra.js"></script>
+	src="${pageContext.request.contextPath}/resources/javascript/contra.js?rnd=${app_release_no}"></script>
 <script type="text/javascript"
-	src="/EGF/resources/javascript/ajaxCommonFunctions.js"></script>
+	src="/EGF/resources/javascript/ajaxCommonFunctions.js?rnd=${app_release_no}"></script>
 </head>
 <script>
 
@@ -90,7 +90,7 @@ function generateReport(){
 	if(isValid == false)
 		return false;
 		
-	var url = '../report/budgetAppropriationRegisterReport!search.action?asOnDate='+asOnDate+'&department.id='+department+'&function.id='+functionId+'&budgetGroup.id='+budgetHeadId+'&fund.id='+fundId;
+	var url = '../report/budgetAppropriationRegisterReport-search.action?asOnDate='+asOnDate+'&department.id='+department+'&function.id='+functionId+'&budgetGroup.id='+budgetHeadId+'&fund.id='+fundId;
 	window.open(url, 'Search','resizable=no,scrollbars=yes,left=300,top=40, width=1200, height=700');
 }
 </script>
@@ -107,7 +107,7 @@ function generateReport(){
 					<td class="bluebox">&nbsp;</td>
 					<td class="bluebox"><s:text name="report.department" />
 						<s:if test="%{isFieldMandatory('executingDepartment')}">
-							<span class="mandatory">*</span>
+							<span class="mandatory1">*</span>
 						</s:if></td>
 					<td class="bluebox"><s:select
 							list="dropdownData.executingDepartmentList" listKey="id"
@@ -115,7 +115,7 @@ function generateReport(){
 							headerValue="--- Select ---" value="department.id"
 							id="department"></s:select></td>
 					<td class="bluebox"><s:text name="report.budged.head" /><span
-						class="mandatory">*</span></td>
+						class="mandatory1">*</span></td>
 					<td class="bluebox"><s:select
 							list="dropdownData.budgetGroupList" listKey="id" listValue="name"
 							name="budgetGroup.id" headerKey="0" headerValue="--- Select ---"
@@ -126,12 +126,12 @@ function generateReport(){
 					<td class="greybox">&nbsp;</td>
 					<td class="greybox"><s:text name="report.function.center" />
 						<s:if test="%{isFieldMandatory('function')}">
-							<span class="mandatory">*</span>
+							<span class="mandatory1">*</span>
 						</s:if></td>
 					<td class="greybox"><s:select list="dropdownData.functionList"
 							listKey="id" listValue="name" name="function.id" headerKey="0"
 							headerValue="--- Select ---" value="function.id" id="function"></s:select></td>
-					<td class="greybox">As on Date:<span class="mandatory">*</span></td>
+					<td class="greybox">As on Date:<span class="mandatory1">*</span></td>
 					<td class="greybox"><s:textfield name="asOnDate" id="asOnDate"
 							cssStyle="width:100px"
 							onkeyup="DateFormat(this,this.value,event,false,'3')" /><a
@@ -145,7 +145,7 @@ function generateReport(){
 					<td class="bluebox">&nbsp;</td>
 					<td class="bluebox"><s:text name="report.fund" />
 						<s:if test="%{isFieldMandatory('fund')}">
-							<span class="mandatory">*</span>
+							<span class="mandatory1">*</span>
 						</s:if></td>
 					<td class="bluebox"><s:select list="dropdownData.fundList"
 							listKey="id" listValue="name" name="fund" headerKey="0"
@@ -155,7 +155,7 @@ function generateReport(){
 			<br />
 			<br />
 			<div class="subheadsmallnew"></div>
-			<div align="left" class="mandatory">* Mandatory Fields</div>
+			<div align="left" class="mandatory1">* Mandatory Fields</div>
 
 			<div class="buttonbottom">
 				<input type="button" value="Submit" class="buttonsubmit"

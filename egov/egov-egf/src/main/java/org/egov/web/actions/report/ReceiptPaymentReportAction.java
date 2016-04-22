@@ -39,6 +39,9 @@
  ******************************************************************************/
 package org.egov.web.actions.report;
 
+
+import org.egov.infstr.services.PersistenceService;
+import org.springframework.beans.factory.annotation.Qualifier;
 import java.io.InputStream;
 import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
@@ -69,7 +72,8 @@ import org.egov.utils.Constants;
 import org.egov.utils.FinancialConstants;
 import org.egov.utils.ReportHelper;
 import org.hibernate.Query;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.beans.factory.annotation.Autowired;
+
 
 @Results(value = {
         @Result(name = "PDF", type = "stream", location = Constants.INPUT_STREAM, params = { Constants.INPUT_NAME,
@@ -79,7 +83,6 @@ import org.springframework.transaction.annotation.Transactional;
                 Constants.INPUT_STREAM, Constants.CONTENT_TYPE, "application/xls", Constants.CONTENT_DISPOSITION,
         "no-cache;filename=receiptPaymentReport.xls" })
 })
-@Transactional(readOnly = true)
 @ParentPackage("egov")
 public class ReceiptPaymentReportAction extends BaseFormAction {
 
@@ -100,6 +103,13 @@ public class ReceiptPaymentReportAction extends BaseFormAction {
     InputStream inputStream;
     ReportHelper reportHelper;
 
+   
+ @Autowired
+ @Qualifier("persistenceService")
+ private PersistenceService persistenceService;
+ @Autowired
+    private EgovMasterDataCaching masterDataCache;
+    
     @Override
     public Object getModel() {
         return receiptPayment;
@@ -143,10 +153,9 @@ public class ReceiptPaymentReportAction extends BaseFormAction {
     }
 
     private void loadDropDownData() {
-        final EgovMasterDataCaching masterCache = EgovMasterDataCaching.getInstance();
-        addDropdownData("fundList", masterCache.get("egi-fund"));
+        addDropdownData("fundList", masterDataCache.get("egi-fund"));
         addDropdownData("financialYearList",
-                getPersistenceService().findAllBy("from CFinancialYear where isActive=1 order by finYearRange desc "));
+                getPersistenceService().findAllBy("from CFinancialYear where isActive=true order by finYearRange desc "));
     }
 
     private void addAomuntToScheduleMap(final List<StatementResultObject> receiptPaymentList,
@@ -824,7 +833,7 @@ public class ReceiptPaymentReportAction extends BaseFormAction {
     }
 
     public String getUlbName() {
-        final Query query = HibernateUtil.getCurrentSession().createSQLQuery("select name from companydetail");
+        final Query query = persistenceService.getSession().createSQLQuery("select name from companydetail");
         final List<String> result = query.list();
         if (result != null)
             return result.get(0);

@@ -1,51 +1,47 @@
-<!--  #-------------------------------------------------------------------------------
-# eGov suite of products aim to improve the internal efficiency,transparency, 
-#      accountability and the service delivery of the government  organizations.
-#   
-#       Copyright (C) <2015>  eGovernments Foundation
-#   
-#       The updated version of eGov suite of products as by eGovernments Foundation 
-#       is available at http://www.egovernments.org
-#   
-#       This program is free software: you can redistribute it and/or modify
-#       it under the terms of the GNU General Public License as published by
-#       the Free Software Foundation, either version 3 of the License, or
-#       any later version.
-#   
-#       This program is distributed in the hope that it will be useful,
-#       but WITHOUT ANY WARRANTY; without even the implied warranty of
-#       MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#       GNU General Public License for more details.
-#   
-#       You should have received a copy of the GNU General Public License
-#       along with this program. If not, see http://www.gnu.org/licenses/ or 
-#       http://www.gnu.org/licenses/gpl.html .
-#   
-#       In addition to the terms of the GPL license to be adhered to in using this
-#       program, the following additional terms are to be complied with:
-#   
-#   	1) All versions of this program, verbatim or modified must carry this 
-#   	   Legal Notice.
-#   
-#   	2) Any misrepresentation of the origin of the material is prohibited. It 
-#   	   is required that all modified versions of this material be marked in 
-#   	   reasonable ways as different from the original version.
-#   
-#   	3) This license does not grant any rights to any user of the program 
-#   	   with regards to rights under trademark law for use of the trade names 
-#   	   or trademarks of eGovernments Foundation.
-#   
-#     In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
-#-------------------------------------------------------------------------------  -->
+<!--
+  ~ eGov suite of products aim to improve the internal efficiency,transparency,
+  ~    accountability and the service delivery of the government  organizations.
+  ~
+  ~     Copyright (C) <2015>  eGovernments Foundation
+  ~
+  ~     The updated version of eGov suite of products as by eGovernments Foundation
+  ~     is available at http://www.egovernments.org
+  ~
+  ~     This program is free software: you can redistribute it and/or modify
+  ~     it under the terms of the GNU General Public License as published by
+  ~     the Free Software Foundation, either version 3 of the License, or
+  ~     any later version.
+  ~
+  ~     This program is distributed in the hope that it will be useful,
+  ~     but WITHOUT ANY WARRANTY; without even the implied warranty of
+  ~     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  ~     GNU General Public License for more details.
+  ~
+  ~     You should have received a copy of the GNU General Public License
+  ~     along with this program. If not, see http://www.gnu.org/licenses/ or
+  ~     http://www.gnu.org/licenses/gpl.html .
+  ~
+  ~     In addition to the terms of the GPL license to be adhered to in using this
+  ~     program, the following additional terms are to be complied with:
+  ~
+  ~         1) All versions of this program, verbatim or modified must carry this
+  ~            Legal Notice.
+  ~
+  ~         2) Any misrepresentation of the origin of the material is prohibited. It
+  ~            is required that all modified versions of this material be marked in
+  ~            reasonable ways as different from the original version.
+  ~
+  ~         3) This license does not grant any rights to any user of the program
+  ~            with regards to rights under trademark law for use of the trade names
+  ~            or trademarks of eGovernments Foundation.
+  ~
+  ~   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
+  -->
 <%@ taglib prefix="s" uri="/WEB-INF/tags/struts-tags.tld"%>
 <%@ taglib prefix="egov" tagdir="/WEB-INF/tags"%>
-<%!
-       int count = -1;
-   %>
 <tr>
 	<td style="width: 5%"></td>
 	<s:if test="%{shouldShowHeaderField('fund')}">
-	<% count++; %>
 		<td class="greybox"><s:text name="voucher.fund" /> <s:if
 				test="%{isFieldMandatory('fund')}">
 				<span class="bluebox"><span class="mandatory1">*</span></span>
@@ -56,15 +52,11 @@
 				onChange="populateSchemes(this);loadBank(this);"
 				value="%{fundId.id}" /></td>
 	</s:if>
-	<%if(count % 2 == 1) {%>
-</tr>
-
-<tr>
-<td style="width: 5%"></td>
-	<%} %>
-	
+	<s:else>
+		<td class="greybox"></td>
+		<td class="greybox"></td>
+	</s:else>
 	<s:if test="%{shouldShowHeaderField('fundsource')}">
-	<% count++; %>
 		<egov:ajaxdropdown id="fundsource" fields="['Text','Value']"
 			dropdownId="fundsourceId"
 			url="voucher/common-ajaxLoadFundSource.action" />
@@ -77,13 +69,15 @@
 				listValue="name" headerKey="-1" headerValue="----Choose----"
 				value="voucherHeader.vouchermis.fundsource.id" /></td>
 	</s:if>
-<%if(count % 2 == 1) {%>
+	<s:else>
+		<td class="greybox"></td>
+		<td class="greybox"></td>
+	</s:else>
 </tr>
+
 <tr>
-<td style="width: 5%"></td>
-	<%} %>
+	<td style="width: 5%"></td>
 	<s:if test="%{shouldShowHeaderField('scheme')}">
-	<% count++; %>
 		<egov:ajaxdropdown id="scheme" fields="['Text','Value']"
 			dropdownId="schemeid" url="voucher/common-ajaxLoadSchemes.action" />
 
@@ -97,13 +91,11 @@
 				onChange="populatesubSchemes(this)"
 				value="voucherHeader.vouchermis.schemeid.id" /></td>
 	</s:if>
-	<%if(count % 2 == 1) {%>
-</tr>
-<tr>
-<td style="width: 5%"></td>
-	<%} %>
+	<s:else>
+		<td class="greybox"></td>
+		<td class="greybox"></td>
+	</s:else>
 	<s:if test="%{shouldShowHeaderField('subscheme')}">
-	<% count++; %>
 		<egov:ajaxdropdown id="subscheme" fields="['Text','Value']"
 			dropdownId="subschemeid"
 			url="voucher/common-ajaxLoadSubSchemes.action" />
@@ -117,14 +109,15 @@
 				value="voucherHeader.vouchermis.subschemeid.id"
 				onChange="populateFundSource(this)" /></td>
 	</s:if>
-<%if(count % 2 == 1) {%>
+	<s:else>
+		<td class="greybox"></td>
+		<td class="greybox"></td>
+	</s:else>
 </tr>
 <tr>
-<td style="width: 5%"></td>
-	<%} %>
+	<td style="width: 5%"></td>
 
 	<s:if test="%{shouldShowHeaderField('department')}">
-	<% count++; %>
 		<td class="greybox" id="deptLabel"><s:text
 				name="voucher.department" /> <s:if
 				test="%{isFieldMandatory('department')}">
@@ -136,14 +129,11 @@
 				headerValue="----Choose----"
 				value="voucherHeader.vouchermis.departmentid.id" /></td>
 	</s:if>
-	<%if(count % 2 == 1) {%>
-</tr>
-<tr>
-<td style="width: 5%"></td>
-	<%} %>
-
+	<s:else>
+		<td class="greybox"></td>
+		<td class="greybox"></td>
+	</s:else>
 	<s:if test="%{shouldShowHeaderField('field')}">
-	<% count++; %>
 		<td class="greybox"><s:text name="voucher.field" /> <s:if
 				test="%{isFieldMandatory('field')}">
 				<span class="mandatory1">*</span>
@@ -154,31 +144,14 @@
 				headerValue="----Choose----"
 				value="voucherHeader.vouchermis.divisionid.id" /></td>
 	</s:if>
-<%if(count % 2 == 1) {%>
+	<s:else>
+		<td class="greybox"></td>
+		<td class="greybox"></td>
+	</s:else>
 </tr>
 <tr>
-<td style="width: 5%"></td>
-	<%} %>
-
-	<s:if test="%{shouldShowHeaderField('functionary')}">
-	<% count++; %>
-		<td class="bluebox"><s:text name="voucher.functionary" /> <s:if
-				test="%{isFieldMandatory('functionary')}">
-				<span class="bluebox"><span class="mandatory1">*</span></span>
-			</s:if></td>
-		<td class="bluebox"><s:select name="vouchermis.functionary"
-				id="vouchermis.functionary" list="dropdownData.functionaryList"
-				listKey="id" listValue="name" headerKey="-1"
-				headerValue="----Choose----"
-				value="voucherHeader.vouchermis.functionary.id" /></td>
-	</s:if>
-	<%if(count % 2 == 1) {%>
-</tr>
-<tr>
-<td style="width: 5%"></td>
-	<%} %>
+	<td style="width: 5%"></td>
 	<s:if test="%{shouldShowHeaderField('function')}">
-	<% count++; %>
 		<td id="functionnametext" class="bluebox"><s:text
 				name="voucher.function" /> <s:if
 				test="%{isFieldMandatory('function')}">
@@ -190,13 +163,27 @@
 				headerValue="----Choose----" value="%{vouchermis.function.id}" /></td>
 	</s:if>
 
-<%if(count % 2 == 1) {%>
+	<s:else>
+		<td class="greybox"></td>
+		<td class="greybox"></td>
+	</s:else>
+	<s:if test="%{shouldShowHeaderField('functionary')}">
+		<td class="bluebox"><s:text name="voucher.functionary" /> <s:if
+				test="%{isFieldMandatory('functionary')}">
+				<span class="bluebox"><span class="mandatory1">*</span></span>
+			</s:if></td>
+		<td class="bluebox"><s:select name="vouchermis.functionary"
+				id="vouchermis.functionary" list="dropdownData.functionaryList"
+				listKey="id" listValue="name" headerKey="-1"
+				headerValue="----Choose----"
+				value="voucherHeader.vouchermis.functionary.id" /></td>
+	</s:if>
+	<s:else>
+		<td class="greybox"></td>
+		<td class="greybox"></td>
+	</s:else>
+
 </tr>
-<%} else {%>
-<td></td>
-<td></td>
-</tr>
-<%} %>
 <script type="text/javascript">
 function populateSchemes(fund){
 	if(null != document.getElementById("schemeid")){

@@ -66,11 +66,19 @@ public class PropertyMaterlizeView implements Serializable {
     private BigDecimal sitalArea;
     private BigDecimal toalBuiltUpArea;
     private Integer latestStatus;
-    private BigDecimal aggrCurrDmd;
+    private BigDecimal aggrCurrFirstHalfDmd;
+    private BigDecimal aggrCurrSecondHalfDmd;
     private BigDecimal aggrArrDmd;
-    private BigDecimal aggrCurrColl;
+    private BigDecimal aggrCurrFirstHalfColl;
+    private BigDecimal aggrCurrSecondHalfColl;
     private BigDecimal aggrArrColl;
     private BigDecimal totalDemand;
+    private BigDecimal aggrArrearPenaly;
+    private BigDecimal aggrArrearPenalyColl;
+    private BigDecimal aggrCurrFirstHalfPenaly;
+    private BigDecimal aggrCurrFirstHalfPenalyColl; 
+    private BigDecimal aggrCurrSecondHalfPenaly;
+    private BigDecimal aggrCurrSecondHalfPenalyColl; 
     private String gisRefNo;
     private Set<InstDmdCollMaterializeView> instDmdColl;
     private BigDecimal alv;
@@ -78,6 +86,7 @@ public class PropertyMaterlizeView implements Serializable {
     private Character source;
     private Set<FloorDetailsView> floorDetails;
     private String mobileNumber;
+    private boolean isActive;
 
     public Integer getBasicPropertyID() {
         return basicPropertyID;
@@ -175,14 +184,6 @@ public class PropertyMaterlizeView implements Serializable {
         this.latestStatus = latestStatus;
     }
 
-    public BigDecimal getAggrCurrDmd() {
-        return aggrCurrDmd;
-    }
-
-    public void setAggrCurrDmd(final BigDecimal aggrCurrDmd) {
-        this.aggrCurrDmd = aggrCurrDmd;
-    }
-
     public PropertyTypeMaster getPropTypeMstrID() {
         return propTypeMstrID;
     }
@@ -197,14 +198,6 @@ public class PropertyMaterlizeView implements Serializable {
 
     public void setAggrArrDmd(final BigDecimal aggrArrDmd) {
         this.aggrArrDmd = aggrArrDmd;
-    }
-
-    public BigDecimal getAggrCurrColl() {
-        return aggrCurrColl;
-    }
-
-    public void setAggrCurrColl(final BigDecimal aggrCurrColl) {
-        this.aggrCurrColl = aggrCurrColl;
     }
 
     public BigDecimal getAggrArrColl() {
@@ -252,8 +245,10 @@ public class PropertyMaterlizeView implements Serializable {
         final StringBuilder objStr = new StringBuilder();
 
         objStr.append("BasicPropertyId: " + getBasicPropertyID()).append("|PropertyId: ").append(getPropertyId())
-        .append("|SitalArea: ").append(getSitalArea()).append("|AggCurrDemand: ").append(getAggrCurrDmd())
-        .append("|AggArrDemand: ").append(getAggrArrDmd()).append("|AggCurrColl: ").append(getAggrCurrColl())
+        .append("|SitalArea: ").append(getSitalArea()).append("|AggCurr1stHalfDemand: ").append(getAggrCurrFirstHalfDmd())
+        .append("|AggCurr2ndHalfDemand: ").append(getAggrCurrSecondHalfDmd())
+        .append("|AggArrDemand: ").append(getAggrArrDmd()).append("|AggCurr1stHalfColl: ").append(getAggrCurrFirstHalfColl())
+        .append("|AggCurr2ndHalfColl: ").append(getAggrCurrSecondHalfColl())
         .append("|AggArrColl: ").append(getAggrArrColl()).append("|TotalDemand: ").append(getTotalDemand());
 
         return objStr.toString();
@@ -306,7 +301,94 @@ public class PropertyMaterlizeView implements Serializable {
     public void setMobileNumber(String mobileNumber) {
         this.mobileNumber = mobileNumber;
     }
-    
-    
+
+    public boolean getIsActive() {
+        return isActive;
+    }
+
+    public void setIsActive(boolean isActive) {
+        this.isActive = isActive;
+    }
+
+    public BigDecimal getAggrArrearPenaly() {
+        return aggrArrearPenaly;
+    }
+
+    public void setAggrArrearPenaly(BigDecimal aggrArrearPenaly) {
+        this.aggrArrearPenaly = aggrArrearPenaly;
+    }
+
+    public BigDecimal getAggrArrearPenalyColl() {
+        return aggrArrearPenalyColl;
+    }
+
+    public void setAggrArrearPenalyColl(BigDecimal aggrArrearPenalyColl) {
+        this.aggrArrearPenalyColl = aggrArrearPenalyColl;
+    }
+
+    public BigDecimal getAggrCurrFirstHalfDmd() {
+        return aggrCurrFirstHalfDmd;
+    }
+
+    public void setAggrCurrFirstHalfDmd(BigDecimal aggrCurrFirstHalfDmd) {
+        this.aggrCurrFirstHalfDmd = aggrCurrFirstHalfDmd;
+    }
+
+    public BigDecimal getAggrCurrSecondHalfDmd() {
+        return aggrCurrSecondHalfDmd;
+    }
+
+    public void setAggrCurrSecondHalfDmd(BigDecimal aggrCurrSecondHalfDmd) {
+        this.aggrCurrSecondHalfDmd = aggrCurrSecondHalfDmd;
+    }
+
+    public BigDecimal getAggrCurrFirstHalfColl() {
+        return aggrCurrFirstHalfColl;
+    }
+
+    public void setAggrCurrFirstHalfColl(BigDecimal aggrCurrFirstHalfColl) {
+        this.aggrCurrFirstHalfColl = aggrCurrFirstHalfColl;
+    }
+
+    public BigDecimal getAggrCurrSecondHalfColl() {
+        return aggrCurrSecondHalfColl;
+    }
+
+    public void setAggrCurrSecondHalfColl(BigDecimal aggrCurrSecondHalfColl) {
+        this.aggrCurrSecondHalfColl = aggrCurrSecondHalfColl;
+    }
+
+    public BigDecimal getAggrCurrFirstHalfPenaly() {
+        return aggrCurrFirstHalfPenaly;
+    }
+
+    public void setAggrCurrFirstHalfPenaly(BigDecimal aggrCurrFirstHalfPenaly) {
+        this.aggrCurrFirstHalfPenaly = aggrCurrFirstHalfPenaly;
+    }
+
+    public BigDecimal getAggrCurrFirstHalfPenalyColl() {
+        return aggrCurrFirstHalfPenalyColl;
+    }
+
+    public void setAggrCurrFirstHalfPenalyColl(BigDecimal aggrCurrFirstHalfPenalyColl) {
+        this.aggrCurrFirstHalfPenalyColl = aggrCurrFirstHalfPenalyColl;
+    }
+
+    public BigDecimal getAggrCurrSecondHalfPenaly() {
+        return aggrCurrSecondHalfPenaly;
+    }
+
+    public void setAggrCurrSecondHalfPenaly(BigDecimal aggrCurrSecondHalfPenaly) {
+        this.aggrCurrSecondHalfPenaly = aggrCurrSecondHalfPenaly;
+    }
+
+    public BigDecimal getAggrCurrSecondHalfPenalyColl() {
+        return aggrCurrSecondHalfPenalyColl;
+    }
+
+    public void setAggrCurrSecondHalfPenalyColl(BigDecimal aggrCurrSecondHalfPenalyColl) {
+        this.aggrCurrSecondHalfPenalyColl = aggrCurrSecondHalfPenalyColl;
+    }
+
     
 }

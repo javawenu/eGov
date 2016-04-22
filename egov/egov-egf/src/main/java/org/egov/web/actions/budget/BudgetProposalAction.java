@@ -39,6 +39,9 @@
  ******************************************************************************/
 package org.egov.web.actions.budget;
 
+
+import org.egov.infstr.services.PersistenceService;
+import org.springframework.beans.factory.annotation.Qualifier;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.math.BigDecimal;
@@ -98,9 +101,9 @@ import org.hibernate.HibernateException;
 import org.hibernate.Query;
 import org.hibernate.SQLQuery;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
 
-@Transactional(readOnly = true)
+
+
 @ParentPackage("egov")
 /*
  * @Results(value={
@@ -160,7 +163,11 @@ public class BudgetProposalAction extends BaseFormAction {
     private static final String SUCCESSFUL = "successful";
     private Date asOndate;
     private Date headerAsOnDate;
-    private @Autowired AppConfigValueService appConfigValuesService;
+    
+ @Autowired
+ @Qualifier("persistenceService")
+ private PersistenceService persistenceService;
+ @Autowired AppConfigValueService appConfigValuesService;
     private InputStream inputStream;
     private ReportHelper reportHelper;
     private Long docNo;
@@ -202,6 +209,9 @@ public class BudgetProposalAction extends BaseFormAction {
     private Long validId;
     private final BigDecimal bigThousand = new BigDecimal(1000);
 
+    @Autowired
+    private EgovMasterDataCaching masterDataCache;
+    
     public void setReportService(final ReportService reportService) {
         this.reportService = reportService;
     }
@@ -303,21 +313,20 @@ public class BudgetProposalAction extends BaseFormAction {
     private void loadToMasterDataMap() {
         if (LOGGER.isInfoEnabled())
             LOGGER.info("Starting loadToMasterDataMap...... ");
-        final EgovMasterDataCaching masterCache = EgovMasterDataCaching.getInstance();
-        final List<BudgetGroup> bgList = masterCache.get("egf-budgetGroup");
+        final List<BudgetGroup> bgList = masterDataCache.get("egf-budgetGroup");
         budgetGroupMap = new HashMap<Long, BudgetGroup>();
         for (final BudgetGroup bg : bgList)
             budgetGroupMap.put(bg.getId(), bg);
-        final List<CFunction> fnList = masterCache.get("egi-function");
+        final List<CFunction> fnList = masterDataCache.get("egi-function");
         functionMap = new HashMap<Long, CFunction>();
         for (final CFunction fn : fnList)
             functionMap.put(fn.getId(), fn);
 
-        final List<Fund> fundList = masterCache.get("egi-fund");
+        final List<Fund> fundList = masterDataCache.get("egi-fund");
         fundMap = new HashMap<Integer, Fund>();
         for (final Fund f : fundList)
             fundMap.put(f.getId(), f);
-        final List<Department> deptList = masterCache.get("egi-department");
+        final List<Department> deptList = masterDataCache.get("egi-department");
         deptMap = new HashMap<Integer, Department>();
         for (final Department d : deptList)
             deptMap.put(d.getId().intValue(), d);
@@ -341,7 +350,7 @@ public class BudgetProposalAction extends BaseFormAction {
             if (LOGGER.isInfoEnabled())
                 LOGGER.info(query);
 
-            final Query updateQuery = HibernateUtil.getCurrentSession().createSQLQuery(query)
+            final Query updateQuery = persistenceService.getSession().createSQLQuery(query)
                     .setBigDecimal("amount", amount)
                     .setLong("detailId", detailId)
                     .setDate("modifiedate", new java.sql.Date(new Date().getTime()))
@@ -361,12 +370,11 @@ public class BudgetProposalAction extends BaseFormAction {
     public String ajaxDeleteBudgetDetail() {
         try {
             if (bpBean.getId() != null && bpBean.getNextYrId() != null) {
-                HibernateUtil
-                .getCurrentSession()
+                persistenceService.getSession()
                 .createSQLQuery(
                         "delete from egf_budgetdetail where id in (" + bpBean.getId() + "," + bpBean.getNextYrId() + ")")
                         .executeUpdate();
-                HibernateUtil.getCurrentSession().flush();
+                persistenceService.getSession().flush();
             }
         } catch (final HibernateException e) {
             if (LOGGER.isDebugEnabled())
@@ -874,10 +882,9 @@ public class BudgetProposalAction extends BaseFormAction {
     {
         if (LOGGER.isInfoEnabled())
             LOGGER.info("Starting loadApproverUser.....");
-        final EgovMasterDataCaching masterCache = EgovMasterDataCaching.getInstance();
         final Map<String, Object> map = voucherService.getDesgBYPassingWfItem("BudgetDetail.nextDesg", null, budgetDetail
                 .getExecutingDepartment().getId().intValue());
-        addDropdownData("departmentList", masterCache.get("egi-department"));
+        addDropdownData("departmentList", masterDataCache.get("egi-department"));
         addDropdownData("designationList", Collections.EMPTY_LIST);
         addDropdownData("userList", Collections.EMPTY_LIST);
 
@@ -1016,7 +1023,7 @@ public class BudgetProposalAction extends BaseFormAction {
             LOGGER.info("Finished computeTotal");
     }
 
-    @Transactional
+    
     @SkipValidation
     @Action(value = "/budget/budgetProposal-update")
     public String update()
@@ -1086,7 +1093,7 @@ public class BudgetProposalAction extends BaseFormAction {
         return "message";
     }
 
-    @Transactional
+    
     private void save(final BigDecimal multiplicationFactor)
     {
         String columntoupdate = "originalAmount";
@@ -1100,8 +1107,8 @@ public class BudgetProposalAction extends BaseFormAction {
             commentsql = "update eg_wf_states set  text1=:text1, value='END' where id=(select state_id from egf_budgetdetail where  id=:id)";
         else
             commentsql = "update eg_wf_states set  text1=:text1 where id=(select state_id from egf_budgetdetail where  id=:id)";
-        final SQLQuery updateQuery = HibernateUtil.getCurrentSession().createSQLQuery(sql);
-        final SQLQuery updateCommentQuery = HibernateUtil.getCurrentSession().createSQLQuery(commentsql);
+        final SQLQuery updateQuery = persistenceService.getSession().createSQLQuery(sql);
+        final SQLQuery updateCommentQuery = persistenceService.getSession().createSQLQuery(commentsql);
         int i = 0;
 
         for (final BudgetProposalBean bpBean : bpBeanList)
@@ -1132,19 +1139,19 @@ public class BudgetProposalAction extends BaseFormAction {
                 LOGGER.debug("Updated  " + i + "record.....");
             if (i % 10 == 0)
             {
-                HibernateUtil.getCurrentSession().flush();
+                persistenceService.getSession().flush();
                 if (LOGGER.isDebugEnabled())
                     LOGGER.debug("flushed for " + i + "record.....");
 
             }
 
         }
-        HibernateUtil.getCurrentSession().flush();
+        persistenceService.getSession().flush();
         if (LOGGER.isDebugEnabled())
             LOGGER.debug("Completed Save .....");
     }
 
-    @Transactional
+    
     private void saveWithForward(final Position pos, final String name, final boolean hod)
     {
 
@@ -1174,7 +1181,7 @@ public class BudgetProposalAction extends BaseFormAction {
             i++;
             if (i % 10 == 0)
             {
-                HibernateUtil.getCurrentSession().flush();
+                persistenceService.getSession().flush();
                 if (LOGGER.isDebugEnabled())
                     LOGGER.debug("flushed for " + i + "record.....");
             }
@@ -1184,7 +1191,7 @@ public class BudgetProposalAction extends BaseFormAction {
             LOGGER.debug("Completed saveWithForward .....");
     }
 
-    @Transactional
+    
     public String modifyList()
     {
         if (budgetDetail.getBudget().getId() != null)
@@ -1242,7 +1249,7 @@ public class BudgetProposalAction extends BaseFormAction {
                 " select distinct(f.name) as functionid from egf_budgetdetail bd,eg_wf_states s,function f where bd.budget="
                 + topBudget.getId() + " and bd.state_id=s.id and s.owner=" + position.getId()
                 + " and bd.function=f.id order by functionid";
-        final Query functionsNotUsed = HibernateUtil.getCurrentSession()
+        final Query functionsNotUsed = persistenceService.getSession()
                 .createSQLQuery(Query);
         final List<String> notUsedList = functionsNotUsed.list();
 
@@ -1271,7 +1278,7 @@ public class BudgetProposalAction extends BaseFormAction {
 
     @SuppressWarnings("unchecked")
     public String getUlbName() {
-        final Query query = HibernateUtil.getCurrentSession().createSQLQuery("select name from companydetail");
+        final Query query = persistenceService.getSession().createSQLQuery("select name from companydetail");
         final List<String> result = query.list();
         if (result != null)
             return result.get(0);

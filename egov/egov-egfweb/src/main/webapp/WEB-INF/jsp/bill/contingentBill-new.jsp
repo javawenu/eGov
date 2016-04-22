@@ -1,42 +1,42 @@
-<!--  #-------------------------------------------------------------------------------
-# eGov suite of products aim to improve the internal efficiency,transparency, 
-#      accountability and the service delivery of the government  organizations.
-#   
-#       Copyright (C) <2015>  eGovernments Foundation
-#   
-#       The updated version of eGov suite of products as by eGovernments Foundation 
-#       is available at http://www.egovernments.org
-#   
-#       This program is free software: you can redistribute it and/or modify
-#       it under the terms of the GNU General Public License as published by
-#       the Free Software Foundation, either version 3 of the License, or
-#       any later version.
-#   
-#       This program is distributed in the hope that it will be useful,
-#       but WITHOUT ANY WARRANTY; without even the implied warranty of
-#       MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#       GNU General Public License for more details.
-#   
-#       You should have received a copy of the GNU General Public License
-#       along with this program. If not, see http://www.gnu.org/licenses/ or 
-#       http://www.gnu.org/licenses/gpl.html .
-#   
-#       In addition to the terms of the GPL license to be adhered to in using this
-#       program, the following additional terms are to be complied with:
-#   
-#   	1) All versions of this program, verbatim or modified must carry this 
-#   	   Legal Notice.
-#   
-#   	2) Any misrepresentation of the origin of the material is prohibited. It 
-#   	   is required that all modified versions of this material be marked in 
-#   	   reasonable ways as different from the original version.
-#   
-#   	3) This license does not grant any rights to any user of the program 
-#   	   with regards to rights under trademark law for use of the trade names 
-#   	   or trademarks of eGovernments Foundation.
-#   
-#     In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
-#-------------------------------------------------------------------------------  -->
+<!--
+  ~ eGov suite of products aim to improve the internal efficiency,transparency,
+  ~    accountability and the service delivery of the government  organizations.
+  ~
+  ~     Copyright (C) <2015>  eGovernments Foundation
+  ~
+  ~     The updated version of eGov suite of products as by eGovernments Foundation
+  ~     is available at http://www.egovernments.org
+  ~
+  ~     This program is free software: you can redistribute it and/or modify
+  ~     it under the terms of the GNU General Public License as published by
+  ~     the Free Software Foundation, either version 3 of the License, or
+  ~     any later version.
+  ~
+  ~     This program is distributed in the hope that it will be useful,
+  ~     but WITHOUT ANY WARRANTY; without even the implied warranty of
+  ~     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  ~     GNU General Public License for more details.
+  ~
+  ~     You should have received a copy of the GNU General Public License
+  ~     along with this program. If not, see http://www.gnu.org/licenses/ or
+  ~     http://www.gnu.org/licenses/gpl.html .
+  ~
+  ~     In addition to the terms of the GPL license to be adhered to in using this
+  ~     program, the following additional terms are to be complied with:
+  ~
+  ~         1) All versions of this program, verbatim or modified must carry this
+  ~            Legal Notice.
+  ~
+  ~         2) Any misrepresentation of the origin of the material is prohibited. It
+  ~            is required that all modified versions of this material be marked in
+  ~            reasonable ways as different from the original version.
+  ~
+  ~         3) This license does not grant any rights to any user of the program
+  ~            with regards to rights under trademark law for use of the trade names
+  ~            or trademarks of eGovernments Foundation.
+  ~
+  ~   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
+  -->
 <html>
 <%@ include file="/includes/taglibs.jsp"%>
 <%@ page language="java"%>
@@ -44,15 +44,18 @@
 <title><s:text name="contingent.bill" /></title>
 <sx:head />
 <script type="text/javascript"
-	src="${pageContext.request.contextPath}/resources/javascript/voucherHelper.js"></script>
+	src="${pageContext.request.contextPath}/resources/javascript/voucherHelper.js?rnd=${app_release_no}"></script>
 <script type="text/javascript"
-	src="${pageContext.request.contextPath}/resources/javascript/contingentBillHelper.js"></script>
-<link rel="stylesheet" href="/EGF/resources/css/tabber.css"
+	src="${pageContext.request.contextPath}/resources/javascript/contingentBillHelper.js?rnd=${app_release_no}"></script>
+<link rel="stylesheet"
+	href="/EGF/resources/css/tabber.css?rnd=${app_release_no}"
 	TYPE="text/css">
-<script type="text/javascript" src="/EGF/resources/javascript/tabber.js"></script>
 <script type="text/javascript"
-	src="/EGF/resources/javascript/tabber2.js"></script>
-
+	src="/EGF/resources/javascript/tabber.js?rnd=${app_release_no}"></script>
+<script type="text/javascript"
+	src="/EGF/resources/javascript/tabber2.js?rnd=${app_release_no}"></script>
+<script type="text/javascript"
+	src="/EGF/resources/javascript/autocomplete-debug.js"></script>
 
 <meta http-equiv="Content-Type"
 	content="text/html; charset=windows-1252">
@@ -487,109 +490,72 @@ document.getElementById(tab+"["+idx+"]."+field).options[<s:property value="#stat
 						<s:text name="contingent.bill" />
 					</div>
 				</div>
-			<div class="tabber" id="main" align="left">
-				<div class="tabbertab" id="maintab">
-					<h2>Header</h2>
-					<jsp:include page="../budget/budgetHeader.jsp">
-						<jsp:param value="Contingent Bill" name="heading" />
-					</jsp:include>
-					<center>
-						<span class="mandatory1">
-							<div id="Errors">
-								<s:actionerror />
-								<s:fielderror />
-							</div> <s:actionmessage />
-						</span>
-					</center>
-					<table border="0" width="100%" cellspacing="0" cellpadding="0">
-						<tr>
-							<td class="bluebox"></td>
-							<s:if test="%{!billNumberGenerationAuto}">
-								<td class="bluebox"><s:text name="bill.Number" /><span
-									class="mandatory1"> *</span></td>
-								<td class="bluebox"><s:textfield
-										name="commonBean.billNumber" /></td>
-							</s:if>
-							<td class="bluebox"><s:text name="bill.Date" /><span
-								class="mandatory1">*</span></td>
-							<s:date name='commonBean.billDate' id="commonBean.billDateId"
-								format='dd/MM/yyyy' />
-							<td class="bluebox"><s:textfield name="commonBean.billDate"
-									id="billDate"
-									onkeyup="DateFormat(this,this.value,event,false,'3')"
-									value="%{commonBean.billDateId}" /> <a tabindex="-1"
-								href="javascript:show_calendar('cbill.billDate');"
-								style="text-decoration: none">&nbsp;<img
-									src="/egi/resources/erp2/images/calendaricon.gif" border="0" /></A></td>
-						</tr>
-						<%@include file="contingentBill-form.jsp"%>
-					</table>
-				</div>
-				<div class="tabbertab" id="checkList" >
-					<h2>Check List</h2>
-					<div class="yui-skin-sam" align="center">
-						<div id="checkListTable"></div>
+				<div class="tabber" id="main" align="left">
+					<div class="tabbertab" id="maintab">
+						<h2>Header</h2>
+						<jsp:include page="../budget/budgetHeader.jsp">
+							<jsp:param value="Contingent Bill" name="heading" />
+						</jsp:include>
+						<center>
+							<span class="mandatory1">
+								<div id="Errors">
+									<s:actionerror />
+									<s:fielderror />
+								</div> <s:actionmessage />
+							</span>
+						</center>
+						<table border="0" width="100%" cellspacing="0" cellpadding="0">
+							<tr>
+								<td class="bluebox"></td>
+								<s:if test="%{!billNumberGenerationAuto}">
+									<td class="bluebox"><s:text name="bill.Number" /><span
+										class="mandatory1"> *</span></td>
+									<td class="bluebox"><s:textfield
+											name="commonBean.billNumber" /></td>
+								</s:if>
+								<td class="bluebox"><s:text name="bill.Date" /><span
+									class="mandatory1">*</span></td>
+								<s:date name='commonBean.billDate' id="commonBean.billDateId"
+									format='dd/MM/yyyy' />
+								<td class="bluebox"><s:textfield id="billDate"
+										name="commonBean.billDate" value="%{commonBean.billDateId}"
+										data-date-end-date="0d"
+										onkeyup="DateFormat(this,this.value,event,false,'3')"
+										placeholder="DD/MM/YYYY" cssClass="form-control datepicker"
+										data-inputmask="'mask': 'd/m/y'" /></td>
+							</tr>
+							<%@include file="contingentBill-form.jsp"%>
+						</table>
 					</div>
+					<div class="tabbertab" id="checkList">
+						<h2>Check List</h2>
+						<div class="yui-skin-sam" align="center">
+							<div id="checkListTable"></div>
+						</div>
 
-					<script>
-			   	makeCheckListTable();
-			   	document.getElementById('checkListTable').getElementsByTagName('table')[0].width="800";
-	</script>
+						<script>
+			   				makeCheckListTable();
+			   				document.getElementById('checkListTable').getElementsByTagName('table')[0].width="800";
+						</script>
 
-
+					</div>
 					<s:hidden name="actionName" id="actionName" />
-
-				</div>
-				<div class="tabbertab" id="approval">
-					<h2>Approval Information</h2>
-					<font style='color: red;'>
-						<div align="center" class="error-block" id="lblError"
-							style="font: bold; text-align: center"></div>
-						<div align="center" class="error-block" id="Errors"
-							style="font: bold; text-align: center"></div>
-					</font>
-					<%-- <s:if test='%{! "END".equalsIgnoreCase(nextLevel)}'>
+					<div class="tabbertab" id="approval">
+						<h2>Approval Information</h2>
+						<font style='color: red;'>
+							<div align="center" class="error-block" id="lblError"
+								style="font: bold; text-align: center"></div>
+							<div align="center" class="error-block" id="Errors"
+								style="font: bold; text-align: center"></div>
+						</font>
+						<%-- <s:if test='%{! "END".equalsIgnoreCase(nextLevel)}'>
 	<%@include file="../voucher/workflowApproval-contingent.jsp"%>
 </s:if> --%>
-					<s:hidden name="nextLevel" id="nextLevel" />
-					<div align="center">
-						<table border="0" width="100%">
-							<tr>
-								<td class="bluebox">Comments</td>
-								<td class="bluebox"><s:textarea name="comments"
-										id="comments" cols="150" rows="3" onblur="checkLength(this)" /></td>
-							</tr>
-							<br />
-						</table>
-					</div>
-					<div class="buttonbottom">
-						<table border="0" width="75%" cellspacing="0" align="center">
-							<tr></tr>
-							<s:hidden name="button" id="button" />
-							<tr>
-								<td><s:iterator value="%{validButtons}" var="p">
-										<s:if test="%{description !='Cancel'}">
-											<s:submit type="submit" cssClass="buttonsubmit"
-												value="%{description}" id="%{name}" name="%{name}"
-												method="create"
-												onclick="document.getElementById('button').value='Save_New';return validate('%{name}','%{description}');" />
-										</s:if>
-									</s:iterator> <s:submit type="submit" cssClass="buttonsubmit"
-										value="Save & Forward" id="%{aa_approve}" name="%{aa_approve}"
-										onclick="document.getElementById('button').value='Save_New';return validateAndSubmit('%{aa_approve}','%{Save & Forward}');"
-										style="margin:0 10px" /></td>
-								<td><input type="reset" name="Cancel" class="button"
-									id="Cancel" value="Cancel"
-									onclick="document.getElementById('button').value='';return true;"
-									method="newform" style="margin: 0 10px" /> <input type="button"
-									id="closeButton" value="Close"
-									onclick="javascript:window.close()" class="button"
-									style="margin: 0 10px" /></td>
-							</tr>
-						</table>
+						<s:hidden name="nextLevel" id="nextLevel" />
+						<%@ include file='../bill/commonWorkflowMatrix.jsp'%>
+						<%@ include file='../payment/commonWorkflowMatrix-button.jsp'%>
 					</div>
 				</div>
-			</div>
 			</div>
 		</s:push>
 		<s:token />
@@ -669,9 +635,9 @@ loadDropDownCodesForAccountDetailType(null);
 
 </script>
 	<script type="text/javascript">
-function validateAndSubmit(name,value)
+function onSubmit()
 {
-	if(validate(name,value)){
+	if(validate()){
 			document.cbill.action='${pageContext.request.contextPath}/bill/contingentBill-create.action';
     		document.cbill.submit();
 			

@@ -40,51 +40,33 @@
 
 package org.egov.pims.dao;
 
-import java.util.Date;
-import java.util.List;
-
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
-
 import org.apache.log4j.Logger;
 import org.egov.eis.entity.Assignment;
 import org.egov.eis.entity.EmployeeView;
 import org.egov.infra.exception.ApplicationRuntimeException;
-import org.egov.infstr.dao.GenericHibernateDAO;
-import org.egov.infstr.utils.HibernateUtil;
 import org.hibernate.HibernateException;
 import org.hibernate.Query;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
+import org.springframework.transaction.annotation.Transactional;
+
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+import java.util.Date;
+import java.util.List;
 
 
-/**
- * This Class implememets the DeptTestsDAO for the Hibernate specific
- * Implementation
- *
- * @author Neetu
- * @version 2.00
- */
-public class AssignmentHibernateDAO extends GenericHibernateDAO implements AssignmentDAO
+public class AssignmentHibernateDAO implements AssignmentDAO
 {
     private final static Logger LOGGER = Logger.getLogger(AssignmentHibernateDAO.class.getClass());
     
     @PersistenceContext
 	private EntityManager entityManager;
     
-    @Override
-	public Session  getCurrentSession() {
+    public Session  getCurrentSession() {
 		return entityManager.unwrap(Session.class);
 	}
-    /*
-     *
-	 * @param persistentClass
-	 * @param session
-	 */
-	public AssignmentHibernateDAO(Class persistentClass, SessionFactory session)
-	{
-		super(persistentClass, session.getCurrentSession());
-	}
+
 	public Assignment getAssignmentById(Integer id)
 	{
 		return (Assignment)getCurrentSession().get(Assignment.class, id);
@@ -208,7 +190,7 @@ public class AssignmentHibernateDAO extends GenericHibernateDAO implements Assig
 		{
 			StringBuffer query = null;
 		
-			query =new StringBuffer("from EmployeeView ev where ev.isActive=1 and ev.assignment.isPrimary='N'");
+			query =new StringBuffer("from EmployeeView ev where ev.isActive=true and ev.assignment.isPrimary='N'");
 		
 			if(code!=null && !code.equals(""))
 			{
@@ -265,7 +247,19 @@ public class AssignmentHibernateDAO extends GenericHibernateDAO implements Assig
 	return employeeAssignList;
 
 	}
-	
+
+	@Override
+	@Transactional
+	public void create(final Assignment egEmpAssignment) {
+		getCurrentSession().save(egEmpAssignment);
+	}
+
+	@Override
+	@Transactional
+	public void update(final Assignment assignment) {
+		getCurrentSession().update(assignment);
+	}
+
 	private final static String STR_EXCEPTION="Exception:";
 	
 }

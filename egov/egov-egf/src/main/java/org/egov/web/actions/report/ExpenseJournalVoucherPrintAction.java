@@ -30,6 +30,9 @@
  ******************************************************************************/
 package org.egov.web.actions.report;
 
+
+import org.egov.infstr.services.PersistenceService;
+import org.springframework.beans.factory.annotation.Qualifier;
 import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigDecimal;
@@ -67,7 +70,8 @@ import org.egov.utils.ReportHelper;
 import org.egov.web.actions.voucher.VoucherReport;
 import org.hibernate.FlushMode;
 import org.hibernate.SQLQuery;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.beans.factory.annotation.Autowired;
+
 
 @Results(value = {
 		
@@ -79,7 +83,7 @@ import org.springframework.transaction.annotation.Transactional;
                         @Result(name = "HTML", type = "stream", location = "inputStream", params = { "inputName", "inputStream", "contentType",
                         "text/html" })
 })
-@Transactional(readOnly = true)
+
 @ParentPackage("egov")
 public class ExpenseJournalVoucherPrintAction extends BaseFormAction {
     String jasperpath = "/reports/templates/expenseJournalVoucherReport.jasper";
@@ -93,6 +97,12 @@ public class ExpenseJournalVoucherPrintAction extends BaseFormAction {
     EgBillregistermis billRegistermis;
     List<EgBillPayeedetails> billPayeeDetails = new ArrayList<EgBillPayeedetails>();
     private static final String ACCDETAILTYPEQUERY = " from Accountdetailtype where id=?";
+   
+ @Autowired
+ @Qualifier("persistenceService")
+ private PersistenceService persistenceService;
+ @Autowired
+    private EgovCommon egovCommon;
 
     public Long getId() {
         return id;
@@ -138,11 +148,11 @@ public class ExpenseJournalVoucherPrintAction extends BaseFormAction {
     }
 
     private void populateVoucher() {
-        HibernateUtil.getCurrentSession().setDefaultReadOnly(true);
-        HibernateUtil.getCurrentSession().setFlushMode(FlushMode.MANUAL);
+        persistenceService.getSession().setDefaultReadOnly(true);
+        persistenceService.getSession().setFlushMode(FlushMode.MANUAL);
         if (!StringUtils.isBlank(parameters.get("id")[0])) {
             final Long id = Long.valueOf(parameters.get("id")[0]);
-            final CVoucherHeader voucherHeader = (CVoucherHeader) HibernateUtil.getCurrentSession().get(CVoucherHeader.class, id);
+            final CVoucherHeader voucherHeader = (CVoucherHeader) persistenceService.getSession().get(CVoucherHeader.class, id);
             if (voucherHeader != null) {
                 voucher = voucherHeader;
                 billRegistermis = (EgBillregistermis) persistenceService.find("from EgBillregistermis where voucherHeader.id=?",
@@ -159,17 +169,17 @@ public class ExpenseJournalVoucherPrintAction extends BaseFormAction {
     private void generateVoucherReportList() {
         if (voucher != null) {
             for (final CGeneralLedger vd : voucher.getGeneralledger())
-                if (BigDecimal.ZERO.equals(vd.getCreditAmount())) {
+                if (BigDecimal.ZERO.compareTo(BigDecimal.valueOf(vd.getCreditAmount()))==0) {
                     final VoucherReport voucherReport = new VoucherReport(persistenceService, Integer.valueOf(voucher.getId()
-                            .toString()), vd);
+                            .toString()), vd, egovCommon);
                     if (billRegistermis != null)
                         voucherReport.setDepartment(billRegistermis.getEgDepartment());
                     voucherReportList.add(voucherReport);
                 }
             for (final CGeneralLedger vd : voucher.getGeneralledger())
-                if (BigDecimal.ZERO.equals(vd.getDebitAmount())) {
+                if (BigDecimal.ZERO.compareTo(BigDecimal.valueOf(vd.getDebitAmount()))==0) {
                     final VoucherReport voucherReport = new VoucherReport(persistenceService, Integer.valueOf(voucher.getId()
-                            .toString()), vd);
+                            .toString()), vd, egovCommon);
                     if (billRegistermis != null)
                         voucherReport.setDepartment(billRegistermis.getEgDepartment());
                     voucherReportList.add(voucherReport);
@@ -178,7 +188,7 @@ public class ExpenseJournalVoucherPrintAction extends BaseFormAction {
     }
 
     private String getUlbName() {
-        final SQLQuery query = HibernateUtil.getCurrentSession().createSQLQuery("select name from companydetail");
+        final SQLQuery query = persistenceService.getSession().createSQLQuery("select name from companydetail");
         final List<String> result = query.list();
         if (result != null)
             return result.get(0);
@@ -209,7 +219,7 @@ public class ExpenseJournalVoucherPrintAction extends BaseFormAction {
         paramMap.put("voucherDate", getVoucherDate());
         paramMap.put("voucherDescription", getVoucherDescription());
         if (voucher != null && voucher.getState() != null)
-            loadInboxHistoryData(voucher.getState(), paramMap);
+            loadInboxHistoryData(voucher.getStateHistory(), paramMap);
         if (billRegistermis != null) {
             paramMap.put("billDate", Constants.DDMMYYYYFORMAT2.format(billRegistermis.getEgBillregister().getBilldate()));
             paramMap.put("partyBillNumber", billRegistermis.getPartyBillNumber());
@@ -232,10 +242,8 @@ public class ExpenseJournalVoucherPrintAction extends BaseFormAction {
         tempMap.put("detailtype", detailtype.getName());
         tempMap.put("detailtypeid", detailtype.getId());
         tempMap.put("detailkeyid", detailkeyid);
-
-        final EgovCommon common = new EgovCommon();
-        common.setPersistenceService(persistenceService);
-        final EntityType entityType = common.getEntityType(detailtype, detailkeyid);
+        egovCommon.setPersistenceService(persistenceService);
+        final EntityType entityType = egovCommon.getEntityType(detailtype, detailkeyid);
         tempMap.put(Constants.DETAILKEY, entityType.getName());
         tempMap.put(Constants.DETAILCODE, entityType.getCode());
         return tempMap;
@@ -254,18 +262,14 @@ public class ExpenseJournalVoucherPrintAction extends BaseFormAction {
                 .getVoucherDate());
     }
 
-    void loadInboxHistoryData(final State states, final Map<String, Object> paramMap) throws ApplicationRuntimeException {
+    void loadInboxHistoryData(final List<StateHistory> stateHistory, final Map<String, Object> paramMap) throws ApplicationRuntimeException {
         final List<String> history = new ArrayList<String>();
         final List<String> workFlowDate = new ArrayList<String>();
-        if (states != null) {
-            final List<StateHistory> stateHistory = states.getHistory();
-
-            for (final StateHistory state : stateHistory)
-                if (!"NEW".equalsIgnoreCase(state.getValue())) {
-                    history.add(state.getSenderName());
-                    workFlowDate.add(Constants.DDMMYYYYFORMAT2.format(state.getLastModifiedDate()));
-                }
-        }
+        for (final StateHistory historyState : stateHistory)
+            if (!"NEW".equalsIgnoreCase(historyState.getValue())) {
+                history.add(historyState.getSenderName());
+                workFlowDate.add(Constants.DDMMYYYYFORMAT2.format(historyState.getLastModifiedDate()));
+            }
         for (int i = 0; i < history.size(); i++) {
             paramMap.put("workFlow_" + i, history.get(i));
             paramMap.put("workFlowDate_" + i, workFlowDate.get(i));

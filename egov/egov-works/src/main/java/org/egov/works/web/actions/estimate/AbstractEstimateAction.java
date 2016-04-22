@@ -66,8 +66,8 @@ import org.egov.commons.CFinancialYear;
 import org.egov.commons.EgwTypeOfWork;
 import org.egov.commons.Fundsource;
 import org.egov.commons.dao.EgwStatusHibernateDAO;
+import org.egov.commons.dao.FinancialYearHibernateDAO;
 import org.egov.commons.dao.FundSourceHibernateDAO;
-import org.egov.commons.service.CommonsService;
 import org.egov.eis.entity.Assignment;
 import org.egov.eis.entity.Employee;
 import org.egov.eis.service.AssignmentService;
@@ -151,8 +151,6 @@ public class AbstractEstimateAction extends GenericWorkFlowAction {
     private String sourcepage = "";
     private String assetStatus;
     private Integer approverUserId;
-    @Autowired
-    private CommonsService commonsService;
     private Long departmentId;
     private Integer designationId;
     private String approverComments;
@@ -189,6 +187,8 @@ public class AbstractEstimateAction extends GenericWorkFlowAction {
     private AssignmentService assignmentService;
     @Autowired
     private SecurityUtils securityUtils;
+    @Autowired
+    private FinancialYearHibernateDAO finHibernateDao;
     @Autowired
     private SimpleWorkflowService<AbstractEstimate> abstractEstimateWorkflowService;
     private Long stateId;
@@ -331,7 +331,7 @@ public class AbstractEstimateAction extends GenericWorkFlowAction {
                         && abstractEstimate.getEgwStatus() != null && abstractEstimate.getEgwStatus().getCode().equals("NEW"))
             uomList = abstractEstimateService.prepareUomListByExcludingSpecialUoms(uomList);
         addDropdownData("uomList", uomList);
-        addDropdownData("financialYearList", getPersistenceService().findAllBy("from CFinancialYear where isActive=1"));
+        addDropdownData("financialYearList", getPersistenceService().findAllBy("from CFinancialYear where isActive=true"));
         addDropdownData("scheduleCategoryList",
                 getPersistenceService().findAllBy("from ScheduleCategory order by upper(code)"));
 
@@ -929,9 +929,9 @@ public class AbstractEstimateAction extends GenericWorkFlowAction {
 
     protected CFinancialYear getCurrentFinancialYear() {
         if (abstractEstimate.getEstimateDate() != null)
-            return commonsService.getFinYearByDate(abstractEstimate.getEstimateDate());
+            return finHibernateDao.getFinYearByDate(abstractEstimate.getEstimateDate());
         else
-            return commonsService.getFinYearByDate(new Date());
+            return finHibernateDao.getFinYearByDate(new Date());
     }
 
     public List<MultiYearEstimate> getActionMultiYearEstimateValues() {

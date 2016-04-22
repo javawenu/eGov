@@ -78,6 +78,7 @@ public class WaterTaxConstants {
     public static final String SMSEMAILTYPEADDCONNESTNOTICE = "addconnestnotice";
     public static final String DONATIONMASTER = "DONATIONMASTER";
     public static final String REVENUE_WARD = "WARD";
+    public static final String SYSTEM = "SYSTEM";
     
 
     public static final String SMSEMAILTYPENEWCONNFEEPAID = "newconnfeepaid";
@@ -106,6 +107,7 @@ public class WaterTaxConstants {
     public static final String ROLE_SUPERUSER = "Super User";
     public static final String ROLE_CITIZEN = "Citizen";
     public static final String ROLE_OPERATOR = "Operator";
+    public static final String ROLE_ADMIN = "Property Administrator";
 
     // Rest API constants
     public static final String CURR_DMD_STR = "CURR_DMD";
@@ -128,6 +130,7 @@ public class WaterTaxConstants {
     public static final String TEMPERARYCLOSE = "Temporary";
     public static final String PERMENENTCLOSECODE = "P";
     public static final String TEMPERARYCLOSECODE = "T";
+    public static final String DEMANDISHISTORY = "N";
 
     public static final String WF_STATE_REJECTED = "Rejected";
     public static final String WFLOW_ACTION_STEP_REJECT = "Reject";
@@ -173,6 +176,9 @@ public class WaterTaxConstants {
     public static final String SEARCH_MENUTREE_APPLICATIONTYPE_CLOSURE = "CLOSURECONNECTION";
     public static final String SEARCH_MENUTREE_APPLICATIONTYPE_METERED = "METERENTRY";
     public static final String SEARCH_MENUTREE_APPLICATIONTYPE_COLLECTTAX = "COLLECTTAX";
+    public static final String APPLICATION_STATUS_CLOSER = "Close Connection By AE";
+    public static final String APPLICATION_STATUS_RE_CONN = "ReConnection By AE";
+    
 
     // appconfig key
     public static final String SENDSMSFORWATERTAX = "SENDSMSFORWATERTAX";
@@ -263,6 +269,7 @@ public class WaterTaxConstants {
     public static final String THIRD_PARTY_ERR_MSG_SUCCESS = "SUCCESS";
     public static final String MEESEVA_REDIRECT_URL = "/meeseva/generatereceipt?transactionServiceNumber=";
     public static final String USERNAME_ANONYMOUS = "anonymous";
+    public static final String USERNAME_MEESEVA = "meeseva";
     
     public static final String PREVIEWWORKFLOWACTION = "Preview";
     public static final String SIGNWORKFLOWACTION = "Sign";
@@ -288,4 +295,8 @@ public class WaterTaxConstants {
     public static final String RECONNECTION_ESTIMATION_NOTICE = "ReconnacknowlgementNotice";
     public static final String CLOSURE_ESTIMATION_NOTICE = "CloserConnectionAcknowldgemt";
     public static final String SIGN_ALL = "SIGN_ALL";
+    public static final String  PDFEXTENTION =".pdf";
+    public static final String  APPLICATIONPDFNAME ="application/pdf";
+    public static final String  DOCUMENTNAMEFORBILL ="DemandBill";
+    public static final Integer QUARTZ_BULKBILL_JOBS = 3;
 }

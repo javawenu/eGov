@@ -45,16 +45,21 @@
  */
 package com.exilant.eGov.src.reports;
 
+import org.egov.infstr.services.PersistenceService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import java.math.BigDecimal;
 import java.sql.Connection;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 
 import org.apache.log4j.Logger;
 import org.egov.infstr.utils.HibernateUtil;
 import org.hibernate.Query;
+import org.springframework.stereotype.Service;
 
 import com.exilant.exility.common.TaskFailedException;
 
@@ -63,8 +68,13 @@ import com.exilant.exility.common.TaskFailedException;
  *
  * TODO To change the template for this generated type comment go to Window - Preferences - Java - Code Style - Code Templates
  */
+@Service
 public class CommnFunctions
 {
+ @Autowired
+ @Qualifier("persistenceService")
+ private PersistenceService persistenceService;
+
     private static final Logger LOGGER = Logger.getLogger(CommnFunctions.class);
     private List<Object[]> resultset;
     Query pstmt = null;
@@ -93,10 +103,10 @@ public class CommnFunctions
         // fundCondition1="AND transactionsummary.fundId="+fundId+" ";
         try
         {
-            final String query = " select id,name from fund where isactive=1 and isnotleaf!=1 " + fundCondition + " order by id";
+            final String query = " select id,name from fund where isactive=true and isnotleaf!=true " + fundCondition + " order by id";
             if (LOGGER.isInfoEnabled())
                 LOGGER.info("getFundList: " + query);
-            pstmt = HibernateUtil.getCurrentSession().createSQLQuery(query);
+            pstmt = persistenceService.getSession().createSQLQuery(query);
             if (!fundId.equalsIgnoreCase(""))
                 pstmt.setString(0, fundId);
             resultset = pstmt.list();
@@ -149,7 +159,7 @@ public class CommnFunctions
                 + " case when coa.type = ? then sum(ts.openingcreditbalance)-sum(ts.openingdebitbalance) else sum(ts.openingdebitbalance)-sum(ts.openingcreditbalance) end as \"amount\" "
                 + " FROM transactionsummary ts,  chartofaccounts coa,fund  f   WHERE (coa.TYPE = ? OR coa.TYPE = ?) and coa.id = ts.glcodeid "
                 + " AND financialyearid =(SELECT ID FROM financialyear WHERE startingdate <= ? AND endingdate >= ?)  "
-                + fundCondition + " and f.id=ts.fundid and f.isactive=1 and f.isnotleaf!=1 "
+                + fundCondition + " and f.id=ts.fundid and f.isactive=true and f.isnotleaf!=true "
                 + " GROUP BY substr(coa.glcode,0," + substringVal + "), fundid ,coa.type ";
         if (LOGGER.isInfoEnabled())
             LOGGER.info("query " + query);
@@ -157,7 +167,7 @@ public class CommnFunctions
         {
             int j = 1;
             getFundList(fundId, startDate, endDate);
-            pstmt = HibernateUtil.getCurrentSession().createSQLQuery(query);
+            pstmt = persistenceService.getSession().createSQLQuery(query);
             pstmt.setString(j++, type2);
             pstmt.setString(j++, type1);
             pstmt.setString(j++, type2);
@@ -227,7 +237,7 @@ public class CommnFunctions
         try
         {
             int j = 1;
-            pstmt = HibernateUtil.getCurrentSession().createSQLQuery(query1);
+            pstmt = persistenceService.getSession().createSQLQuery(query1);
             pstmt.setString(j++, type1);
             pstmt.setString(j++, startDate);
             pstmt.setString(j++, endDate);
@@ -295,14 +305,14 @@ public class CommnFunctions
                 + " sum(ts.openingcreditbalance) as \"amount\" "
                 + " FROM transactionsummary ts,  chartofaccounts coa,fund  f   WHERE " + type + " coa.id = ts.glcodeid "
                 + " AND financialyearid =(SELECT ID FROM financialyear WHERE startingdate <= ? AND endingdate >= ?)  "
-                + fundCondition + " and f.id=ts.fundid and f.isactive=1 and f.isnotleaf!=1 "
+                + fundCondition + " and f.id=ts.fundid and f.isactive=true and f.isnotleaf!=true "
                 + " GROUP BY substr(coa.glcode,0," + substringVal + "), fundid ,coa.type";
         if (LOGGER.isInfoEnabled())
             LOGGER.info("query " + query);
         try
         {
             int j = 1;
-            pstmt = HibernateUtil.getCurrentSession().createSQLQuery(query);
+            pstmt = persistenceService.getSession().createSQLQuery(query);
             if (type1 == null || type1.trim().equals("")) {
                 pstmt.setString(j++, type1);
                 pstmt.setString(j++, type2);
@@ -367,14 +377,14 @@ public class CommnFunctions
                 + " sum(ts.openingdebitbalance) as \"amount\" "
                 + " FROM transactionsummary ts,  chartofaccounts coa,fund  f   WHERE (coa.TYPE = ? OR coa.TYPE = ?) and coa.id = ts.glcodeid "
                 + " AND financialyearid =(SELECT ID FROM financialyear WHERE startingdate <= ? AND endingdate >= ?)  "
-                + fundCondition + " and f.id=ts.fundid and f.isactive=1 and f.isnotleaf!=1 "
+                + fundCondition + " and f.id=ts.fundid and f.isactive=true and f.isnotleaf!=true "
                 + " GROUP BY substr(coa.glcode,0," + substringVal + "), fundid ,coa.type";
         if (LOGGER.isInfoEnabled())
             LOGGER.info("query " + query);
         try
         {
             int j = 1;
-            pstmt = HibernateUtil.getCurrentSession().createSQLQuery(query);
+            pstmt = persistenceService.getSession().createSQLQuery(query);
             pstmt.setString(j++, type1);
             pstmt.setString(j++, type2);
             pstmt.setString(j++, startDate);
@@ -451,7 +461,7 @@ public class CommnFunctions
         final String query = "SELECT TO_CHAR(startingdate,'DD/MM/YYYY') FROM FINANCIALYEAR WHERE id= ?";
         try
         {
-            pstmt = HibernateUtil.getCurrentSession().createSQLQuery(query);
+            pstmt = persistenceService.getSession().createSQLQuery(query);
             pstmt.setInteger(0, finYearId);
 
             List list = pstmt.list();
@@ -479,7 +489,7 @@ public class CommnFunctions
         final String query = "SELECT TO_CHAR(endingdate,'DD/MM/YYYY') FROM FINANCIALYEAR WHERE id= ?";
         try
         {
-            pstmt = HibernateUtil.getCurrentSession().createSQLQuery(query);
+            pstmt = persistenceService.getSession().createSQLQuery(query);
             pstmt.setInteger(0, finYearId);
             resultset = pstmt.list();
             for (final Object[] element : resultset)
@@ -520,34 +530,7 @@ public class CommnFunctions
         return strbNumber;
     }
 
-    /**
-     * function to get the financial year id
-     * @param sDate
-     * @param connection
-     * @return
-     */
-    public String getFYID(final String sDate) throws TaskFailedException {
-        String fyId = "";
-        try {
-            final String query = "SELECT id FROM financialYear " +
-                    "WHERE to_char(startingDate,'dd-MMM-yyyy')<=? AND to_char(endingDate,'dd-MMM-yyyy')>=?";
-            // for accross the financial year
-            pstmt = HibernateUtil.getCurrentSession().createSQLQuery(query);
-            pstmt.setString(0, sDate);
-            pstmt.setString(1, sDate);
-
-           List list = pstmt.list();
-           fyId=   list.toArray()[0].toString();
-
-        } catch (final Exception ex) {
-            fyId = "";
-            if (LOGGER.isDebugEnabled())
-                LOGGER.debug("Error GeneralLedger->getFYID(): " + ex.toString());
-            throw taskExc;
-        }
-        // if(LOGGER.isDebugEnabled()) LOGGER.debug("fyId: " + fyId);
-        return fyId;
-    }
+    
 
     // used to format the report schedule
     /*

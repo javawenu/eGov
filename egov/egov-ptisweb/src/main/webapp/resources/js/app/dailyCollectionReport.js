@@ -47,6 +47,7 @@ $('#dailyCollectionReportSearch').click(function(e){
 		var mode = $("#mode").val();
 		var operator = $("#operator").val();
 		var status = $("#status").val();
+		var ward = $("#ward").val();
 		oTable= $('#dailyCollReport-table');
 		$('#dailyCollectionReport-header').show();
         $("#resultDateLabel").html(fromDate+" - "+toDate);	
@@ -83,7 +84,8 @@ $('#dailyCollectionReportSearch').click(function(e){
 					'toDate' : toDate,
 					'collectionMode': mode,
 					'collectionOperator':operator,
-					'status':status
+					'status':status,
+					'ward':ward
 				}
 			},
 			"columns" : [
@@ -91,6 +93,7 @@ $('#dailyCollectionReportSearch').click(function(e){
 						  { "data" : "receiptDate", "title": "Receipt date"},
 						  { "data" : "assessmentNumber", "title": "Assessment Number"},
 						  { "data" : "ownerName", "title": "Owner Name"},
+						  { "data" : "ward" , "title": "ward"},
 						  { "data" : "doorNumber", "title": "Door no	"},
 						  { "data" : "paidAt", "title": "Paid at"},
 						  { "data" : "paymentMode", "title": "Pay mode"},
@@ -103,6 +106,7 @@ $('#dailyCollectionReportSearch').click(function(e){
 						  { "data" : "arrearLibCess","title": "Arrear Library cess"},
 						  { "data" : "currLibCess","title": "Current Library cess"},
 						  { "data" : "totalLibCess","title": "Total library cess"},
+						  { "data" : "totalRebate","title": "Rebate"}, 
 						  { "data" : "totalCollection", "title": "Total collection"}, 
 						  ],
 						  "aaSorting": [[2, 'desc']] ,
@@ -114,17 +118,18 @@ $('#dailyCollectionReportSearch').click(function(e){
 									jQuery('#report-footer').show(); 
 								}
 								if (data.length > 0) {
-									updateTotalFooter(10, api);
 									updateTotalFooter(11, api);
 									updateTotalFooter(12, api);
 									updateTotalFooter(13, api);
 									updateTotalFooter(14, api);
 									updateTotalFooter(15, api);
 									updateTotalFooter(16, api);
+									updateTotalFooter(17, api);
+									updateTotalFooter(18, api);
 								}
 							},
 							"aoColumnDefs" : [ {
-								"aTargets" : [10,11,12,13,14,15,16],
+								"aTargets" : [11,12,13,14,15,16,17,18],
 								"mRender" : function(data, type, full) {
 									return formatNumberInr(data);    
 								}

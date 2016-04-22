@@ -38,16 +38,51 @@
 #   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
 #-------------------------------------------------------------------------------*/
 $(document).ready(function(){
+
+	$('#statusdiv').hide();
 	
-	//var formdate=$('#formDate').val();
-	  
+	var activeDiv = $('#reqAttr').val();
+	
+	if (activeDiv =='false')
+		{
+		$('#statusdiv').hide();
+	     $('#addnewid').hide();
+	     $('#resetid').show();
+		}
+	
+	else
+		{
+		
+		$('#resetid').hide();
+		$('#statusdiv').show();
+		 $('#addnewid').show();
+		}
+		
+	
+	$( "#monthlyrate" ).focusout(function() {
+	    textValue =  $.trim($(this).val());
+	    if(textValue ==''){
+	       $.trim($(this).val('')); //to set it blank
+	    } else {
+	       return true;
+	    }
+	});
+	
+	$( "#formDate" ).focusout(function() {
+	    textValue =  $.trim($(this).val());
+	    if(textValue ==''){
+	       $.trim($(this).val('')); //to set it blank
+	    } else {
+	       return true;
+	    }
+	});
+	
+	
+
 	  $('#buttonid').click(function() {
-		  if(!validateTapExecutionDate())
-			{
-			return false;
-			
-			}
-		  else{
+		 
+		 if( $( "#waterRatesform").valid())
+		 {
 			  if($('#formDate').val() !=undefined)
 		  $.ajax({
 	            url: '/wtms/ajax-WaterRatescombination',
@@ -75,55 +110,43 @@ $(document).ready(function(){
 	    			console.log("failed");
 	    		}
 	        });
-		  }
-		   
+		  
+		 }
      });
+	  
+	  
+	  $('#listid').click(function() {
+			window.open("/wtms/masters/waterRatesMaster/list", "_self");
+			
+	  });
+	  $('#resetid').click(function() {
+		  document.forms[0].reset();
+			
+	  });
+	 
+	  $('#addnewid').click(function() {
+		  window.open("/wtms/masters/waterRatesMaster/", "_self");
+			
+	  });
+
 });
+
+
+function edit(waterratesHeader)
+{
+	window.open("/wtms/masters/waterRatesMaster/"+waterratesHeader, "_self");
+	console.log("Water Details ->"+waterratesHeader);
+	
+}
+
+function addNew()
+{
+	window.open("/wtms/masters/waterRatesMaster/", "_self");
+}
 
 function overwritedonation(res)
 {
-	var r=confirm("With entered combination and from same effective date monthly rent is present. Do you want to overwrite it?")
-	if (r ==true){	
-		console.log('came as true');
-		document.forms[0].submit();
-	}
-	else
-	{
-		console.log('came as false');
-	    //document.forms[0].reset();
-	    return false;
-	}
+	
+	document.forms[0].submit();
 }
-	function compareDate(dt1, dt2){			
-	/*******		Return Values [0 if dt1=dt2], [1 if dt1<dt2],  [-1 if dt1>dt2]     *******/
-		var d1, m1, y1, d2, m2, y2, ret;
-		dt1 = dt1.split('/');
-		dt2 = dt2.split('/');
-		ret = (eval(dt2[2])>eval(dt1[2])) ? 1 : (eval(dt2[2])<eval(dt1[2])) ? -1 : (eval(dt2[1])>eval(dt1[1])) ? 1 : (eval(dt2[1])<eval(dt1[1])) ? -1 : (eval(dt2[0])>eval(dt1[0])) ? 1 : (eval(dt2[0])<eval(dt1[0])) ? -1 : 0 ;										
-		return ret;
-	}
-	function getTodayDate()
-	{
-	var date;
-	    var d = new Date();
-	var curr_date = d.getDate();
-	var curr_month = d.getMonth();
-		curr_month++;
-	var curr_year = d.getFullYear();
-	    date=curr_date+"/"+curr_month+"/"+curr_year;
-	    return date;
-	}
-	function validateTapExecutionDate() {
-	var formdate= $('#formDate').val();
-	var todaysDate=getTodayDate();
-	if(compareDate(formdate,todaysDate) == 1  )
-	{		
-		bootbox.alert('Effective Date should not be less than todays date');
-		obj.value="";
-		return false;
-		}
-	else
-		{
-		return true;
-		}
-	}
+	

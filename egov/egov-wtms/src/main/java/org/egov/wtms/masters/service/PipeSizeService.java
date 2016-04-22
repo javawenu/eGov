@@ -43,7 +43,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.egov.wtms.masters.entity.PipeSize;
-import org.egov.wtms.masters.entity.PropertyPipeSize;
 import org.egov.wtms.masters.repository.PipeSizeRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -64,12 +63,15 @@ public class PipeSizeService {
         this.pipeSizeRepository = pipeSizeRepository;
     }
 
-    public PipeSize findBy(final Long pipeSizeId) {
+    public PipeSize findOne(final Long pipeSizeId) {
         return pipeSizeRepository.findOne(pipeSizeId);
     }
 
     @Transactional
     public PipeSize createPipeSize(final PipeSize pipeSize) {
+        final double pipeSizeininch = pipeSize.getSizeInMilimeter() * 0.039370;
+        pipeSize.setSizeInInch(Math.round(pipeSizeininch * 1000.0) / 1000.0);
+        pipeSize.setActive(true);
         return pipeSizeRepository.save(pipeSize);
     }
 
@@ -79,7 +81,7 @@ public class PipeSizeService {
     }
 
     public List<PipeSize> findAll() {
-        return pipeSizeRepository.findAll(new Sort(Sort.Direction.ASC, "code"));
+        return pipeSizeRepository.findAll(new Sort(Sort.Direction.DESC, "code"));
     }
 
     public PipeSize load(final Long id) {
@@ -95,6 +97,14 @@ public class PipeSizeService {
         return pipeSizeRepository.findByCode(code);
     }
 
+    public PipeSize findBySizeInMilimeter(final double sizeInMilimeter) {
+        return pipeSizeRepository.findBySizeInMilimeter(sizeInMilimeter);
+    }
+
+    public PipeSize findBySizeInInch(final double sizeInInch) {
+        return pipeSizeRepository.findBySizeInInch(sizeInInch);
+    }
+
     public List<PipeSize> getAllActivePipeSize() {
         return pipeSizeRepository.findByActiveTrueOrderBySizeInInchAsc();
     }
@@ -103,10 +113,15 @@ public class PipeSizeService {
         return pipeSizeRepository.getAllPipeSizesByPropertyType(propertyType);
     }
 
-    public PropertyPipeSize getAllPipeSizesByPropertyTypeAnPipeSize(final String propertyType,final String pipesizeCode) {
-        return pipeSizeRepository.getAllPipeSizesByPropertyTypeAndPipesize(propertyType,pipesizeCode);
+    public PipeSize findByCodeAndPipeSizeInmm(final String code, final double sizeInMilimeter) {
+
+        return pipeSizeRepository.findByCodeAndSizeInMilimeter(code, sizeInMilimeter);
     }
-    
+
+    public PipeSize findByCodeIgnoreCase(final String code) {
+        return pipeSizeRepository.findByCodeIgnoreCase(code);
+    }
+
     public List<PipeSize> getPipeSizeListForRest() {
         final List<PipeSize> pipeSizeList = pipeSizeRepository.findByActiveTrueOrderBySizeInInchAsc();
         final List<PipeSize> prepareListForRest = new ArrayList<PipeSize>(0);

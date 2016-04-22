@@ -39,6 +39,9 @@
  ******************************************************************************/
 package org.egov.services.report;
 
+
+import org.egov.infstr.services.PersistenceService;
+import org.springframework.beans.factory.annotation.Qualifier;
 import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -71,10 +74,15 @@ import org.hibernate.Query;
 import org.hibernate.criterion.Projections;
 import org.hibernate.criterion.Restrictions;
 import org.hibernate.transform.Transformers;
+import org.hibernate.type.BigDecimalType;
 import org.springframework.beans.factory.annotation.Autowired;
 
 public abstract class ReportService {
-    @Autowired
+   
+ @Autowired
+ @Qualifier("persistenceService")
+ private PersistenceService persistenceService;
+ @Autowired
     AppConfigValueService appConfigValuesService;
     int minorCodeLength;
     List<Character> coaType = new ArrayList<Character>();
@@ -95,18 +103,19 @@ public abstract class ReportService {
     }
 
     public List<Fund> getFunds() {
-        final Criteria voucherHeaderCriteria = HibernateUtil.getCurrentSession().createCriteria(
+        final Criteria voucherHeaderCriteria = persistenceService.getSession().createCriteria(
                 CVoucherHeader.class);
         final List fundIdList = voucherHeaderCriteria.setProjection(
                 Projections.distinct(Projections.property("fundId.id"))).list();
         if (!fundIdList.isEmpty())
-            return HibernateUtil.getCurrentSession().createCriteria(Fund.class).add(
+            return persistenceService.getSession().createCriteria(Fund.class).add(
                     Restrictions.in("id", fundIdList)).list();
         return new ArrayList<Fund>();
     }
 
+    //TODO- find the api for this in COA hibernate dao
     public String getGlcodeForPurposeCode(final Integer purposeId) {
-        final Query query = HibernateUtil.getCurrentSession().createSQLQuery(
+        final Query query = persistenceService.getSession().createSQLQuery(
                 "select majorcode from chartofaccounts where purposeid="
                         + purposeId);
         final List list = query.list();
@@ -128,7 +137,7 @@ public abstract class ReportService {
                 && balanceSheet.getFunction().getId() != 0)
             query = query + " and g.functionid="
                     + balanceSheet.getFunction().getId().toString();
-        if (balanceSheet.getFunctionary() != null
+        /*if (balanceSheet.getFunctionary() != null
                 && balanceSheet.getFunctionary().getId() != null
                 && balanceSheet.getFunctionary().getId() != 0)
             query = query + " and mis.functionaryid="
@@ -137,7 +146,7 @@ public abstract class ReportService {
                 && balanceSheet.getField().getId() != null
                 && balanceSheet.getField().getId() != 0)
             query = query + " and mis.divisionid="
-                    + balanceSheet.getField().getId().toString();
+                    + balanceSheet.getField().getId().toString();*/
         if (balanceSheet.getFund() != null
                 && balanceSheet.getFund().getId() != null
                 && balanceSheet.getFund().getId() != 0)
@@ -180,7 +189,7 @@ public abstract class ReportService {
                 && balanceSheet.getFunction().getId() != 0)
             query = query + " and ts.functionid="
                     + balanceSheet.getFunction().getId().toString();
-        if (balanceSheet.getFunctionary() != null
+/*        if (balanceSheet.getFunctionary() != null
                 && balanceSheet.getFunctionary().getId() != null
                 && balanceSheet.getFunctionary().getId() != 0)
             query = query + " and ts.functionaryid="
@@ -189,7 +198,7 @@ public abstract class ReportService {
                 && balanceSheet.getField().getId() != null
                 && balanceSheet.getField().getId() != 0)
             query = query + " and ts.divisionid="
-                    + balanceSheet.getField().getId().toString();
+                    + balanceSheet.getField().getId().toString();*/
         if (balanceSheet.getFund() != null
                 && balanceSheet.getFund().getId() != null
                 && balanceSheet.getFund().getId() != 0)
@@ -202,7 +211,13 @@ public abstract class ReportService {
         final SimpleDateFormat formatter = Constants.DDMMYYYYFORMAT1;
         return formatter.format(date);
     }
-
+    
+    public String getFormattedDate2(final Date date) {
+        final SimpleDateFormat formatter = Constants.DDMMYYYYFORMAT2;
+        return formatter.format(date);
+    }
+    
+//TODO- Use the common method instead
     public String getAppConfigValueFor(final String module, final String key) {
         try {
             return appConfigValuesService
@@ -254,7 +269,7 @@ public abstract class ReportService {
 
     protected List<StatementResultObject> getAllGlCodesFor(
             final String scheduleReportType) {
-        final Query query = HibernateUtil.getCurrentSession()
+        final Query query = persistenceService.getSession()
                 .createSQLQuery(
                         "select distinct coa.majorcode as glCode,s.schedule as scheduleNumber,"
                                 + "s.schedulename as scheduleName,coa.type as type from chartofaccounts coa, schedulemapping s "
@@ -269,10 +284,10 @@ public abstract class ReportService {
 
     List<StatementResultObject> getTransactionAmount(final String filterQuery,
             final Date toDate, final Date fromDate, final String coaType, final String subReportType) {
-        voucherStatusToExclude = getAppConfigValueFor("finance",
+        voucherStatusToExclude = getAppConfigValueFor("EGF",
                 "statusexcludeReport");
-        final Query query = HibernateUtil
-                .getCurrentSession()
+        
+        final Query query = persistenceService.getSession()
                 .createSQLQuery(
                         "select c.majorcode as glCode,v.fundid as fundId,c.type as type,sum(debitamount)-sum(creditamount) as amount"
                                 + " from generalledger g,chartofaccounts c,voucherheader v ,vouchermis mis where v.id=mis.voucherheaderid and "
@@ -284,7 +299,7 @@ public abstract class ReportService {
                                 + getFormattedDate(toDate)
                                 + "' and v.voucherdate >='"
                                 + getFormattedDate(fromDate)
-                                + "' and substr(c.glcode,0,"
+                                + "' and substr(c.glcode,1,"
                                 + minorCodeLength
                                 + ") in "
                                 + "(select distinct coa2.glcode from chartofaccounts coa2, schedulemapping s where s.id=coa2.scheduleid and "
@@ -293,15 +308,15 @@ public abstract class ReportService {
                                 + "') "
                                 + filterQuery
                                 + " group by c.majorcode,v.fundid,c.type order by c.majorcode")
-                                .addScalar("glCode").addScalar("fundId").addScalar("type")
-                                .addScalar("amount").setResultTransformer(
+                                .addScalar("glCode").addScalar("fundId",BigDecimalType.INSTANCE).addScalar("type")
+                                .addScalar("amount",BigDecimalType.INSTANCE).setResultTransformer(
                                         Transformers.aliasToBean(StatementResultObject.class));
         return query.list();
     }
 
     protected Map<String, String> getSubSchedule(final String subReportType) {
         final Map<String, String> scheduleNumberToName = new HashMap<String, String>();
-        final List<Object[]> rows = HibernateUtil.getCurrentSession()
+        final List<Object[]> rows = persistenceService.getSession()
                 .createSQLQuery(
                         "select s.schedule,sub.subschedulename from egf_subschedule sub,schedulemapping s "
                                 + "where sub.reporttype='"
@@ -316,14 +331,14 @@ public abstract class ReportService {
         CFinancialYear financialYear = null;
         if ("Date".equalsIgnoreCase(statement.getPeriod())
                 && statement.getAsOndate() != null) {
-            final String financialYearId = financialYearDAO.getFinancialYearId(getFormattedDate(statement.getAsOndate()));
+            final String financialYearId = financialYearDAO.getFinancialYearId(getFormattedDate2(statement.getAsOndate()));
             financialYear = financialYearDAO
                     .getFinancialYearById(Long.valueOf(financialYearId));
             statement.setFinancialYear(financialYear);
         } else
             financialYear = statement.getFinancialYear();
         return financialYear.getStartingDate();
-    }
+       }
 
     public Date getToDate(final Statement statement) {
         if ("Date".equalsIgnoreCase(statement.getPeriod())
@@ -342,6 +357,7 @@ public abstract class ReportService {
             return calendar.getTime();
         }
         return statement.getFinancialYear().getEndingDate();
+        
     }
 
     void addFundAmount(final StatementEntry entry, final Map<String, BigDecimal> fundTotals) {
@@ -401,14 +417,15 @@ public abstract class ReportService {
     }
 
     protected void populateSchedule(final Statement statement, final String reportSubType) {
-        final Query query = HibernateUtil
-                .getCurrentSession()
+        //TODO change the query parameter
+        final Query query = persistenceService.getSession()
                 .createSQLQuery(
                         "select c.majorcode,s.schedulename,s.schedule from chartofaccounts c,schedulemapping s "
                                 + "where s.id=c.scheduleid and s.reporttype = '"
                                 + reportSubType
-                                + "' and c.type in(:coaType) group by c.majorcode,s.schedulename,s.schedule ORDER BY c.majorcode")
-                                .setParameter("coaType", coaType);
+                                + "' and c.type in('A','L') group by c.majorcode,s.schedulename,s.schedule ORDER BY c.majorcode");
+                              //  .setParameter("coaType", coaType);
+        //TODO- change the query
         final List<Object[]> scheduleList = query.list();
         for (final Object[] obj : scheduleList)
             for (int index = 0; index < statement.size(); index++) {

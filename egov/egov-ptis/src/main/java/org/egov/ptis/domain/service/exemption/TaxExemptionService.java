@@ -151,11 +151,8 @@ public class TaxExemptionService extends PersistenceService<PropertyImpl, Long> 
 
         basicProperty.setUnderWorkflow(Boolean.TRUE);
         propertyModel.setEffectiveDate(propCompletionDate);
-        try {
-            propService.createDemand(propertyModel, new Date());
-        } catch (TaxCalculatorExeption e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+        for (Ptdemand ptdemand : propertyModel.getPtDemandSet()) {
+            propertyPerService.applyAuditing(ptdemand.getDmdCalculations());
         }
         propertyModel.setBasicProperty(basicProperty);
         basicProperty.addProperty(propertyModel);
@@ -236,7 +233,7 @@ public class TaxExemptionService extends PersistenceService<PropertyImpl, Long> 
                         property.transition().end().withSenderName(user.getUsername() + "::" + user.getName())
                                 .withComments(approvarComments).withDateInfo(currentDate.toDate());
                     else
-                        property.transition(false).withSenderName(user.getUsername() + "::" + user.getName())
+                        property.transition(true).withSenderName(user.getUsername() + "::" + user.getName())
                                 .withComments(approvarComments).withStateValue(wfmatrix.getNextState())
                                 .withDateInfo(currentDate.toDate()).withOwner(pos)
                                 .withNextAction(wfmatrix.getNextAction());
@@ -249,8 +246,8 @@ public class TaxExemptionService extends PersistenceService<PropertyImpl, Long> 
             LOGGER.debug(" WorkFlow Transition Completed for Demolition ...");
     }
 
-    public void addModelAttributes(final Model model, final BasicProperty basicProperty) {
         Property property = null;
+        public void addModelAttributes(final Model model, final BasicProperty basicProperty) {
         if (null != basicProperty.getWFProperty())
             property = basicProperty.getWFProperty();
         else
@@ -262,8 +259,7 @@ public class TaxExemptionService extends PersistenceService<PropertyImpl, Long> 
             model.addAttribute("ARV", BigDecimal.ZERO);
         model.addAttribute("propertyByEmployee", propService.isEmployee(securityUtils.getCurrentUser()));
         if (!property.getIsExemptedFromTax()) {
-            final Map<String, BigDecimal> demandCollMap = propertyTaxUtil.prepareDemandDetForView(property,
-                    PropertyTaxUtil.getCurrentInstallment());
+            final Map<String, BigDecimal> demandCollMap = null;
             model.addAttribute("currTax", demandCollMap.get(CURR_DMD_STR));
             model.addAttribute("eduCess", demandCollMap.get(DEMANDRSN_STR_EDUCATIONAL_CESS));
             model.addAttribute("currTaxDue", demandCollMap.get(CURR_DMD_STR).subtract(demandCollMap.get(CURR_COLL_STR)));

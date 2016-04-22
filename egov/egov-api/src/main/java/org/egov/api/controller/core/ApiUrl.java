@@ -56,6 +56,8 @@ public class ApiUrl {
 	
 	public final static String COMPLAINT_DOWNLOAD_SUPPORT_DOCUMENT = "/complaint/{complaintNo}/downloadSupportDocument";
 	
+	public final static String COMPLAINT_DOWNLOAD_SUPPORT_DOCUMENT_BY_ID = "/complaint/downloadfile/{fileStoreId}";
+	
 	public final static String COMPLAINT_GET_LOCATION = "/complaint/getLocation";
 
 	public final static String COMPLAINT_LATEST = "/complaint/latest/{page}/{pageSize}";
@@ -93,5 +95,14 @@ public class ApiUrl {
 	public final static String CITIZEN_GET_MY_COMPLAINT = "/citizen/getMyComplaint/{page}/{pageSize}";
 	
 	public final static String CITIZEN_SEND_OTP = "/sendOTP";
-
+	
+	/*
+	 * Employee
+	 */
+	public final static String EMPLOYEE_INBOX_LIST_WFT_COUNT = "/employee/inbox";
+	
+	public final static String EMPLOYEE_INBOX_LIST_FILTER_BY_WFT = "/employee/inbox/{workFlowType}/{resultsFrom}/{resultsTo}";
+	
+	public final static String EMPLOYEE_LOGOUT = "/employee/logout";
+	
 }

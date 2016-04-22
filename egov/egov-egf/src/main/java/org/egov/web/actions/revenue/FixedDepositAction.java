@@ -39,6 +39,9 @@
  ******************************************************************************/
 package org.egov.web.actions.revenue;
 
+import org.egov.infstr.services.PersistenceService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigDecimal;
@@ -66,7 +69,7 @@ import org.egov.infstr.utils.HibernateUtil;
 import org.egov.model.instrument.InstrumentHeader;
 import org.egov.utils.ReportHelper;
 import org.hibernate.Query;
-import org.springframework.transaction.annotation.Transactional;
+
 
 @Results(value = {
         @Result(name = "PDF", type = "stream", location = "inputStream", params = { "inputName", "inputStream", "contentType",
@@ -75,8 +78,12 @@ import org.springframework.transaction.annotation.Transactional;
                         "application/xls", "contentDisposition", "no-cache;filename=FixedDepositReport.xls" })
 })
 @ParentPackage("egov")
-@Transactional(readOnly = true)
+
 public class FixedDepositAction extends BaseFormAction {
+ @Autowired
+ @Qualifier("persistenceService")
+ private PersistenceService persistenceService;
+
     private static final long serialVersionUID = -145348568312338226L;
     protected List<FixedDeposit> fixedDepositList;
     private List<Bankbranch> bankBranchList;
@@ -105,7 +112,7 @@ public class FixedDepositAction extends BaseFormAction {
     @Override
     @SuppressWarnings("unchecked")
     public void prepare() {
-        bankBranchList = persistenceService.findAllBy("from Bankbranch br where br.isactive=1 order by br.bank.name asc ");
+        bankBranchList = persistenceService.findAllBy("from Bankbranch br where br.isactive=true order by br.bank.name asc ");
     }
 
     @Override
@@ -150,7 +157,7 @@ public class FixedDepositAction extends BaseFormAction {
         if (fromDate != null && toDate != null)
             query.append("where date >='" + sdf.format(fromDate) + "' and date <='" + sdf.format(toDate) + "'");
         else if (fromDate == null && toDate == null)
-            query.append("where date<= sysdate");
+            query.append("where date<= CURRENT_DATE");
         else if (fromDate != null)
             query.append("where date>='" + sdf.format(fromDate) + "'");
         else
@@ -163,7 +170,7 @@ public class FixedDepositAction extends BaseFormAction {
 
         for (final FixedDeposit fd : fixedDepositList) {
             bankAccountListTemp = getPersistenceService().findAllBy(
-                    "from Bankaccount ba where ba.bankbranch.id=? and isactive=1 order by ba.chartofaccounts.glcode",
+                    "from Bankaccount ba where ba.bankbranch.id=? and isactive=true order by ba.chartofaccounts.glcode",
                     fd.getBankBranch().getId());
             fd.setBankAccountList(bankAccountListTemp);
             if (fd.getReceiptAmount() == null)
@@ -265,7 +272,7 @@ public class FixedDepositAction extends BaseFormAction {
 
     @SuppressWarnings("unchecked")
     public String getUlbName() {
-        final Query query = HibernateUtil.getCurrentSession().createSQLQuery(
+        final Query query = persistenceService.getSession().createSQLQuery(
                 "select name from companydetail");
         final List<String> result = query.list();
         if (result != null)

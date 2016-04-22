@@ -30,6 +30,9 @@
  ******************************************************************************/
 package org.egov.web.actions.report;
 
+
+import org.egov.infstr.services.PersistenceService;
+import org.springframework.beans.factory.annotation.Qualifier;
 import java.io.InputStream;
 import java.math.BigDecimal;
 import java.text.ParseException;
@@ -79,7 +82,7 @@ import org.egov.utils.VoucherHelper;
 import org.egov.web.actions.voucher.VoucherSearchAction;
 import org.hibernate.Query;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
+
 
 import com.opensymphony.xwork2.validator.annotations.Validation;
 
@@ -92,7 +95,6 @@ import com.opensymphony.xwork2.validator.annotations.Validation;
 })
 @ParentPackage("egov")
 @Validation
-@Transactional(readOnly = true)
 public class VoucherStatusReportAction extends BaseFormAction
 {
     private static final Logger LOGGER = Logger.getLogger(VoucherSearchAction.class);
@@ -118,7 +120,11 @@ public class VoucherStatusReportAction extends BaseFormAction
     private EgovPaginatedList pagedResults;
     private String countQry;
     private String modeOfPayment;
-    @Autowired
+   
+ @Autowired
+ @Qualifier("persistenceService")
+ private PersistenceService persistenceService;
+ @Autowired
     private FinancialYearDAO financialYearDAO;
 
     List<String> voucherTypes = VoucherHelper.VOUCHER_TYPES;
@@ -150,6 +156,7 @@ public class VoucherStatusReportAction extends BaseFormAction
         else
             fromDate = (Date) persistenceService.find("select startingDate  from CFinancialYear where id=?",
                     Long.parseLong(financialYearId));
+        toDate = null;
 
     }
 
@@ -176,12 +183,12 @@ public class VoucherStatusReportAction extends BaseFormAction
         if (headerFields.contains("department"))
             addDropdownData("departmentList", persistenceService.findAllBy("from Department order by name"));
         if (headerFields.contains("functionary"))
-            addDropdownData("functionaryList", persistenceService.findAllBy(" from Functionary where isactive=1 order by name"));
+            addDropdownData("functionaryList", persistenceService.findAllBy(" from Functionary where isactive=true order by name"));
         if (headerFields.contains("fund"))
-            addDropdownData("fundList", persistenceService.findAllBy(" from Fund where isactive=1 and isnotleaf=0 order by name"));
+            addDropdownData("fundList", persistenceService.findAllBy(" from Fund where isactive=true and isnotleaf=false order by name"));
         if (headerFields.contains("fundsource"))
             addDropdownData("fundsourceList",
-                    persistenceService.findAllBy(" from Fundsource where isactive=1 and isnotleaf=0 order by name"));
+                    persistenceService.findAllBy(" from Fundsource where isactive=true and isnotleaf=false order by name"));
         if (headerFields.contains("field"))
             addDropdownData("fieldList",
                     persistenceService.findAllBy(" from Boundary b where lower(b.boundaryType.name)='ward' "));
@@ -237,7 +244,7 @@ public class VoucherStatusReportAction extends BaseFormAction
          * try { Thread.sleep(30000); } catch (InterruptedException e) { // TODO Auto-generated catch block e.printStackTrace(); }
          */
         //
-        // LOGGER.errorHibernateUtil.getCurrentSession().getFlushMode());
+        // LOGGER.errorpersistenceService.getSession().getFlushMode());
         return "search";
     }
 
@@ -286,7 +293,7 @@ public class VoucherStatusReportAction extends BaseFormAction
         if (headerFields.contains("scheme"))
             if (voucherHeader.getFundId() != null && voucherHeader.getFundId().getId() != -1) {
                 final StringBuffer st = new StringBuffer();
-                st.append("from Scheme where isactive=1 and fund.id=");
+                st.append("from Scheme where isactive=true and fund.id=");
                 st.append(voucherHeader.getFundId().getId());
                 dropdownData.put("schemeList", persistenceService.findAllBy(st.toString()));
                 st.delete(0, st.length() - 1);
@@ -298,14 +305,14 @@ public class VoucherStatusReportAction extends BaseFormAction
                     && voucherHeader.getVouchermis().getSchemeid() != null
                     && voucherHeader.getVouchermis().getSchemeid().getId() != -1)
                 dropdownData.put("subSchemeList", persistenceService.findAllBy(
-                        "from SubScheme where isactive=1 and scheme.id=?",
+                        "from SubScheme where isactive=true and scheme.id=?",
                         voucherHeader.getVouchermis().getSchemeid().getId()));
             else
                 dropdownData.put("subSchemeList", Collections.emptyList());
     }
 
     public Map<String, String> getVoucherNameMap(final String type) {
-        final List<Object> voucherNameList = getPersistenceService().findAllBy(
+        final List<Object> voucherNameList = persistenceService.findAllBy(
                 "select  distinct name from  CVoucherHeader where type=?", type);
         nameMap = new LinkedHashMap<String, String>();
 
@@ -327,7 +334,7 @@ public class VoucherStatusReportAction extends BaseFormAction
 
         if (voucherHeader.getType() != null && !voucherHeader.getType().equals("-1"))
             sql = sql + " and vh.type='" + voucherHeader.getType() + "'";
-        if (voucherHeader.getName() != null && !voucherHeader.getName().equalsIgnoreCase("-1"))
+        if (voucherHeader.getName() != null && !voucherHeader.getName().equalsIgnoreCase("-1") && !voucherHeader.getName().equalsIgnoreCase("0"))
             sql = sql + " and vh.name='" + voucherHeader.getName() + "'";
         if (fromDate != null)
             sql = sql + " and vh.voucherDate>='" + Constants.DDMMYYYYFORMAT1.format(fromDate) + "'";
@@ -352,7 +359,7 @@ public class VoucherStatusReportAction extends BaseFormAction
             sql = sql + " and upper(ph.type) ='" + getModeOfPayment() + "'";
         countQry = "select count(*) " + sql;
         sql = "select vh " + sql + " order by vh.vouchermis.departmentid.name ,vh.voucherDate, vh.voucherNumber";
-        final Query query = HibernateUtil.getCurrentSession().createQuery(sql);
+        final Query query = persistenceService.getSession().createQuery(sql);
         return query;
     }
 
@@ -407,7 +414,7 @@ public class VoucherStatusReportAction extends BaseFormAction
             vhcrRptView.setVoucherDate(cVchrHdr.getVoucherDate());
             vhcrRptView.setSource(getVoucherModule(cVchrHdr.getModuleId()));
             for (final CGeneralLedger detail : cVchrHdr.getGeneralledger())
-                amt = amt.add(new BigDecimal(detail.getDebitAmount()));
+                amt = amt.add(BigDecimal.valueOf(detail.getDebitAmount()).setScale(2, BigDecimal.ROUND_HALF_EVEN));
             vhcrRptView.setAmount(amt);
             vhcrRptView.setOwner(getVoucherOwner(cVchrHdr));
             vhcrRptView.setStatus(getVoucherStatus(cVchrHdr.getStatus()));
@@ -492,8 +499,10 @@ public class VoucherStatusReportAction extends BaseFormAction
             else
                 return getUserNameForPosition(voucherState.getOwnerPosition().getId().intValue());
         }
-        else if (voucherType.equalsIgnoreCase(FinancialConstants.STANDARD_VOUCHER_TYPE_RECEIPT))
-        {
+        
+        //no need to find owner of receipt
+       /* else if (voucherType.equalsIgnoreCase(FinancialConstants.STANDARD_VOUCHER_TYPE_RECEIPT))
+        { 
             final ReceiptVoucher receiptVoucher = (ReceiptVoucher) persistenceService.find(
                     "from ReceiptVoucher rv where rv.voucherHeader=?", voucherHeader);
             if (receiptVoucher == null || receiptVoucher.getState() == null)
@@ -510,7 +519,7 @@ public class VoucherStatusReportAction extends BaseFormAction
                 return dash;
             else
                 return getUserNameForPosition(receiptVoucher.getState().getOwnerPosition().getId().intValue());
-        }
+        }*/
         else
             return dash;
     }

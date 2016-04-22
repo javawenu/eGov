@@ -41,7 +41,7 @@
  *
  */
 package org.egov.services.report;
-
+import org.springframework.beans.factory.annotation.Qualifier;
 import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
@@ -126,7 +126,7 @@ public class FundFlowService extends PersistenceService {
                             +
                             " eg_designation desg, functionary func "
                             +
-                            " where ph.state_id =state.id and empinfo.pos_id= state.owner and empinfo.functionary_id=func.id  and empinfo.isactive=1 "
+                            " where ph.state_id =state.id and empinfo.pos_id= state.owner and empinfo.functionary_id=func.id  and empinfo.isactive=true "
                             +
                             " and empinfo.DESIGNATIONID=desg.DESIGNATIONID and vh.id =ph.voucherheaderid and  ba.id=ph.bankaccountnumberid"
                             +
@@ -169,7 +169,7 @@ public class FundFlowService extends PersistenceService {
 
         if (LOGGER.isDebugEnabled())
             LOGGER.debug("Out Standing Payment Query " + outstandingPaymentQryStr.toString());
-        final Query outstandingQry = HibernateUtil.getCurrentSession().createSQLQuery(outstandingPaymentQryStr.toString())
+        final Query outstandingQry = getSession().createSQLQuery(outstandingPaymentQryStr.toString())
                 .addScalar("accountNumber")
                 .addScalar("outStandingBPV")
                 .setResultTransformer(Transformers.aliasToBean(FundFlowBean.class));
@@ -218,7 +218,7 @@ public class FundFlowService extends PersistenceService {
 
         if (LOGGER.isDebugEnabled())
             LOGGER.debug("Concurrancey payment " + conCurrancePaymentQryStr.toString());
-        final Query conCurranceQry = HibernateUtil.getCurrentSession().createSQLQuery(conCurrancePaymentQryStr.toString())
+        final Query conCurranceQry = getSession().createSQLQuery(conCurrancePaymentQryStr.toString())
                 .addScalar("accountNumber")
                 .addScalar("concurranceBPV")
                 .setResultTransformer(Transformers.aliasToBean(FundFlowBean.class));
@@ -235,13 +235,13 @@ public class FundFlowService extends PersistenceService {
                 +
                 "from Chartofaccounts  coa,  fund fd, bankaccount ba left outer join bankbranch bb  on ba.branchid=bb.id left outer "
                 +
-                "join bank b on bb.bankid=b.id where  coa.id=ba.glcodeid and ba.fundid= fd.id and ba.isactive=1 and ba.type in ('PAYMENTS','RECEIPTS_PAYMENTS') ");
+                "join bank b on bb.bankid=b.id where  coa.id=ba.glcodeid and ba.fundid= fd.id and ba.isactive=true and ba.type in ('PAYMENTS','RECEIPTS_PAYMENTS') ");
         if (fundId != null && fundId != -1)
             allPaymentAccounts.append("and ba.fundid=" + fundId);
         else
             allPaymentAccounts.append(" order by fd.code,b.code,coa.glcode,ba.accountnumber");
 
-        final Query allPaymentAccountsQry = HibernateUtil.getCurrentSession().createSQLQuery(allPaymentAccounts.toString())
+        final Query allPaymentAccountsQry = getSession().createSQLQuery(allPaymentAccounts.toString())
                 .addScalar("bankAccountId")
                 .addScalar("accountNumber")
                 .addScalar("glcode")
@@ -266,12 +266,12 @@ public class FundFlowService extends PersistenceService {
                 +
                 " from Chartofaccounts  coa, fund fd, bankaccount ba left outer join bankbranch bb  on ba.branchid=bb.id left outer "
                 +
-                " join bank b on bb.bankid=b.id where coa.id=ba.glcodeid and ba.fundid= fd.id and ba.isactive=1 and ba.type in ('RECEIPTS') ");
+                " join bank b on bb.bankid=b.id where coa.id=ba.glcodeid and ba.fundid= fd.id and ba.isactive=true and ba.type in ('RECEIPTS') ");
         if (fundId != null && fundId != -1)
             allAccounts.append(" and ba.fundid=" + fundId);
         else
             allAccounts.append(" order by fd.code, walkinPaymentAccount, b.code,coa.glcode,ba.accountnumber");
-        final Query allAccountsQry = HibernateUtil.getCurrentSession().createSQLQuery(allAccounts.toString())
+        final Query allAccountsQry = getSession().createSQLQuery(allAccounts.toString())
                 .addScalar("bankAccountId")
                 .addScalar("accountNumber")
                 .addScalar("glcode")
@@ -303,7 +303,7 @@ public class FundFlowService extends PersistenceService {
                 "  and bb.bankid= b.id and ba.branchid=bb.id GROUP BY GL.GLCODEID,ba.accountnumber,b.name");
 
         List<FundFlowBean> tempPayList;
-        final Query tempQry = HibernateUtil.getCurrentSession().createSQLQuery(temp.toString())
+        final Query tempQry = getSession().createSQLQuery(temp.toString())
                 .addScalar("accountNumber")
                 .addScalar("bankName")
                 .addScalar("btbReceipt")
@@ -340,7 +340,7 @@ public class FundFlowService extends PersistenceService {
                 +
                 "  and bb.bankid= b.id and ba.branchid=bb.id GROUP BY gl.glcodeId,ba.accountnumber,b.name ");
         List<FundFlowBean> tempList;
-        final Query q = HibernateUtil.getCurrentSession().createSQLQuery(qry.toString())
+        final Query q = getSession().createSQLQuery(qry.toString())
                 .addScalar("accountNumber")
                 .addScalar("bankName")
                 .addScalar("btbPayment")
@@ -382,7 +382,7 @@ public class FundFlowService extends PersistenceService {
                         +
                         "  and bb.bankid= b.id and ba.branchid=bb.id GROUP BY gl.glcodeId,ba.accountnumber,b.name");
         List<FundFlowBean> tempList;
-        final Query q = HibernateUtil.getCurrentSession().createSQLQuery(qry.toString())
+        final Query q = getSession().createSQLQuery(qry.toString())
                 .addScalar("accountNumber")
                 .addScalar("bankName")
                 .addScalar("btbPayment")
@@ -464,7 +464,7 @@ public class FundFlowService extends PersistenceService {
                     + FinancialConstants.CONTRAVOUCHER_NAME_INTERFUND
                     + "') "
                     +
-                    "  and vh.fiscalperiodid in (select id from fiscalperiod where financialyearid=(select f.id from financialyear f where sysdate between f.startingdate and f.endingdate))"
+                    "  and vh.fiscalperiodid in (select id from fiscalperiod where financialyearid=(select f.id from financialyear f where CURRENT_DATE between f.startingdate and f.endingdate))"
                     +
                     " and vh.voucherdate='" + sqlformat.format(asPerDate) + "'   and vh.status =0");
         else
@@ -483,7 +483,7 @@ public class FundFlowService extends PersistenceService {
                     + "'  and acc.id="
                     + bankaccountId
                     + " and vh.status =0");
-        final List list = HibernateUtil.getCurrentSession().createSQLQuery(qry.toString()).list();
+        final List list = getSession().createSQLQuery(qry.toString()).list();
         final BigDecimal contraPayment = (BigDecimal) list.get(0);
         if (LOGGER.isDebugEnabled())
             LOGGER.debug("Contra Payments For BankId " + accountGlcodeId + " And Date " + sqlformat.format(asPerDate) + " is : "
@@ -511,7 +511,7 @@ public class FundFlowService extends PersistenceService {
                     + FinancialConstants.CONTRAVOUCHER_NAME_INTERFUND
                     + "') "
                     +
-                    "  and vh.fiscalperiodid in (select id from fiscalperiod where financialyearid=(select f.id from financialyear f where sysdate between f.startingdate and f.endingdate))"
+                    "  and vh.fiscalperiodid in (select id from fiscalperiod where financialyearid=(select f.id from financialyear f where CURRENT_DATE between f.startingdate and f.endingdate))"
                     +
                     " and vh.voucherdate='" + sqlformat.format(asPerDate) + "'  and vh.status =0");
         else
@@ -530,7 +530,7 @@ public class FundFlowService extends PersistenceService {
                     + "'  and acc.id="
                     + bankaccountId
                     + " and vh.status =0");
-        final List list = HibernateUtil.getCurrentSession().createSQLQuery(qry.toString()).list();
+        final List list = getSession().createSQLQuery(qry.toString()).list();
         final BigDecimal contraReceipt = (BigDecimal) list.get(0);
         if (LOGGER.isDebugEnabled())
             LOGGER.debug("Contra Receipt For BankId " + accountGlcodeId + " And Date " + sqlformat.format(asPerDate) + " is : "
@@ -572,7 +572,7 @@ public class FundFlowService extends PersistenceService {
                         "	and vh.id =ph.voucherheaderid and  ba.id=ph.bankaccountnumberid and ba.id="
                         + bankaccountId
                         + "")
-                        .append(" and vh.fiscalperiodid in (select id from fiscalperiod where financialyearid=(select f.id from financialyear f where sysdate between f.startingdate and f.endingdate))")
+                        .append(" and vh.fiscalperiodid in (select id from fiscalperiod where financialyearid=(select f.id from financialyear f where CURRENT_DATE between f.startingdate and f.endingdate))")
                         .append(" and vh.voucherdate >= '")
                         .append(START_FINANCIALYEAR_DATE + "' ")
                         .append(" and to_char(created_date,'dd-Mon-yyyy') ='")
@@ -586,7 +586,7 @@ public class FundFlowService extends PersistenceService {
         if (LOGGER.isDebugEnabled())
             LOGGER.debug("Executing outstandingPaymentQryStr query----------------------------------------------"
                     + outstandingPaymentQryStr);
-        final List list = HibernateUtil.getCurrentSession().createSQLQuery(outstandingPaymentQryStr.toString()).list();
+        final List list = getSession().createSQLQuery(outstandingPaymentQryStr.toString()).list();
         if (!list.isEmpty())
             outStandingPayment = (BigDecimal) list.get(0);
         if (LOGGER.isDebugEnabled())

@@ -64,10 +64,10 @@ import org.egov.infra.web.struts.actions.BaseFormAction;
 import org.egov.model.budget.BudgetProposalBean;
 import org.egov.services.budget.BudgetDetailService;
 import org.egov.utils.ReportHelper;
-import org.springframework.transaction.annotation.Transactional;
+
 
 @ParentPackage("egov")
-@Transactional(readOnly = true)
+
 /*
  * @Results(value={
  * @Result(name="PDF",type="stream",location=Constants.INPUT_STREAM,
@@ -125,14 +125,14 @@ public class ConsolidatedBudgetReportAction extends BaseFormAction {
     @Action(value = "/report/consolidatedBudgetReport-consolidatedReport")
     public String consolidatedReport() {
         addDropdownData("financialYearList",
-                getPersistenceService().findAllBy("from CFinancialYear where isActive=1 order by finYearRange desc "));
+                getPersistenceService().findAllBy("from CFinancialYear where isActive=true order by finYearRange desc "));
         return "reportSearch";
     }
 
     @Action(value = "/report/consolidatedBudgetReport-search")
     public String search() {
         addDropdownData("financialYearList",
-                getPersistenceService().findAllBy("from CFinancialYear where isActive=1 order by finYearRange desc "));
+                getPersistenceService().findAllBy("from CFinancialYear where isActive=true order by finYearRange desc "));
 
         populateData();
 

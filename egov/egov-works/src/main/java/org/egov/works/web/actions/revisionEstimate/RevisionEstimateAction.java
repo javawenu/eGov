@@ -57,7 +57,7 @@ import org.apache.struts2.convention.annotation.Action;
 import org.apache.struts2.convention.annotation.ParentPackage;
 import org.apache.struts2.convention.annotation.Result;
 import org.egov.common.entity.UOM;
-import org.egov.commons.service.CommonsService;
+import org.egov.commons.dao.EgwStatusHibernateDAO;
 import org.egov.infra.admin.master.entity.Department;
 import org.egov.infra.admin.master.entity.User;
 import org.egov.infra.admin.master.service.UserService;
@@ -114,10 +114,10 @@ public class RevisionEstimateAction extends GenericWorkFlowAction {
     private String departmentName;
     private Long id;
     @Autowired
+    private EgwStatusHibernateDAO egwStatusHibernateDAO;
+    @Autowired
     private EmployeeServiceOld employeeService;
     private Integer approverPositionId;
-    @Autowired
-    private CommonsService commonsService;
     private WorkOrderService workOrderService;
     private List<Activity> originalRevisedActivityList = new LinkedList<Activity>();
     private double originalTotalAmount = 0;
@@ -353,7 +353,7 @@ public class RevisionEstimateAction extends GenericWorkFlowAction {
         revisionEstimate = revisionAbstractEstimateService.persist(revisionEstimate);
 
         if (actionName.equalsIgnoreCase("save")) {
-            revisionEstimate.setEgwStatus(commonsService.getStatusByModuleAndCode("AbstractEstimate", "NEW"));
+            revisionEstimate.setEgwStatus(egwStatusHibernateDAO.getStatusByModuleAndCode("AbstractEstimate", "NEW"));
             if (id == null) {
                 final Position pos = employeeService.getPositionforEmp(employeeService.getEmpForUserId(
                         worksService.getCurrentLoggedInUserId()).getIdPersonalInformation());
@@ -367,7 +367,7 @@ public class RevisionEstimateAction extends GenericWorkFlowAction {
             revisionEstimate = revisionAbstractEstimateService.persist(revisionEstimate);
         } else {
             if (id == null) {
-                revisionEstimate.setEgwStatus(commonsService.getStatusByModuleAndCode("AbstractEstimate", "NEW"));
+                revisionEstimate.setEgwStatus(egwStatusHibernateDAO.getStatusByModuleAndCode("AbstractEstimate", "NEW"));
                 final Position pos = employeeService.getPositionforEmp(employeeService.getEmpForUserId(
                         worksService.getCurrentLoggedInUserId()).getIdPersonalInformation());
                 // revisionEstimate = (RevisionAbstractEstimate)
@@ -514,17 +514,16 @@ public class RevisionEstimateAction extends GenericWorkFlowAction {
             revisionWO.setWorkOrderDate(revisionEstimate.getEstimateDate());
             revisionWO.setWorkOrderNumber(workOrder.getWorkOrderNumber() + "/RW".concat(Integer.toString(reCount)));
             revisionWO.setContractor(workOrder.getContractor());
-            revisionWO.setWorkOrderPreparedBy(workOrder.getWorkOrderPreparedBy());
             revisionWO.setEngineerIncharge(workOrder.getEngineerIncharge());
             revisionWO.setEmdAmountDeposited(0.00001);
-            revisionWO.setEgwStatus(commonsService.getStatusByModuleAndCode("WorkOrder", "NEW"));
+            revisionWO.setEgwStatus(egwStatusHibernateDAO.getStatusByModuleAndCode("WorkOrder", "NEW"));
         }
 
         if (parameters.get(ACTION_NAME)[0].equalsIgnoreCase("Approve"))
-            revisionWO.setEgwStatus(commonsService.getStatusByModuleAndCode("WorkOrder", "APPROVED"));
+            revisionWO.setEgwStatus(egwStatusHibernateDAO.getStatusByModuleAndCode("WorkOrder", "APPROVED"));
 
         if (parameters.get(ACTION_NAME)[0].equalsIgnoreCase("Cancel"))
-            revisionWO.setEgwStatus(commonsService.getStatusByModuleAndCode("WorkOrder", "CANCELLED"));
+            revisionWO.setEgwStatus(egwStatusHibernateDAO.getStatusByModuleAndCode("WorkOrder", "CANCELLED"));
 
         if (curStatus.equals("NEW") || curStatus.equals("REJECTED"))
             populateWorkOrderActivities(revisionWO);
@@ -774,10 +773,6 @@ public class RevisionEstimateAction extends GenericWorkFlowAction {
     public void setRevisionAbstractEstimateService(
             final PersistenceService<RevisionAbstractEstimate, Long> revisionAbstractEstimateService) {
         this.revisionAbstractEstimateService = revisionAbstractEstimateService;
-    }
-
-    public void setCommonsService(final CommonsService commonsService) {
-        this.commonsService = commonsService;
     }
 
     public void setWorkOrderService(final WorkOrderService workOrderService) {

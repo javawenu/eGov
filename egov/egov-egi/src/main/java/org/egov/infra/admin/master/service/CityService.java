@@ -69,7 +69,7 @@ public class CityService {
     private HashOperations<String, String, Object> cityPrefCache;
 
     @Autowired
-    private RedisTemplate<String, Object> redisTemplate;
+    private RedisTemplate<Object, Object> redisTemplate;
     
     @Autowired
     public CityService(final CityRepository cityRepository) {
@@ -123,7 +123,7 @@ public class CityService {
         return String.format(CITY_PREFS_CK, EgovThreadLocals.getDomainName());
     }
     
-    private Object cityDataForKey(final String key) {
+    public Object cityDataForKey(final String key) {
         return cityPrefCache.entries(cityPrefCacheKey()).get(key);
     }
 }

@@ -85,7 +85,7 @@
 	<div class="form-group">
     	<div class="col-sm-1 text-center"><s:property value="#status.index + 1"/></div>
         <div class="col-sm-5 text-center">
-        	<s:property value="name" /><s:if test="mandatory"><span class="mandatory"></span></s:if>
+        	<span class="docname"><s:property value="name" /></span><s:if test="mandatory"><span class="mandatory"></span></s:if>
 			<s:hidden name="documents[%{#status.index}].type.id" value="%{id}"/>
 		</div>
        	<div class="col-sm-3 text-center">
@@ -123,10 +123,10 @@
 				</s:iterator>	
 			</s:else>
 			<form:errors path="documents[%{#status.index}].files" cssClass="add-margin error-msg" />
-			<div class="add-margin error-msg text-left" ><font size="2"><s:text name="lbl.mesg.document"/></font></div>
+			<%-- <div class="add-margin error-msg text-left" ><font size="2"><s:text name="lbl.mesg.document"/></font></div> --%>
        	</div>
    	</div>
 </s:iterator>
 </table>
 
-<script src="<c:url value='/resources/app/js/documentupload.js'/>"></script> 
+<script src="<c:url value='/resources/js/app/documentupload.js?rnd=${app_release_no}'/>"></script> 

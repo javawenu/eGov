@@ -39,14 +39,15 @@
  ******************************************************************************/
 package org.egov.web.actions.report;
 
+
+import org.egov.infstr.services.PersistenceService;
+import org.springframework.beans.factory.annotation.Qualifier;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
-
-import net.sf.jasperreports.engine.JRException;
 
 import org.apache.log4j.Logger;
 import org.apache.struts2.convention.annotation.Action;
@@ -67,7 +68,9 @@ import org.egov.utils.FinancialConstants;
 import org.egov.utils.ReportHelper;
 import org.hibernate.FlushMode;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
+
+
+import net.sf.jasperreports.engine.JRException;
 
 @Results(value = {
         @Result(name = "functionwiseIE-PDF", type = "stream", location = Constants.INPUT_STREAM, params = { Constants.INPUT_NAME,
@@ -79,7 +82,7 @@ import org.springframework.transaction.annotation.Transactional;
         @Result(name = "functionwiseIE-HTML", type = "stream", location = Constants.INPUT_STREAM, params = {
                 Constants.INPUT_NAME, Constants.INPUT_STREAM, Constants.CONTENT_TYPE, "text/html" })
 })
-@Transactional(readOnly = true)
+
 @ParentPackage("egov")
 public class FunctionwiseIEAction extends ReportAction
 {
@@ -90,11 +93,17 @@ public class FunctionwiseIEAction extends ReportAction
     private final FunctionwiseIE functionwiseIE = new FunctionwiseIE();
     private CityService cityService;
     private City cityWebsite;
-    private @Autowired AppConfigValueService appConfigValuesService;
+    
+ @Autowired
+ @Qualifier("persistenceService")
+ private PersistenceService persistenceService;
+ @Autowired AppConfigValueService appConfigValuesService;
     private FinancialYearDAO financialYearDAO;
     private String heading = "";
     private Date todayDate;
-
+    @Autowired
+    private EgovMasterDataCaching masterDataCache;
+    
     public FinancialYearDAO getFinancialYearDAO() {
         return financialYearDAO;
     }
@@ -103,7 +112,6 @@ public class FunctionwiseIEAction extends ReportAction
         this.financialYearDAO = financialYearDAO;
     }
 
-    private final EgovMasterDataCaching masterCache = EgovMasterDataCaching.getInstance();
     private static final Logger LOGGER = Logger.getLogger(FunctionwiseIEAction.class);
     private List<CommonReportBean> ieWithBudgetList;
 
@@ -118,8 +126,8 @@ public class FunctionwiseIEAction extends ReportAction
     @Override
     public void prepare()
     {
-        HibernateUtil.getCurrentSession().setDefaultReadOnly(true);
-        HibernateUtil.getCurrentSession().setFlushMode(FlushMode.MANUAL);
+        persistenceService.getSession().setDefaultReadOnly(true);
+        persistenceService.getSession().setFlushMode(FlushMode.MANUAL);
         super.prepare();
         if (reportSearch.getStartDate() == null || reportSearch.getStartDate().equals(""))
             reportSearch.setStartDate(sdf.format(((CFinancialYear) persistenceService
@@ -132,8 +140,8 @@ public class FunctionwiseIEAction extends ReportAction
 
     public void preparebeforesearchWithBudget()
     {
-        addDropdownData("fundList", masterCache.get("egi-fund"));
-        addDropdownData("functionList", masterCache.get("egi-function"));
+        addDropdownData("fundList", masterDataCache.get("egi-fund"));
+        addDropdownData("functionList", masterDataCache.get("egi-function"));
     }
 
     @Override
@@ -351,7 +359,7 @@ public class FunctionwiseIEAction extends ReportAction
         setDatasForBudgetWise();
         reportSearch.setByDepartment(true);
 
-        reportSearch.setDeptList(masterCache.get("egi-department"));
+        reportSearch.setDeptList(masterDataCache.get("egi-department"));
 
         populateDataSourceWithBudget(reportSearch);
         /*
@@ -371,7 +379,7 @@ public class FunctionwiseIEAction extends ReportAction
         reportSearch.setMinorCodeLen(minorCodeLen);
         reportSearch.setByDepartment(true);
         reportSearch.setByDetailCode(true);
-        reportSearch.setDeptList(masterCache.get("egi-department"));
+        reportSearch.setDeptList(masterDataCache.get("egi-department"));
 
         populateDataSourceWithBudget(reportSearch);
         /*

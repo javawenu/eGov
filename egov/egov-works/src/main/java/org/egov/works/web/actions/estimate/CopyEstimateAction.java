@@ -45,7 +45,8 @@ import java.util.List;
 
 import org.apache.struts2.convention.annotation.ParentPackage;
 import org.apache.struts2.convention.annotation.Result;
-import org.egov.commons.service.CommonsService;
+import org.egov.commons.dao.EgwStatusHibernateDAO;
+import org.egov.commons.dao.FinancialYearHibernateDAO;
 import org.egov.infra.web.struts.actions.BaseFormAction;
 import org.egov.infra.workflow.service.WorkflowService;
 import org.egov.pims.model.PersonalInformation;
@@ -72,9 +73,11 @@ public class CopyEstimateAction extends BaseFormAction {
     @Autowired
     private EmployeeServiceOld employeeService;
     private Date financialYearStartDate;
-    @Autowired
-    private CommonsService commonsService;
     private String messageKey;
+    @Autowired
+    private EgwStatusHibernateDAO egwStatusHibernateDAO;
+    @Autowired
+    private FinancialYearHibernateDAO finHibernateDo;
     private WorksService worksService;
 
     @Override
@@ -98,7 +101,7 @@ public class CopyEstimateAction extends BaseFormAction {
         copyEstimate.setUserDepartment(abstractEstimate.getUserDepartment());
         copyEstimate.setExecutingDepartment(abstractEstimate.getExecutingDepartment());
         copyEstimate.setFundSource(abstractEstimate.getFundSource());
-        copyEstimate.setEgwStatus(commonsService.getStatusByModuleAndCode("AbstractEstimate", "NEW"));
+        copyEstimate.setEgwStatus(egwStatusHibernateDAO.getStatusByModuleAndCode("AbstractEstimate", "NEW"));
 
         copyEstimate.setOverheadValues(cloneOverheadValue(abstractEstimate.getOverheadValues()));
         copyEstimate.setActivities(cloneActivity(abstractEstimate.getActivities()));
@@ -202,7 +205,7 @@ public class CopyEstimateAction extends BaseFormAction {
     }
 
     public Date getFinancialYearStartDate() {
-        financialYearStartDate = commonsService.getFinancialYearByFinYearRange(
+        financialYearStartDate = finHibernateDo.getFinancialYearByFinYearRange(
                 worksService.getWorksConfigValue("FINANCIAL_YEAR_RANGE")).getStartingDate();
         return financialYearStartDate;
     }
@@ -233,14 +236,6 @@ public class CopyEstimateAction extends BaseFormAction {
 
     public void setEmployeeService(final EmployeeServiceOld employeeService) {
         this.employeeService = employeeService;
-    }
-
-    public CommonsService getCommonsService() {
-        return commonsService;
-    }
-
-    public void setCommonsService(final CommonsService commonsService) {
-        this.commonsService = commonsService;
     }
 
     public String getMessageKey() {

@@ -45,14 +45,19 @@
  */
 package com.exilant.eGov.src.domain;
 
+
+import org.egov.infstr.services.PersistenceService;
+import org.springframework.beans.factory.annotation.Qualifier;
 import java.sql.SQLException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.Locale;
 
 import org.apache.log4j.Logger;
 import org.egov.infstr.utils.HibernateUtil;
 import org.hibernate.Query;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.exilant.eGov.src.common.EGovernCommon;
@@ -80,7 +85,11 @@ public class ScheduleMapping {
     private String repSubType = null;
     private String isRemission = null;
     private static TaskFailedException taskExc;
-    EGovernCommon cm = new EGovernCommon();
+   
+ @Autowired
+ @Qualifier("persistenceService")
+ private PersistenceService persistenceService;
+ @Autowired EGovernCommon eGovernCommon;
     private final SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy", Locale
             .getDefault());
     private final SimpleDateFormat formatter = new SimpleDateFormat("dd-MMM-yyyy",
@@ -96,16 +105,11 @@ public class ScheduleMapping {
 
     @Transactional
     public void insert() throws SQLException, TaskFailedException {
-        // EGovernCommon commommethods = new EGovernCommon();
 
         setId(String.valueOf(PrimaryKeyGenerator.getNextKey("schedulemapping")));
-        final EGovernCommon common = new EGovernCommon();
         try {
-            createdDate = common.getCurrentDate();
-            // Formatting Date
-            final SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
             final SimpleDateFormat formatter = new SimpleDateFormat("dd-MMM-yyyy");
-            createdDate = formatter.format(sdf.parse(createdDate));
+            createdDate = formatter.format(new Date());
             setCreatedDate(createdDate);
             lastModifiedDate = null;
 
@@ -118,7 +122,7 @@ public class ScheduleMapping {
                     + "values(?,?,?,?,?,?,?,?,?,?)";
             if (LOGGER.isInfoEnabled())
                 LOGGER.info(insertQuery);
-            pstmt = HibernateUtil.getCurrentSession().createSQLQuery(insertQuery);
+            pstmt = persistenceService.getSession().createSQLQuery(insertQuery);
             pstmt.setString(0, id);
             pstmt.setString(1, reportType);
             pstmt.setString(2, schedule);
@@ -148,8 +152,7 @@ public class ScheduleMapping {
 
     public void newUpdate() throws TaskFailedException,
     SQLException {
-        final EGovernCommon commommethods = new EGovernCommon();
-        lastModifiedDate = commommethods.getCurrentDate();
+        lastModifiedDate = eGovernCommon.getCurrentDate();
         Query pstmt = null;
         try {
             lastModifiedDate = formatter.format(sdf.parse(lastModifiedDate));
@@ -182,7 +185,7 @@ public class ScheduleMapping {
         query.append(" where id=?");
         try {
             int i = 1;
-            pstmt = HibernateUtil.getCurrentSession().createSQLQuery(query.toString());
+            pstmt = persistenceService.getSession().createSQLQuery(query.toString());
             if (reportType != null)
                 pstmt.setString(i++, reportType);
             if (schedule != null)

@@ -41,32 +41,9 @@
 <html>
 	<head>
 		<title><s:text name="page.title.viewtrade" /></title>
-		<sx:head />
-		<script>
-			function closethis() {
-				if (confirm("Do you want to close this window ?")) {
-					window.close();
-				}
-			}
-			
-			function printthis() {
-				if (confirm("Do you want to print this screen ?")) {
-					var html="<html>";
-					html+= document.getElementById('content').innerHTML;
-					html+="</html>";
-					
-					var printWin = window.open('','','left=0,top=0,width=1,height=1,toolbar=0,scrollbars=0,status=0');
-					printWin.document.write(html);
-					printWin.document.close();
-					printWin.focus();
-					printWin.print();
-					printWin.close();
-				}		
-			}
-		</script>
 	</head>
 	<body>
-		<div id="content">
+		<div id="content" class="printable">
 			<div class="formmainbox panel-primary">
 										<div class="subheadnew text-center" id="headingdiv">
 											<s:text name="page.title.viewtrade" />
@@ -80,7 +57,7 @@
 												</td>
 											</tr>
 										</table>
-										<s:form action="viewTradeLicense" theme="css_xhtml" name="viewForm">
+										<s:form action="viewTradeLicense" theme="simple" name="viewForm">
 											<s:push value="model">
 												<s:hidden name="actionName" value="create" />
 												<s:hidden id="detailChanged" name="detailChanged"></s:hidden>
@@ -91,19 +68,21 @@
 											</s:push>
 										</s:form>
 		
+		
+		</div>
+		</div>
 		<div align="center" class="buttonbottom" id="buttondiv">
 			<table>
 				<tr>
 					<td>
-						<input name="button1" type="button" class="buttonsubmit" id="button" onClick="printthis()" value="Print" />
+						<input name="button1" type="button" class="buttonsubmit printbtn" id="button" value="Print" />
 					</td>
 					<td>
-						<input name="button2" type="button" class="button" id="button" onclick="closethis()" value="Close" />
+						<input name="button2" type="button" class="button" id="button" onclick="window.close();" value="Close" />
 					</td>
 				</tr>
 			</table>
 		</div>
-		</div>
-		</div>
+		<script src="<c:url value='/resources/global/js/jquery/plugins/jquery.printelement.min.js' context='/egi'/>"></script>
 	</body>
 </html>

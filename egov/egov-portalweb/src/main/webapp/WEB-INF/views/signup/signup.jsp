@@ -48,7 +48,8 @@
 		<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 		<meta name="description" content="eGov Urban Portal" />
 		<meta name="author" content="eGovernments Foundation" />
-		
+		<spring:eval expression="@environment.getProperty('user.pwd.strength')" var="pwdstrengthmsg"/>
+		<spring:message code="usr.pwd.strength.msg.${pwdstrengthmsg}" var="pwdmsg"/>
 		<title>Citizen Portal Registration</title>
 		<link rel="icon" href="/egi/resources/global/images/favicon.png" sizes="32x32">
 		<link rel="stylesheet" href="/egi/resources/global/css/bootstrap/bootstrap.css">
@@ -56,12 +57,12 @@
 		<link rel="stylesheet" href="/egi/resources/global/css/egov/custom.css">
 		<script src="/egi/resources/global/js/jquery/jquery.js" type="text/javascript"></script>
 		<script src='https://www.google.com/recaptcha/api.js'></script>
-		<!--[if lt IE 9]><script src="resources/js/ie8-responsive-file-warning.js"></script><![endif]-->
+		
 		
 		<!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
 		<!--[if lt IE 9]>
-			<script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
-			<script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+			<script src="/egi/resources/global/js/ie8/html5shiv.min.js"></script>
+			<script src="/egi/resources/global/js/ie8/respond.min.js"></script>
 		<![endif]-->
 	</head>
 	<body class="page-body">
@@ -109,13 +110,14 @@
 									<form:errors path="username" cssClass="add-margin error-msg font-12"/>
 								</div>
 							</div>
+							<input style="display:none" type="password">
 							<div class="row form-group" id="wrap">
 								<div class="col-md-6" style="margin:0">
 									<div class="input-group">
 										<div class="input-group-addon style-label">
 											<i class="entypo-key theme-color style-color"></i>
 										</div>
-										<form:password path="password" cssClass="form-control style-form check-password" id="password" placeholder="Password" minlength="8" maxlength="32" autocomplete="off" required="required" data-container="#wrap" data-toggle="popover" data-content="Minimum 8 to 32 characters long and should contain upper case, lower case alphabet,number and special character except [& < > # % \" ' / and space]"/>
+										<form:password path="password" cssClass="form-control style-form check-password" id="password" placeholder="Password" maxlength="32" autocomplete="new-password" required="required" data-container="#wrap" data-toggle="popover" data-content='${pwdmsg}' />
 										<span class="mandatory set-mandatory"></span>
 									</div>
 								</div>
@@ -125,7 +127,7 @@
 											<i class="entypo-key theme-color style-color"></i>
 										</div>
 										<input type="password" class="form-control style-form check-password" name="con-password" id="con-password" placeholder="Confirm password" 
-										autocomplete="off" required="required" minlength="8" maxlength="32"/><span class="mandatory set-mandatory"></span>
+										autocomplete="new-password" required="required" maxlength="32"/><span class="mandatory set-mandatory"></span>
 									</div>
 								</div>
 								<div class="text-right add-margin error-msg display-hide password-error">These passwords don't match. Try again!</div>
@@ -219,6 +221,7 @@
 		                                        <div class="input-group-addon style-label">
 		                                            <i class="entypo-key theme-color style-color"></i>
 		                                        </div>
+		                                        <input style="display:none" type="password">
 		                                        <input type="password" class="form-control style-form" name="activationCode" id="activationCode" placeholder="Activation Code" autocomplete="off" />
 		                                    </div>
 		                                </div>

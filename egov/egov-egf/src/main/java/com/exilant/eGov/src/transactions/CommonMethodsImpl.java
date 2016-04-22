@@ -50,6 +50,9 @@ package com.exilant.eGov.src.transactions;
  * @author Tilak
  *
  */
+
+
+import org.egov.infstr.services.PersistenceService;
 import java.sql.Connection;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
@@ -65,6 +68,8 @@ import org.egov.infstr.utils.seqgen.DatabaseSequence;
 import org.egov.infstr.utils.seqgen.DatabaseSequenceFirstTimeException;
 import org.egov.utils.VoucherHelper;
 import org.hibernate.Query;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 
 import com.exilant.exility.common.TaskFailedException;
 
@@ -73,7 +78,10 @@ public class CommonMethodsImpl implements CommonMethodsI {
     Connection connection;
     List<Object[]> rset;
     private static final Logger LOGGER = Logger.getLogger(CommonMethodsImpl.class);
-
+   
+ @Autowired
+    @Qualifier("persistenceService")
+    private PersistenceService persistenceService ;
     /**
      * Get the cash in hand code account for the boundary
      */
@@ -84,7 +92,7 @@ public class CommonMethodsImpl implements CommonMethodsI {
             final String query = " SELECT a.glcode FROM CHARTOFACCOUNTS a,EG_BOUNDARY b,eg_boundary_type c "
                     +
                     " WHERE id=(SELECT cashinhand FROM CODEMAPPING WHERE EG_BOUNDARYID= ? )  and b.ID_BNDRY_TYPE=c.ID_BNDRY_TYPE and b.ID_BNDRY= ?";
-            pst = HibernateUtil.getCurrentSession().createSQLQuery(query);
+            pst = persistenceService.getSession().createSQLQuery(query);
             pst.setInteger(0, BoundaryId);
             pst.setInteger(1, BoundaryId);
             rset = pst.list();
@@ -111,7 +119,7 @@ public class CommonMethodsImpl implements CommonMethodsI {
             final String query = " SELECT a.glcode FROM CHARTOFACCOUNTS a,EG_BOUNDARY b,eg_boundary_type c "
                     +
                     " WHERE id=(SELECT chequeinhand FROM CODEMAPPING WHERE EG_BOUNDARYID= ? )  and b.ID_BNDRY_TYPE=c.ID_BNDRY_TYPE and b.ID_BNDRY= ?";
-            pst = HibernateUtil.getCurrentSession().createSQLQuery(query);
+            pst = persistenceService.getSession().createSQLQuery(query);
             pst.setInteger(0, BoundaryId);
             pst.setInteger(1, BoundaryId);
             rset = pst.list();
@@ -142,7 +150,7 @@ public class CommonMethodsImpl implements CommonMethodsI {
                 if (LOGGER.isInfoEnabled())
                     LOGGER.info("  forYear  " + forYear);
                 final String query1 = "select financialyear from financialyear  where ? between startingdate and endingdate";
-                pst = HibernateUtil.getCurrentSession().createSQLQuery(query1);
+                pst = persistenceService.getSession().createSQLQuery(query1);
                 pst.setString(0, forYear);
                 rset = pst.list();
                 String fId = "", isOld = "";
@@ -151,7 +159,7 @@ public class CommonMethodsImpl implements CommonMethodsI {
                 if (rset == null || rset.size() == 0)
                 {
                     final String query2 = "select a.glcode,a.name from chartofaccounts a,egf_tax_account_mapping b where b.glcodeid=a.id and upper(b.financialyear)=upper('old')";
-                    pst = HibernateUtil.getCurrentSession().createSQLQuery(query2);
+                    pst = persistenceService.getSession().createSQLQuery(query2);
                     rset = pst.list();
                     for (final Object[] element : rset) {
                         ptCodeAndName = element[0].toString();
@@ -163,7 +171,7 @@ public class CommonMethodsImpl implements CommonMethodsI {
                 if (!fId.equalsIgnoreCase(""))
                 {
                     final String query3 = "select a.isold from egf_tax_account_mapping a,egf_tax_code b,financialyear c where a.taxcodeid=b.id and b.code='PT' and a.financialyear=c.financialyear and c.financialyear= ?";
-                    pst = HibernateUtil.getCurrentSession().createSQLQuery(query3);
+                    pst = persistenceService.getSession().createSQLQuery(query3);
                     pst.setString(0, fId);
                     rset = pst.list();
                     for (final Object[] element : rset) {
@@ -176,7 +184,7 @@ public class CommonMethodsImpl implements CommonMethodsI {
                         if (LOGGER.isInfoEnabled())
                             LOGGER.info("   inside 4    ");
                         final String query4 = "select a.glcode,a.name from chartofaccounts a,egf_tax_account_mapping b where b.glcodeid=a.id and upper(b.financialyear)=upper('old')";
-                        pst = HibernateUtil.getCurrentSession().createSQLQuery(query4);
+                        pst = persistenceService.getSession().createSQLQuery(query4);
                         rset = pst.list();
                         for (final Object[] element : rset) {
                             ptCodeAndName = element[0].toString();
@@ -190,7 +198,7 @@ public class CommonMethodsImpl implements CommonMethodsI {
                         if (LOGGER.isInfoEnabled())
                             LOGGER.info("   inside 5   ");
                         final String query5 = "select a.glcode,a.name from chartofaccounts a,egf_tax_account_mapping b,egf_tax_code c,financialyear d where b.taxcodeid=c.id and c.code='PT' and b.glcodeid=a.id and b.financialyear=d.financialyear and d.financialyear= ?";
-                        pst = HibernateUtil.getCurrentSession().createSQLQuery(query5);
+                        pst = persistenceService.getSession().createSQLQuery(query5);
                         pst.setString(0, fId);
                         rset = pst.list();
                         for (final Object[] element : rset) {
@@ -209,7 +217,7 @@ public class CommonMethodsImpl implements CommonMethodsI {
             {
                 // if foryear is not given, then use Sespense code
                 final String query = "select a.glcode, a.name from chartofaccounts a,egf_accountcode_purpose b where a.purposeid=b.id and upper(b.name)=upper('SuspenseCode')";
-                pst = HibernateUtil.getCurrentSession().createSQLQuery(query);
+                pst = persistenceService.getSession().createSQLQuery(query);
                 rset = pst.list();
                 for (final Object[] element : rset) {
                     ptCodeAndName = element[0].toString();
@@ -237,7 +245,7 @@ public class CommonMethodsImpl implements CommonMethodsI {
         String bankCodeAndName = "";
         try {
             final String query = "select glcode,name from chartofaccounts where id=(select glcodeid from bankaccount where id= ?)";
-            pst = HibernateUtil.getCurrentSession().createSQLQuery(query);
+            pst = persistenceService.getSession().createSQLQuery(query);
             pst.setInteger(0, bankAccountId);
             rset = pst.list();
             for (final Object[] element : rset) {
@@ -265,7 +273,7 @@ public class CommonMethodsImpl implements CommonMethodsI {
         try
         {
             final String query = "select id from fiscalperiod  where ? between startingdate and endingdate";
-            pst = HibernateUtil.getCurrentSession().createSQLQuery(query);
+            pst = persistenceService.getSession().createSQLQuery(query);
             pst.setString(0, vDate);
             rset = pst.list();
             for (final Object[] element : rset) {
@@ -296,7 +304,7 @@ public class CommonMethodsImpl implements CommonMethodsI {
         String bankAndBranchId = "null";
         try {
             final String sql = "select b.id,c.id from bankaccount a,bankbranch b,bank c where a.branchid=b.id and b.bankid=c.id and a.id= ?";
-            pst = HibernateUtil.getCurrentSession().createSQLQuery(sql);
+            pst = persistenceService.getSession().createSQLQuery(sql);
             pst.setInteger(0, bankAccountId);
             rset = pst.list();
             for (final Object[] element : rset) {
@@ -329,7 +337,7 @@ public class CommonMethodsImpl implements CommonMethodsI {
                     "AND endingDate >= ?)  AND glCodeId =(select glcodeid from bankaccount where id= ?)";
             if (LOGGER.isInfoEnabled())
                 LOGGER.info(str);
-            pst = HibernateUtil.getCurrentSession().createSQLQuery(str);
+            pst = persistenceService.getSession().createSQLQuery(str);
             pst.setString(0, vcDate);
             pst.setString(1, vcDate);
             pst.setInteger(2, bankAccountId);
@@ -348,7 +356,7 @@ public class CommonMethodsImpl implements CommonMethodsI {
                     " vh.voucherDate >=( SELECT TO_CHAR(startingDate, 'dd-Mon-yyyy') FROM financialYear WHERE startingDate <= ? AND endingDate >= ?) AND vh.voucherDate <= ?";
             if (LOGGER.isInfoEnabled())
                 LOGGER.info(str1);
-            pst = HibernateUtil.getCurrentSession().createSQLQuery(str1);
+            pst = persistenceService.getSession().createSQLQuery(str1);
             pst.setInteger(0, bankAccountId);
             pst.setString(1, vcDate);
             pst.setString(2, vcDate);
@@ -376,7 +384,7 @@ public class CommonMethodsImpl implements CommonMethodsI {
         String codeAndName = "null";
         try {
             final String query = "select a.glcode, a.name from chartofaccounts a,egf_accountcode_purpose b where a.purposeid=b.id and b.id= ?";
-            pst = HibernateUtil.getCurrentSession().createSQLQuery(query);
+            pst = persistenceService.getSession().createSQLQuery(query);
             pst.setString(0, purposeId);
             rset = pst.list();
             // for(int i=0;rset.next();i++){
@@ -404,7 +412,7 @@ public class CommonMethodsImpl implements CommonMethodsI {
             final String query = "select name from chartofaccounts where glcode= ?";
             if (LOGGER.isInfoEnabled())
                 LOGGER.info("  query   " + query);
-            pst = HibernateUtil.getCurrentSession().createSQLQuery(query);
+            pst = persistenceService.getSession().createSQLQuery(query);
             pst.setString(0, glcode);
             rset = pst.list();
             for (final Object[] element : rset) {
@@ -432,7 +440,7 @@ public class CommonMethodsImpl implements CommonMethodsI {
             final String query = "select glcode from chartofaccounts where id= ?";
             if (LOGGER.isInfoEnabled())
                 LOGGER.info("  query   " + query);
-            pst = HibernateUtil.getCurrentSession().createSQLQuery(query);
+            pst = persistenceService.getSession().createSQLQuery(query);
             pst.setString(0, glCodeId);
             rset = pst.list();
             for (final Object[] element : rset) {
@@ -461,7 +469,7 @@ public class CommonMethodsImpl implements CommonMethodsI {
             final String query = "SELECT VOUCHERNUMBER FROM integrationlog WHERE RECORDID= ? and USERID= ? order by id desc";
             if (LOGGER.isInfoEnabled())
                 LOGGER.info("  query   " + query);
-            pst = HibernateUtil.getCurrentSession().createSQLQuery(query);
+            pst = persistenceService.getSession().createSQLQuery(query);
             pst.setString(0, recordId);
             pst.setInteger(1, userId);
             rset = pst.list();
@@ -490,7 +498,7 @@ public class CommonMethodsImpl implements CommonMethodsI {
             LOGGER.debug("Divisio code query-->>>>>>>> " + sql);
         try {
 
-            pst = HibernateUtil.getCurrentSession().createSQLQuery(sql);
+            pst = persistenceService.getSession().createSQLQuery(sql);
             pst.setInteger(0, divid);
             rset = pst.list();
             for (final Object[] element : rset) {
@@ -520,7 +528,7 @@ public class CommonMethodsImpl implements CommonMethodsI {
             LOGGER.debug("Division id query-->>>>>>>> " + sql);
         try {
 
-            pst = HibernateUtil.getCurrentSession().createSQLQuery(sql);
+            pst = persistenceService.getSession().createSQLQuery(sql);
             rset = pst.list();
             for (final Object[] element : rset)
                 divId = Integer.parseInt(element[0].toString());
@@ -544,7 +552,7 @@ public class CommonMethodsImpl implements CommonMethodsI {
         final String sql = "select FINANCIALYEAR from FINANCIALYEAR  where '" + vDate + "' between startingdate and endingdate";
         try
         {
-            pst = HibernateUtil.getCurrentSession().createSQLQuery(sql);
+            pst = persistenceService.getSession().createSQLQuery(sql);
             rset = pst.list();
             for (final Object[] element : rset) {
                 finYear = element[0].toString();
@@ -571,7 +579,7 @@ public class CommonMethodsImpl implements CommonMethodsI {
             final String query = "select id from chartofaccounts where glCode like ?";
             if (LOGGER.isInfoEnabled())
                 LOGGER.info("  query   " + query);
-            pst = HibernateUtil.getCurrentSession().createSQLQuery(query);
+            pst = persistenceService.getSession().createSQLQuery(query);
             pst.setString(0, glCode);
             rset = pst.list();
             for (final Object[] element : rset) {
@@ -613,7 +621,7 @@ public class CommonMethodsImpl implements CommonMethodsI {
             LOGGER.info(sql);
         try
         {
-            pst = HibernateUtil.getCurrentSession().createSQLQuery(sql);
+            pst = persistenceService.getSession().createSQLQuery(sql);
             pst.setString(0, txndate);
             rset = pst.list();
             for (final Object[] element : rset) {
@@ -631,7 +639,6 @@ public class CommonMethodsImpl implements CommonMethodsI {
             // ---
             if (LOGGER.isDebugEnabled())
                 LOGGER.debug(" In CommonMethodsImpl :getTxnNumber method ");
-            final PersistenceService persistenceService = new PersistenceService();
             // persistenceService.setSessionFactory(new SessionFactory());
             //persistenceService.setType(CFiscalPeriod.class);
             final CFiscalPeriod fiscalPeriodObj = (CFiscalPeriod) persistenceService.find("from CFiscalPeriod where id=?",
@@ -690,7 +697,7 @@ public class CommonMethodsImpl implements CommonMethodsI {
 
             // This is for getting fund type based on the fund id.
             final String query = "SELECT identifier as \"fund_identi\" from fund where id= ?";
-            pst = HibernateUtil.getCurrentSession().createSQLQuery(query);
+            pst = persistenceService.getSession().createSQLQuery(query);
             pst.setString(0, fundId);
             rset = pst.list();
             for (final Object[] element : rset) {
@@ -702,7 +709,7 @@ public class CommonMethodsImpl implements CommonMethodsI {
             if (rset == null || rset.size() == 0)
                 throw new Exception("Fund is not defined in the system");
 
-            pst = HibernateUtil.getCurrentSession().createSQLQuery(sql);
+            pst = persistenceService.getSession().createSQLQuery(sql);
             rset = pst.list();
             for (final Object[] element : rset) {
                 finYear = element[0].toString();
@@ -721,7 +728,6 @@ public class CommonMethodsImpl implements CommonMethodsI {
             // ---
             if (LOGGER.isDebugEnabled())
                 LOGGER.debug(" In CommonMethodsImpl :getTxnNumber method ");
-            final PersistenceService persistenceService = new PersistenceService();
             // persistenceService.setSessionFactory(new SessionFactory());
             //persistenceService.setType(CFiscalPeriod.class);
             final CFiscalPeriod fiscalPeriodObj = (CFiscalPeriod) persistenceService.find("from CFiscalPeriod where id=?",
@@ -778,7 +784,7 @@ public class CommonMethodsImpl implements CommonMethodsI {
 
             // This is for getting fund type based on the fund id.
             final String query = "SELECT identifier as \"fund_identi\" from fund where id= ?";
-            pst = HibernateUtil.getCurrentSession().createSQLQuery(query);
+            pst = persistenceService.getSession().createSQLQuery(query);
             pst.setString(0, fundId);
             rset = pst.list();
             for (final Object[] element : rset) {
@@ -788,7 +794,7 @@ public class CommonMethodsImpl implements CommonMethodsI {
             }
             if (rset == null || rset.size() == 0)
                 throw new Exception("Fund is not defined in the system");
-            pst = HibernateUtil.getCurrentSession().createSQLQuery(sql);
+            pst = persistenceService.getSession().createSQLQuery(sql);
             rset = pst.list();
             for (final Object[] element : rset) {
                 finYear = element[0].toString();
@@ -803,7 +809,6 @@ public class CommonMethodsImpl implements CommonMethodsI {
             // ---
             if (LOGGER.isDebugEnabled())
                 LOGGER.debug(" In CommonMethodsImpl :getTxnNumber method ");
-            final PersistenceService persistenceService = new PersistenceService();
             // persistenceService.setSessionFactory(new SessionFactory());
             //persistenceService.setType(CFiscalPeriod.class);
             final CFiscalPeriod fiscalPeriodObj = (CFiscalPeriod) persistenceService.find("from CFiscalPeriod where id=?",
@@ -840,7 +845,7 @@ public class CommonMethodsImpl implements CommonMethodsI {
         final String sql = "Select id_bndry from EG_BOUNDARY where BNDRY_NUM= ? and is_bndry_active=1 order by id_bndry_type desc";
         if (LOGGER.isInfoEnabled())
             LOGGER.info("Sub Field id query-->>>>>>>> " + sql);
-        pst = HibernateUtil.getCurrentSession().createSQLQuery(sql);
+        pst = persistenceService.getSession().createSQLQuery(sql);
         pst.setString(0, divisionCode);
         rset = pst.list();
         for (final Object[] element : rset)

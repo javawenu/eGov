@@ -40,9 +40,8 @@
 package org.egov.commons.dao;
 
 import org.egov.commons.SubScheme;
-import org.egov.infstr.dao.GenericDAO;
 
-public interface SubSchemeDAO extends GenericDAO {
+public interface SubSchemeDAO {
 	public SubScheme getSubSchemeById(Integer id);
 
 	public SubScheme getSubSchemeByCode(String code);

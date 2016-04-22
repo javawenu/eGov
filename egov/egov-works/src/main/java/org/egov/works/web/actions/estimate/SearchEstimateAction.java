@@ -60,7 +60,7 @@ import org.apache.struts2.convention.annotation.ParentPackage;
 import org.apache.struts2.convention.annotation.Result;
 import org.apache.struts2.convention.annotation.Results;
 import org.egov.commons.EgwTypeOfWork;
-import org.egov.commons.service.CommonsService;
+import org.egov.commons.dao.EgwStatusHibernateDAO;
 import org.egov.eis.entity.Assignment;
 import org.egov.eis.entity.Employee;
 import org.egov.eis.service.AssignmentService;
@@ -79,7 +79,7 @@ import org.egov.infra.web.struts.annotation.ValidationErrorPage;
 import org.egov.infstr.search.SearchQuery;
 import org.egov.infstr.search.SearchQueryHQL;
 import org.egov.infstr.utils.DateUtils;
-import org.egov.works.models.contractorBill.ContractorBillRegister;
+import org.egov.works.contractorbill.entity.ContractorBillRegister;
 import org.egov.works.models.estimate.AbstractEstimate;
 import org.egov.works.models.masters.NatureOfWork;
 import org.egov.works.models.measurementbook.MBHeader;
@@ -147,10 +147,9 @@ public class SearchEstimateAction extends SearchFormAction {
     public static final String TMS_OBJECT_TYPE = "TrackMilestone";
     private String workOrdEstIds;
     @Autowired
-    private CommonsService commonsService;
-    @Autowired
     private UserService userService;
-
+    @Autowired
+    private EgwStatusHibernateDAO egwStatusHibernateDAO;
     @Autowired
     private EmployeeService employeeService;
     @Autowired
@@ -865,7 +864,7 @@ public class SearchEstimateAction extends SearchFormAction {
 
             for (final Milestone milestone : woe.getMilestone())
                 if (WorksConstants.APPROVED.equalsIgnoreCase(milestone.getEgwStatus().getCode())) {
-                    milestone.setEgwStatus(commonsService.getStatusByModuleAndCode(WorksConstants.MILESTONE_MODULE_KEY,
+                    milestone.setEgwStatus(egwStatusHibernateDAO.getStatusByModuleAndCode(WorksConstants.MILESTONE_MODULE_KEY,
                             WorksConstants.CANCELLED_STATUS));
                             // TODO - The setter methods of variables in State.java are
                             // protected. Need to alternative way to solve this issue.
@@ -879,7 +878,7 @@ public class SearchEstimateAction extends SearchFormAction {
 
                     for (final TrackMilestone tms : milestone.getTrackMilestone())
                         if (!WorksConstants.CANCELLED_STATUS.equalsIgnoreCase(tms.getEgwStatus().getCode())) {
-                            tms.setEgwStatus(commonsService.getStatusByModuleAndCode(
+                            tms.setEgwStatus(egwStatusHibernateDAO.getStatusByModuleAndCode(
                                     WorksConstants.TRACK_MILESTONE_MODULE_KEY, WorksConstants.CANCELLED_STATUS));
 
                             tms.getCurrentState();

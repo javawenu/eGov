@@ -39,41 +39,72 @@
  ******************************************************************************/
 package org.egov.dao.bills;
 
-import java.util.Arrays;
-import java.util.List;
-
 import org.apache.log4j.Logger;
 import org.egov.commons.CVoucherHeader;
 import org.egov.infra.validation.exception.ValidationError;
 import org.egov.infra.validation.exception.ValidationException;
-import org.egov.infstr.dao.GenericHibernateDAO;
 import org.egov.infstr.services.PersistenceService;
-import org.egov.infstr.utils.HibernateUtil;
 import org.egov.model.bills.EgBillregister;
 import org.hibernate.Query;
 import org.hibernate.Session;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
+
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+import java.util.Arrays;
+import java.util.List;
 
 @SuppressWarnings("unchecked")
 @Transactional(readOnly = true)
-public class EgBillRegisterHibernateDAO extends GenericHibernateDAO {
+@Repository
+public class EgBillRegisterHibernateDAO {
+    @Transactional
+    public EgBillregister update(final EgBillregister entity) {
+        getCurrentSession().update(entity);
+        return entity;
+    }
+
+    @Transactional
+    public EgBillregister create(final EgBillregister entity) {
+        getCurrentSession().persist(entity);
+        return entity;
+    }
+
+    @Transactional
+    public void delete(EgBillregister entity) {
+        getCurrentSession().delete(entity);
+    }
+
+    
+    public EgBillregister findById(Long id, boolean lock) {
+        return (EgBillregister) getCurrentSession().load(EgBillregister.class, id);
+    }
+
+    public List<EgBillregister> findAll() {
+        return (List<EgBillregister>) getCurrentSession().createCriteria(EgBillregister.class).list();
+    }
+
+    @PersistenceContext
+    private EntityManager entityManager;
+
+    
+    public Session getCurrentSession() {
+        return entityManager.unwrap(Session.class);
+    }
+
     private final Logger LOGGER = Logger.getLogger(getClass());
+    @Autowired
+    @Qualifier("persistenceService")
     private PersistenceService<EgBillregister, Long> egBillRegisterService;
     private Session session;
 
-    public EgBillRegisterHibernateDAO(final Class persistentClass, final Session session) {
-        super(persistentClass, session);
-        egBillRegisterService = new PersistenceService<EgBillregister, Long>();
-        // egBillRegisterService.setSessionFactory(new SessionFactory());
-        //egBillRegisterService.setType(EgBillregister.class);
-    }
-
-    public EgBillRegisterHibernateDAO() {
-        super(EgBillregister.class, HibernateUtil.getCurrentSession());
-    }
+   
 
     public List<String> getDistinctEXpType() {
-        session = HibernateUtil.getCurrentSession();
+        session = getCurrentSession();
 
         final List<String> list = session.createQuery("select DISTINCT (expendituretype) from EgBillregister egbills")
                 .list();
@@ -88,8 +119,9 @@ public class EgBillRegisterHibernateDAO extends GenericHibernateDAO {
         if (null == voucherHeader)
             throw new ValidationException(Arrays.asList(new ValidationError("voucher header null",
                     "VoucherHeader supplied is null")));
-        session = HibernateUtil.getCurrentSession();
-        final Query qry = session.createQuery("from  EgBillregister br where br.egBillregistermis.voucherHeader.id=:voucherId");
+        session = getCurrentSession();
+        final Query qry = session
+                .createQuery("from  EgBillregister br where br.egBillregistermis.voucherHeader.id=:voucherId");
         qry.setLong("voucherId", voucherHeader.getId());
         final EgBillregister billRegister = (EgBillregister) qry.uniqueResult();
         return billRegister == null ? null : billRegister.getExpendituretype();
@@ -102,11 +134,13 @@ public class EgBillRegisterHibernateDAO extends GenericHibernateDAO {
         if (null == voucherHeader)
             throw new ValidationException(Arrays.asList(new ValidationError("voucher header null",
                     "VoucherHeader supplied is null")));
-        session = HibernateUtil.getCurrentSession();
-        final Query qry = session.createQuery("from  EgBillregister br where br.egBillregistermis.voucherHeader.id=:voucherId");
+        session = getCurrentSession();
+        final Query qry = session
+                .createQuery("from  EgBillregister br where br.egBillregistermis.voucherHeader.id=:voucherId");
         qry.setLong("voucherId", voucherHeader.getId());
         final EgBillregister billRegister = (EgBillregister) qry.uniqueResult();
-        return billRegister == null ? "General" : billRegister.getEgBillregistermis().getEgBillSubType() == null ? billRegister
-                .getExpendituretype() : billRegister.getEgBillregistermis().getEgBillSubType().getName();
+        return billRegister == null ? "General"
+                : billRegister.getEgBillregistermis().getEgBillSubType() == null ? billRegister.getExpendituretype()
+                        : billRegister.getEgBillregistermis().getEgBillSubType().getName();
     }
 }

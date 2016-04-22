@@ -1,42 +1,42 @@
-<!--  #-------------------------------------------------------------------------------
-# eGov suite of products aim to improve the internal efficiency,transparency, 
-#      accountability and the service delivery of the government  organizations.
-#   
-#       Copyright (C) <2015>  eGovernments Foundation
-#   
-#       The updated version of eGov suite of products as by eGovernments Foundation 
-#       is available at http://www.egovernments.org
-#   
-#       This program is free software: you can redistribute it and/or modify
-#       it under the terms of the GNU General Public License as published by
-#       the Free Software Foundation, either version 3 of the License, or
-#       any later version.
-#   
-#       This program is distributed in the hope that it will be useful,
-#       but WITHOUT ANY WARRANTY; without even the implied warranty of
-#       MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#       GNU General Public License for more details.
-#   
-#       You should have received a copy of the GNU General Public License
-#       along with this program. If not, see http://www.gnu.org/licenses/ or 
-#       http://www.gnu.org/licenses/gpl.html .
-#   
-#       In addition to the terms of the GPL license to be adhered to in using this
-#       program, the following additional terms are to be complied with:
-#   
-#   	1) All versions of this program, verbatim or modified must carry this 
-#   	   Legal Notice.
-#   
-#   	2) Any misrepresentation of the origin of the material is prohibited. It 
-#   	   is required that all modified versions of this material be marked in 
-#   	   reasonable ways as different from the original version.
-#   
-#   	3) This license does not grant any rights to any user of the program 
-#   	   with regards to rights under trademark law for use of the trade names 
-#   	   or trademarks of eGovernments Foundation.
-#   
-#     In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
-#-------------------------------------------------------------------------------  -->
+<!--
+  ~ eGov suite of products aim to improve the internal efficiency,transparency,
+  ~    accountability and the service delivery of the government  organizations.
+  ~
+  ~     Copyright (C) <2015>  eGovernments Foundation
+  ~
+  ~     The updated version of eGov suite of products as by eGovernments Foundation
+  ~     is available at http://www.egovernments.org
+  ~
+  ~     This program is free software: you can redistribute it and/or modify
+  ~     it under the terms of the GNU General Public License as published by
+  ~     the Free Software Foundation, either version 3 of the License, or
+  ~     any later version.
+  ~
+  ~     This program is distributed in the hope that it will be useful,
+  ~     but WITHOUT ANY WARRANTY; without even the implied warranty of
+  ~     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  ~     GNU General Public License for more details.
+  ~
+  ~     You should have received a copy of the GNU General Public License
+  ~     along with this program. If not, see http://www.gnu.org/licenses/ or
+  ~     http://www.gnu.org/licenses/gpl.html .
+  ~
+  ~     In addition to the terms of the GPL license to be adhered to in using this
+  ~     program, the following additional terms are to be complied with:
+  ~
+  ~         1) All versions of this program, verbatim or modified must carry this
+  ~            Legal Notice.
+  ~
+  ~         2) Any misrepresentation of the origin of the material is prohibited. It
+  ~            is required that all modified versions of this material be marked in
+  ~            reasonable ways as different from the original version.
+  ~
+  ~         3) This license does not grant any rights to any user of the program
+  ~            with regards to rights under trademark law for use of the trade names
+  ~            or trademarks of eGovernments Foundation.
+  ~
+  ~   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
+  -->
 <%@ include file="/includes/taglibs.jsp"%>
 <%@ page language="java"%>
 
@@ -44,7 +44,7 @@
 
 <head>
 <script type="text/javascript"
-	src="${pageContext.request.contextPath}/resources/javascript/voucherHelper.js"></script>
+	src="${pageContext.request.contextPath}/resources/javascript/voucherHelper.js?rnd=${app_release_no}"></script>
 <meta http-equiv="Content-Type"
 	content="text/html; charset=windows-1252">
 <title>Voucher - View</title>
@@ -84,6 +84,13 @@
 		display: none;
 	}
 }
+
+@media print {
+	div.sourceIcon {
+		display: none;
+	}
+}
+
 </style>
 <script>
 	function openSource(){
@@ -118,18 +125,18 @@
 			<div class="subheadnew">Voucher View</div>
 			<table border="0" width="100%" cellspacing="0">
 				<tr>
-					<td width="25%" class="greybox"><b>Voucher Number:</b></td>
+					<td width="10%" class="greybox"><b>Voucher Number :  </b></td>
 					<td width="25%" class="greybox"><s:property
 							value="%{voucherHeader.voucherNumber}" /></td>
-					<td width="25%" class="greybox"><b>Date:</b></td>
+					<td width="10%" class="greybox"><b>  Date :</b></td>
 					<td width="25%" class="greybox"><s:date
 							name="voucherHeader.voucherDate" format="dd/MM/yyyy" /></td>
 				</tr>
 			</table>
 			<jsp:include page="voucherViewHeader.jsp" />
-			<table align="center">
+			<table align="center" id="sourceIcon">
 				<tr>
-					<td class="bluebox"><a href="#"
+					<td class="bluebox"><a href="#" id="sourceLink"
 						onclick=" return openSource();">Source</a></td>
 
 				</tr>
@@ -156,9 +163,9 @@
 
 				<s:iterator var="p" value="%{billDetails.tempList}" status="s">
 					<tr>
-						<td width="18%" class="bluebox setborder"><s:property
+						<td width="18%" class="bluebox setborder" style="text-align: center"><s:property
 								value="function" /></td>
-						<td width="17%" class="bluebox setborder"><s:property
+						<td width="17%" class="bluebox setborder" style="text-align: center"><s:property
 								value="glcode" /></td>
 						<td width="19%" class="bluebox setborder"><s:property
 								value="accounthead" /></td>
@@ -205,9 +212,9 @@
 					</tr>
 					<s:iterator var="p" value="%{billDetails.subLedgerlist}" status="s">
 						<tr>
-							<td width="17%" class="bluebox setborder"><s:property
+							<td width="17%" class="bluebox setborder" style="text-align: center"><s:property
 									value="functionDetail" /></td>
-							<td width="17%" class="bluebox setborder"><s:property
+							<td width="17%"  class="bluebox setborder" style="text-align: center"><s:property 
 									value="glcode.glcode" /></td>
 							<td width="19%" class="bluebox setborder"><s:property
 									value="detailType.description" /></td>

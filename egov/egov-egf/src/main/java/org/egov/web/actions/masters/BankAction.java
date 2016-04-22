@@ -58,7 +58,9 @@ import org.apache.struts2.convention.annotation.Result;
 import org.apache.struts2.convention.annotation.Results;
 import org.apache.struts2.interceptor.validation.SkipValidation;
 import org.egov.commons.Bank;
+import org.egov.commons.dao.BankHibernateDAO;
 import org.egov.commons.utils.BankAccountType;
+import org.egov.egf.commons.EgovCommon;
 import org.egov.infra.utils.EgovThreadLocals;
 import org.egov.infra.validation.exception.ValidationError;
 import org.egov.infra.validation.exception.ValidationException;
@@ -67,6 +69,7 @@ import org.egov.infra.web.struts.annotation.ValidationErrorPage;
 import org.egov.services.masters.BankService;
 import org.hibernate.exception.ConstraintViolationException;
 import org.json.JSONArray;
+import org.springframework.beans.factory.annotation.Autowired;
 
 @ParentPackage("egov")
 @Results({
@@ -80,6 +83,7 @@ public class BankAction extends BaseFormAction {
     public static final String MODIFY = "modify";
     public static final String SEARCH = "search";
     private String mode;
+   
     // For jquery BankName auto complete
     private String term;
 
@@ -92,15 +96,19 @@ public class BankAction extends BaseFormAction {
         @Action(value = "/masters/bank-execute")
     })
     public String execute() {
+    	
         if ("MODIFY".equals(mode)) {
             if (StringUtils.isBlank(bank.getName()))
+            {
+            	addDropdownData("bankList",bankService.findAll("name"));
                 return "search";
+            }
             else {
                 bank = bankService.find("FROM Bank WHERE name = ?", bank.getName());
                 if (bank == null)
                     return "search";
                 else {
-                    if (bank.getIsactive() != 0)
+                    if (bank.getIsactive() != false)
                         isActive = true;
                     else
                         isActive = false;
@@ -126,9 +134,9 @@ public class BankAction extends BaseFormAction {
     public String save() {
         try {
             if (isActive)
-                bank.setIsactive(1);
+                bank.setIsactive(true);
             else
-                bank.setIsactive(0);
+                bank.setIsactive(false);
 
             if (bank.getId() == null) {
                 // TODO Dirty Code can be avoided by extending BaseModel for Bank
@@ -138,7 +146,9 @@ public class BankAction extends BaseFormAction {
                 bank.setModifiedby(BigDecimal.valueOf(Double.valueOf(EgovThreadLocals.getUserId())));
                 bankService.persist(bank);
             } else {
-                bank.setLastmodified(new Date());
+                final Date currentDate = new Date();
+                bank.setCreated(currentDate);
+                bank.setLastmodified(currentDate);
                 bank.setModifiedby(BigDecimal.valueOf(Double.valueOf(EgovThreadLocals.getUserId())));
                 bankService.update(bank);
             }
@@ -178,7 +188,7 @@ public class BankAction extends BaseFormAction {
     }
 
     public String getFundsJSON() {
-        final List<Object[]> funds = persistenceService.findAllBy("SELECT id, name FROM Fund WHERE isactive=?", 1);
+        final List<Object[]> funds = persistenceService.findAllBy("SELECT id, name FROM Fund WHERE isactive=?", true);
         final StringBuilder fundJson = new StringBuilder(":;");
         for (final Object[] fund : funds)
             fundJson.append(fund[0]).append(":").append(fund[1]).append(";");

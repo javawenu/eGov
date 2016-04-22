@@ -102,13 +102,13 @@
 		<build.number>${timestamp}</build.number>
 		<app.version>${project.version}</app.version>
 
-        <!-- Sonar properties -->
+		<!-- Sonar properties -->
 		<sonar.core.codeCoveragePlugin>jacoco</sonar.core.codeCoveragePlugin>
 		<sonar.dynamicAnalysis>reuseReports</sonar.dynamicAnalysis>
 		<sonar.jacoco.reportPath>${project.basedir}/../target/jacoco.exec</sonar.jacoco.reportPath>
 
 		<!-- Application core dependency versions -->
-		<egov-search-version>1.0.2-SNAPSHOT</egov-search-version>
+		<egov-search-version>1.0.2</egov-search-version>
 
 		<!-- Application server provided dependency versions -->
 		<lucene-version>4.10.4</lucene-version>
@@ -132,12 +132,14 @@
 		<xstream-version>1.4.2</xstream-version>
 		<xpp3-version>1.1.4c</xpp3-version>
 		<struts1-version>1.2.9</struts1-version>
-		<spring-version>4.2.3.RELEASE</spring-version>
-		<spring-data-jpa-version>1.9.1.RELEASE</spring-data-jpa-version>
+		<spring-version>4.2.5.RELEASE</spring-version>
+		<spring-session-version>1.1.1.RELEASE</spring-session-version>
+		<spring-data-jpa-version>1.9.4.RELEASE</spring-data-jpa-version>
 		<spring-data-jpa-envers-version>0.3.0.RELEASE</spring-data-jpa-envers-version>
 		<spring-security-version>4.0.3.RELEASE</spring-security-version>
 		<spring-security-oauth2-version>2.0.7.RELEASE</spring-security-oauth2-version>
 		<apache-tiles-version>3.0.5</apache-tiles-version>
+		<embedded-redis-version>0.6</embedded-redis-version>
 		<quartz-version>2.2.2</quartz-version>
 		<jasper-report-version>6.1.0</jasper-report-version>
 		<json-simple-version>1.1.1</json-simple-version>
@@ -153,11 +155,11 @@
 		<itext-version>2.1.7</itext-version>
 		<commons-javaflow-version>20060411</commons-javaflow-version>
 		<jexcelapi-version>2.6.10</jexcelapi-version>
-		<commons-beanutils-version>1.8.0</commons-beanutils-version>
+		<commons-beanutils-version>1.8.3</commons-beanutils-version>
 		<commons-config-version>1.10</commons-config-version>
 		<commons-lang-version>2.5</commons-lang-version>
 		<commons-email-version>1.4</commons-email-version>
-		<commons-collections-version>3.2.1</commons-collections-version>
+		<commons-collections-version>3.2.2</commons-collections-version>
 		<commons-codec-version>1.10</commons-codec-version>
 		<commons-dbcp-version>1.4</commons-dbcp-version>
 		<commons-io-version>2.4</commons-io-version>
@@ -216,7 +218,7 @@
 		<module>egov-wtmsweb</module>
 		<module>egov-stmsweb</module>
 		<module>egov-dashboardweb</module>
-		<module>egov-tlweb</module>
+		 <module>egov-tlweb</module> 
 		<module>egov-ear</module>
 		<module>egov-restapi</module>
 	</modules>
@@ -514,6 +516,11 @@
 				<artifactId>spring-data-envers</artifactId>
 				<version>${spring-data-jpa-envers-version}</version>
 			</dependency>
+			<dependency>
+				<groupId>org.springframework.session</groupId>
+				<artifactId>spring-session-data-redis</artifactId>
+				<version>${spring-session-version}</version>
+			</dependency>
 			<!-- SPRING END -->
 
 			<!-- SECURITY START -->
@@ -567,6 +574,14 @@
 			</dependency>
 			<!-- SECURITY END -->
 
+			<!-- EMBEDDED REDIS STARTS -->
+			<dependency>
+				<groupId>com.orange.redis-embedded</groupId>
+				<artifactId>embedded-redis</artifactId>
+				<version>${embedded-redis-version}</version>
+			</dependency>
+			<!-- EMBEDDED REDIS ENDS -->
+
 			<!-- QUARTZ START -->
 			<dependency>
 				<groupId>org.quartz-scheduler</groupId>
@@ -593,6 +608,10 @@
 					<exclusion>
 						<groupId>org.slf4j</groupId>
 						<artifactId>jcl104-over-slf4j</artifactId>
+					</exclusion>
+					<exclusion>
+						<groupId>org.apache.poi</groupId>
+						<artifactId>poi</artifactId>
 					</exclusion>
 				</exclusions>
 			</dependency>
@@ -638,6 +657,11 @@
 				<groupId>net.sf.jasperreports</groupId>
 				<artifactId>jasperreports-javaflow</artifactId>
 				<version>${jasper-report-version}</version>
+			</dependency>
+			<dependency>
+				<groupId>org.apache.poi</groupId>
+				<artifactId>poi</artifactId>
+				<version>3.10.1</version>
 			</dependency>
 			<dependency>
 				<groupId>org.jfree</groupId>
@@ -1034,8 +1058,6 @@
 		<dependency>
 			<groupId>org.springframework.session</groupId>
 			<artifactId>spring-session-data-redis</artifactId>
-			<version>1.0.0.RELEASE</version>
-			<type>pom</type>
 		</dependency>
 		<!-- SPRING DEPENDENCIES END -->
 
@@ -1043,7 +1065,6 @@
 		<dependency>
 			<groupId>com.orange.redis-embedded</groupId>
 			<artifactId>embedded-redis</artifactId>
-			<version>0.6</version>
 		</dependency>
 		<!-- EMBEDDED REDIS SERVER END -->
 
@@ -1328,11 +1349,11 @@
 				</executions>
 			</plugin>
 
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <version>2.19.1</version>
-            </plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-surefire-plugin</artifactId>
+				<version>2.19.1</version>
+			</plugin>
 
 		</plugins>
 	</build>

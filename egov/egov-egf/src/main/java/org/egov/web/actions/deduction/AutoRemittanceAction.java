@@ -39,6 +39,9 @@
  ******************************************************************************/
 package org.egov.web.actions.deduction;
 
+
+import org.egov.infstr.services.PersistenceService;
+import org.springframework.beans.factory.annotation.Qualifier;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
@@ -65,9 +68,10 @@ import org.egov.model.recoveries.RemittanceSchedulerLog;
 import org.egov.services.deduction.ScheduledRemittanceService;
 import org.egov.utils.FinancialConstants;
 import org.hibernate.HibernateException;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.beans.factory.annotation.Autowired;
 
-@Transactional(readOnly = true)
+
+
 @Results({
     @Result(name = "manual", location = "autoRemittance-manual.jsp")
 })
@@ -84,12 +88,18 @@ public class AutoRemittanceAction extends BaseFormAction {
     private String drawingOfficer;
     private Date lastRunDate;
     private Map<String, String> coaMap;
-    private final EgovMasterDataCaching masterCache = EgovMasterDataCaching.getInstance();
     private List<DepartmentDOMapping> deptDOList;
     private RemittanceSchedulerLog remittanceScheduler;
     private Map<String, String> lastRunDateMap;
     private TdsHibernateDAO tdsDAO;
 
+   
+ @Autowired
+ @Qualifier("persistenceService")
+ private PersistenceService persistenceService;
+ @Autowired
+    private EgovMasterDataCaching masterDataCache;
+    
     @Override
     public Object getModel() {
         return null;
@@ -106,11 +116,10 @@ public class AutoRemittanceAction extends BaseFormAction {
                 coaMap.put(r.getChartofaccounts().getGlcode(), r.getChartofaccounts().getGlcode() + "-"
                         + r.getChartofaccounts().getName());
 
-            addDropdownData("departmentList", masterCache.get("egi-department"));
+            addDropdownData("departmentList", masterDataCache.get("egi-department"));
             deptDOList = persistenceService.findAllBy("from DepartmentDOMapping where department is not null  ");
 
-            final List<Object[]> list = HibernateUtil
-                    .getCurrentSession()
+            final List<Object[]> list = persistenceService.getSession()
                     .
                     createSQLQuery(
                             "select glcode, to_char(max(lastrundate),'dd/mm/yyyy') from egf_remittance_scheduler where glcode is not null and sch_type='A' "

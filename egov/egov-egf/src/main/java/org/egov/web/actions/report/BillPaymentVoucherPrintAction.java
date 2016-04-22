@@ -39,6 +39,9 @@
  ******************************************************************************/
 package org.egov.web.actions.report;
 
+
+import org.egov.infstr.services.PersistenceService;
+import org.springframework.beans.factory.annotation.Qualifier;
 import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigDecimal;
@@ -80,7 +83,8 @@ import org.egov.utils.ReportHelper;
 import org.egov.web.actions.voucher.VoucherReport;
 import org.hibernate.FlushMode;
 import org.hibernate.SQLQuery;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.beans.factory.annotation.Autowired;
+
 
 @Results(value = {
 		@Result(name=BillPaymentVoucherPrintAction.PRINT , location="billPaymentVoucherPrint-print.jsp"),
@@ -91,7 +95,7 @@ import org.springframework.transaction.annotation.Transactional;
                         @Result(name = "HTML", type = "stream", location = "inputStream", params = { "inputName", "inputStream", "contentType",
                         "text/html" })
 })
-@Transactional(readOnly = true)
+
 @ParentPackage("egov")
 public class BillPaymentVoucherPrintAction extends BaseFormAction {
     Long chequeNumberPass;
@@ -120,6 +124,12 @@ public class BillPaymentVoucherPrintAction extends BaseFormAction {
     String bankAccountNumber = "";
     ArrayList<Long> chequeNoList = new ArrayList<Long>();
     ArrayList<String> chequeNosList = new ArrayList<String>();
+   
+ @Autowired
+ @Qualifier("persistenceService")
+ private PersistenceService persistenceService;
+ @Autowired
+    private EgovCommon egovCommon;
 
     public Map<String, Object> getParamMap() {
         final Map<String, Object> paramMap = new HashMap<String, Object>();
@@ -129,7 +139,7 @@ public class BillPaymentVoucherPrintAction extends BaseFormAction {
         paramMap.put("bankAccountNumber", bankAccountNumber);
 
         if (paymentHeader != null && paymentHeader.getState() != null)
-            loadInboxHistoryData(paymentHeader.getState(), paramMap);
+            loadInboxHistoryData(paymentHeader.getStateHistory(), paramMap);
 
         if (miscBillDetailList != null) {
             paramMap.put("partyName", getPartyName());
@@ -247,13 +257,13 @@ public class BillPaymentVoucherPrintAction extends BaseFormAction {
     }
 
     void populateVoucher() {
-        HibernateUtil.getCurrentSession().setDefaultReadOnly(true);
-        HibernateUtil.getCurrentSession().setFlushMode(FlushMode.MANUAL);
+        persistenceService.getSession().setDefaultReadOnly(true);
+        persistenceService.getSession().setFlushMode(FlushMode.MANUAL);
 
         if (!StringUtils.isBlank(parameters.get("id")[0])) {
             chequeNosList = new ArrayList<String>();
             final Long id = Long.valueOf(parameters.get("id")[0]);
-            paymentHeader = (Paymentheader) HibernateUtil.getCurrentSession().get(Paymentheader.class, id);
+            paymentHeader = (Paymentheader) persistenceService.getSession().get(Paymentheader.class, id);
             if (paymentHeader != null && paymentHeader.getType().equalsIgnoreCase(FinancialConstants.MODEOFPAYMENT_RTGS))
             {
                 paymentMode = "rtgs";
@@ -361,14 +371,14 @@ public class BillPaymentVoucherPrintAction extends BaseFormAction {
             for (final CGeneralLedger vd : voucher.getGeneralledger())
                 if (BigDecimal.ZERO.compareTo(BigDecimal.valueOf(vd.getCreditAmount().doubleValue()))==0) {
                     final VoucherReport voucherReport = new VoucherReport(persistenceService, Integer.valueOf(voucher.getId()
-                            .toString()), vd);
+                            .toString()), vd, egovCommon);
                     voucherReport.setDepartment(voucher.getVouchermis().getDepartmentid());
                     voucherReportList.add(voucherReport);
                 }
             for (final CGeneralLedger vd : voucher.getGeneralledger())
             	  if (BigDecimal.ZERO.compareTo(BigDecimal.valueOf(vd.getDebitAmount().doubleValue()))==0){
                     final VoucherReport voucherReport = new VoucherReport(persistenceService, Integer.valueOf(voucher.getId()
-                            .toString()), vd);
+                            .toString()), vd, egovCommon);
                     voucherReport.setDepartment(voucher.getVouchermis().getDepartmentid());
                     voucherReportList.add(voucherReport);
                 }
@@ -376,7 +386,7 @@ public class BillPaymentVoucherPrintAction extends BaseFormAction {
     }
 
     String getUlbName() {
-        final SQLQuery query = HibernateUtil.getCurrentSession().createSQLQuery("select name from companydetail");
+        final SQLQuery query = persistenceService.getSession().createSQLQuery("select name from companydetail");
         final List<String> result = query.list();
         if (result != null)
             return result.get(0);
@@ -413,10 +423,8 @@ public class BillPaymentVoucherPrintAction extends BaseFormAction {
         tempMap.put("detailtype", detailtype.getName());
         tempMap.put("detailtypeid", detailtype.getId());
         tempMap.put("detailkeyid", detailkeyid);
-
-        final EgovCommon common = new EgovCommon();
-        common.setPersistenceService(persistenceService);
-        final EntityType entityType = common.getEntityType(detailtype, detailkeyid);
+        egovCommon.setPersistenceService(persistenceService);
+        final EntityType entityType = egovCommon.getEntityType(detailtype, detailkeyid);
         tempMap.put(Constants.DETAILKEY, entityType.getName());
         tempMap.put(Constants.DETAILCODE, entityType.getCode());
         return tempMap;
@@ -431,18 +439,14 @@ public class BillPaymentVoucherPrintAction extends BaseFormAction {
                 .getVoucherDate());
     }
 
-    void loadInboxHistoryData(final State states, final Map<String, Object> paramMap) throws ApplicationRuntimeException {
+    void loadInboxHistoryData(final List<StateHistory> stateHistory, final Map<String, Object> paramMap) throws ApplicationRuntimeException {
         final List<String> history = new ArrayList<String>();
         final List<String> workFlowDate = new ArrayList<String>();
-        if (states != null) {
-            final List<StateHistory> stateHistory = states.getHistory();
-
-            for (final StateHistory state : stateHistory)
-                if (!"NEW".equalsIgnoreCase(state.getValue())) {
-                    history.add(state.getSenderName());
-                    workFlowDate.add(Constants.DDMMYYYYFORMAT2.format(state.getLastModifiedDate()));
-                }
-        }
+        for (final StateHistory historyState : stateHistory)
+            if (!"NEW".equalsIgnoreCase(historyState.getValue())) {
+                history.add(historyState.getSenderName());
+                workFlowDate.add(Constants.DDMMYYYYFORMAT2.format(historyState.getLastModifiedDate()));
+            }
         for (int i = 0; i < history.size(); i++) {
             paramMap.put("workFlow_" + i, history.get(i));
             paramMap.put("workFlowDate_" + i, workFlowDate.get(i));

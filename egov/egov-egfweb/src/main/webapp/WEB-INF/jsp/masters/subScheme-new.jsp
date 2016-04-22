@@ -1,42 +1,42 @@
-<!--  #-------------------------------------------------------------------------------
-# eGov suite of products aim to improve the internal efficiency,transparency, 
-#      accountability and the service delivery of the government  organizations.
-#   
-#       Copyright (C) <2015>  eGovernments Foundation
-#   
-#       The updated version of eGov suite of products as by eGovernments Foundation 
-#       is available at http://www.egovernments.org
-#   
-#       This program is free software: you can redistribute it and/or modify
-#       it under the terms of the GNU General Public License as published by
-#       the Free Software Foundation, either version 3 of the License, or
-#       any later version.
-#   
-#       This program is distributed in the hope that it will be useful,
-#       but WITHOUT ANY WARRANTY; without even the implied warranty of
-#       MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#       GNU General Public License for more details.
-#   
-#       You should have received a copy of the GNU General Public License
-#       along with this program. If not, see http://www.gnu.org/licenses/ or 
-#       http://www.gnu.org/licenses/gpl.html .
-#   
-#       In addition to the terms of the GPL license to be adhered to in using this
-#       program, the following additional terms are to be complied with:
-#   
-#   	1) All versions of this program, verbatim or modified must carry this 
-#   	   Legal Notice.
-#   
-#   	2) Any misrepresentation of the origin of the material is prohibited. It 
-#   	   is required that all modified versions of this material be marked in 
-#   	   reasonable ways as different from the original version.
-#   
-#   	3) This license does not grant any rights to any user of the program 
-#   	   with regards to rights under trademark law for use of the trade names 
-#   	   or trademarks of eGovernments Foundation.
-#   
-#     In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
-#-------------------------------------------------------------------------------  -->
+<!--
+  ~ eGov suite of products aim to improve the internal efficiency,transparency,
+  ~    accountability and the service delivery of the government  organizations.
+  ~
+  ~     Copyright (C) <2015>  eGovernments Foundation
+  ~
+  ~     The updated version of eGov suite of products as by eGovernments Foundation
+  ~     is available at http://www.egovernments.org
+  ~
+  ~     This program is free software: you can redistribute it and/or modify
+  ~     it under the terms of the GNU General Public License as published by
+  ~     the Free Software Foundation, either version 3 of the License, or
+  ~     any later version.
+  ~
+  ~     This program is distributed in the hope that it will be useful,
+  ~     but WITHOUT ANY WARRANTY; without even the implied warranty of
+  ~     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  ~     GNU General Public License for more details.
+  ~
+  ~     You should have received a copy of the GNU General Public License
+  ~     along with this program. If not, see http://www.gnu.org/licenses/ or
+  ~     http://www.gnu.org/licenses/gpl.html .
+  ~
+  ~     In addition to the terms of the GPL license to be adhered to in using this
+  ~     program, the following additional terms are to be complied with:
+  ~
+  ~         1) All versions of this program, verbatim or modified must carry this
+  ~            Legal Notice.
+  ~
+  ~         2) Any misrepresentation of the origin of the material is prohibited. It
+  ~            is required that all modified versions of this material be marked in
+  ~            reasonable ways as different from the original version.
+  ~
+  ~         3) This license does not grant any rights to any user of the program
+  ~            with regards to rights under trademark law for use of the trade names
+  ~            or trademarks of eGovernments Foundation.
+  ~
+  ~   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
+  -->
 <%@ include file="/includes/taglibs.jsp"%>
 
 <%@ page language="java"%>
@@ -87,6 +87,9 @@
 				}
 			return true; 
 		}
+
+		
+	    
 </script>
 
 </head>
@@ -107,6 +110,7 @@
 			<div style="color: green">
 				<s:actionmessage />
 			</div>
+			
 			<s:token />
 
 			<s:form id="subSchemeForm" name="subSchemeForm" action="subScheme"
@@ -127,23 +131,24 @@
 						<td class="bluebox" width="20%"><strong>Name<span
 								class="mandatory1"> *</span></strong></td>
 						<td class="bluebox"><s:textfield id="name" name="name"
-								value="%{subScheme.name}" cssStyle="width: 250px" /></td>
+								value="%{subScheme.name}" cssStyle="width: 250px" onblur="checkuniquenessname();"/></td>
+								
 					</tr>
 					<tr>
 						<td class="greybox">&nbsp;</td>
 						<td class="greybox"><strong>Code</strong><span
 							class="mandatory1"> *</span></td>
 						<td class="greybox"><s:textfield id="code" name="code"
-								value="%{subScheme.code}" /></td>
+								value="%{subScheme.code}" onblur="checkuniquenesscode();" /></td>
+								
 						<td class="greybox"><strong>Valid From</strong><span
 							class="mandatory1"> *</span></td>
 						<td class="greybox"><s:date name="validfrom" id="validfrom"
-								format="dd/MM/yyyy" /> <s:textfield name="validfrom"
-								id="validfrom" value="%{subScheme.validfrom}" maxlength="10"
-								onkeyup="DateFormat(this,this.value,event,false,'3')" /> <a
-							href="javascript:show_calendar('subSchemeForm.validfrom',null,null,'DD/MM/YYYY');"
-							style="text-decoration: none">&nbsp;<img
-								src="/egi/resources/erp2/images/calendaricon.gif" border="0" /></a>(dd/mm/yyyy)</td>
+								format="dd/MM/yyyy" /> <s:textfield id="validfrom"
+								name="validfrom" value="%{subScheme.validfrom}"
+								onkeyup="DateFormat(this,this.value,event,false,'3')"
+								placeholder="DD/MM/YYYY" cssClass="form-control datepicker"
+								data-inputmask="'mask': 'd/m/y'" /></td>
 
 						</td>
 					</tr>
@@ -152,15 +157,15 @@
 						<td class="bluebox"><strong>Valid To</strong><span
 							class="mandatory1"> *</span></td>
 						<td class="bluebox"><s:date name="validto" id="validtoId"
-								format="dd/MM/yyyy" /> <s:textfield name="validto"
-								id="validtoId" value="%{subScheme.validto}" maxlength="10"
-								onkeyup="DateFormat(this,this.value,event,false,'3')" /> <a
-							href="javascript:show_calendar('subSchemeForm.validto',null,null,'DD/MM/YYYY');"
-							style="text-decoration: none">&nbsp;<img
-								src="/egi/resources/erp2/images/calendaricon.gif" border="0" /></a>(dd/mm/yyyy)</td>
+								format="dd/MM/yyyy" /> <s:textfield id="validtoId"
+								name="validto" value="%{subScheme.validto}"
+								onkeyup="DateFormat(this,this.value,event,false,'3')"
+								placeholder="DD/MM/YYYY" cssClass="form-control datepicker"
+								data-inputmask="'mask': 'd/m/y'" /></td>
 						</td>
 						<td class="bluebox"><strong>Is Active</strong></td>
-						<td class="bluebox"><s:checkbox name="isActive" value="%{isActive}" /></td>
+						<td class="bluebox"><s:checkbox name="isActive"
+								value="%{isActive}" /></td>
 					</tr>
 					<tr>
 						<td class="greybox">&nbsp;</td>
@@ -184,15 +189,12 @@
 								value="%{subScheme.councilLoanProposalNumber}" /></td>
 						<td class="bluebox"><strong>Council Loan Proposal
 								Date</strong></td>
-						<td class="bluebox"><input type="text"
-							id="councilLoanProposalDate" name="councilLoanProposalDate"
-							style="width: 100px"
-							value='<s:date name="councilLoanProposalDate" format="dd/MM/yyyy"/>'
-							onkeyup="DateFormat(this,this.value,event,false,'3')" /> <a
-							href="javascript:show_calendar('subSchemeForm.councilLoanProposalDate');"
-							style="text-decoration: none">&nbsp;<img
-								src="/egi/resources/erp2/images/calendaricon.gif" border="0" /></a>
-						</td>
+						<td class="bluebox"><s:textfield id="councilLoanProposalDate"
+								name="councilLoanProposalDate"
+								value="%{councilLoanProposalDate}"
+								onkeyup="DateFormat(this,this.value,event,false,'3')"
+								placeholder="DD/MM/YYYY" cssClass="form-control datepicker"
+								data-inputmask="'mask': 'd/m/y'" /></td>
 					</tr>
 					<tr>
 						<td class="greybox">&nbsp;</td>
@@ -204,15 +206,12 @@
 								value="%{subScheme.councilAdminSanctionNumber}" /></td>
 						<td class="greybox"><strong>Council Admin Sanctioned
 								Date</strong></td>
-						<td class="greybox"><input type="text"
-							id="councilAdminSanctionDate" name="councilAdminSanctionDate"
-							style="width: 100px"
-							value='<s:date name="councilAdminSanctionDate" format="dd/MM/yyyy"/>'
-							onkeyup="DateFormat(this,this.value,event,false,'3')" /> <a
-							href="javascript:show_calendar('subSchemeForm.councilAdminSanctionDate');"
-							style="text-decoration: none">&nbsp;<img
-								src="/egi/resources/erp2/images/calendaricon.gif" border="0" /></a>
-						</td>
+						<td class="greybox"><s:textfield
+								id="councilAdminSanctionDate" name="councilAdminSanctionDate"
+								value="%{councilAdminSanctionDate}"
+								onkeyup="DateFormat(this,this.value,event,false,'3')"
+								placeholder="DD/MM/YYYY" cssClass="form-control datepicker"
+								data-inputmask="'mask': 'd/m/y'" /></td>
 					</tr>
 					<tr>
 						<td class="bluebox">&nbsp;</td>
@@ -223,15 +222,11 @@
 								value="%{subScheme.govtLoanProposalNumber}" /></td>
 						<td class="bluebox"><strong>Government Loan Proposal
 								Date</strong></td>
-						<td class="bluebox"><input type="text"
-							id="govtLoanProposalDate" name="govtLoanProposalDate"
-							style="width: 100px"
-							value='<s:date name="govtLoanProposalDate" format="dd/MM/yyyy"/>'
-							onkeyup="DateFormat(this,this.value,event,false,'3')" /> <a
-							href="javascript:show_calendar('subSchemeForm.govtLoanProposalDate');"
-							style="text-decoration: none">&nbsp;<img
-								src="/egi/resources/erp2/images/calendaricon.gif" border="0" /></a>
-						</td>
+						<td class="bluebox"><s:textfield id="govtLoanProposalDate"
+								name="govtLoanProposalDate" value="%{govtLoanProposalDate}"
+								onkeyup="DateFormat(this,this.value,event,false,'3')"
+								placeholder="DD/MM/YYYY" cssClass="form-control datepicker"
+								data-inputmask="'mask': 'd/m/y'" /></td>
 					</tr>
 					<tr>
 						<td class="greybox">&nbsp;</td>
@@ -242,15 +237,11 @@
 								value="%{subScheme.govtAdminSanctionNumber}" /></td>
 						<td class="greybox"><strong>Government Admin
 								Sanction Date</strong></td>
-						<td class="greybox"><input type="text"
-							id="govtAdminSanctionDate" name="govtAdminSanctionDate"
-							style="width: 100px"
-							value='<s:date name="govtAdminSanctionDate" format="dd/MM/yyyy"/>'
-							onkeyup="DateFormat(this,this.value,event,false,'3')" /> <a
-							href="javascript:show_calendar('subSchemeForm.govtAdminSanctionDate');"
-							style="text-decoration: none">&nbsp;<img
-								src="/egi/resources/erp2/images/calendaricon.gif" border="0" /></a>
-						</td>
+						<td class="greybox"><s:textfield id="govtAdminSanctionDate"
+								name="govtAdminSanctionDate" value="%{govtAdminSanctionDate}"
+								onkeyup="DateFormat(this,this.value,event,false,'3')"
+								placeholder="DD/MM/YYYY" cssClass="form-control datepicker"
+								data-inputmask="'mask': 'd/m/y'" /></td>
 					</tr>
 				</table>
 				<br />

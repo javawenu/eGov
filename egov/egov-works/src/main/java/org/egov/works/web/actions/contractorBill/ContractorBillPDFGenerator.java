@@ -51,7 +51,7 @@ import java.util.Map;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.egov.commons.CChartOfAccounts;
-import org.egov.commons.service.CommonsService;
+import org.egov.commons.dao.ChartOfAccountsHibernateDAO;
 import org.egov.infra.exception.ApplicationException;
 import org.egov.infra.exception.ApplicationRuntimeException;
 import org.egov.infra.workflow.entity.StateHistory;
@@ -61,8 +61,8 @@ import org.egov.model.bills.EgBilldetails;
 import org.egov.pims.commons.DeptDesig;
 import org.egov.pims.model.PersonalInformation;
 import org.egov.pims.service.EmployeeServiceOld;
+import org.egov.works.contractorbill.entity.ContractorBillRegister;
 import org.egov.works.models.contractorBill.AssetForBill;
-import org.egov.works.models.contractorBill.ContractorBillRegister;
 import org.egov.works.models.contractorBill.DeductionTypeForBill;
 import org.egov.works.models.contractorBill.StatutoryDeductionsForBill;
 import org.egov.works.models.measurementbook.MBForCancelledBill;
@@ -105,6 +105,8 @@ public class ContractorBillPDFGenerator extends AbstractPDFGenerator {
     private String projectCode = "";
     public static final String newLine = "\n";
     private Long workOrderId;
+    @Autowired
+    private ChartOfAccountsHibernateDAO chartOfAccountsHibernateDAO;
 
     private final List<MBHeader> mbHeaderList = new ArrayList<MBHeader>();
     private final SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy", Locale.US);
@@ -123,8 +125,6 @@ public class ContractorBillPDFGenerator extends AbstractPDFGenerator {
     private List<DeductionTypeForBill> sortedStandardDeductionList;
     private List<EgBilldetails> customDeductionList;
     private List<AssetForBill> assetForBillList;
-    @Autowired
-    private CommonsService commonsService;
     private WorksService worksService;
     private BigDecimal advanceAdjustment = new BigDecimal(0);
     private List<BigDecimal> glcodeIdList;
@@ -429,7 +429,8 @@ public class ContractorBillPDFGenerator extends AbstractPDFGenerator {
                 final String[] resultAry = resultAmt.split(":");
                 createcreateDeductionTypeDataTable.getDefaultCell().setColspan(7);
                 createcreateDeductionTypeDataTable.addCell(
-                        commonsService.getCChartOfAccountsById(Long.valueOf(egBilldetails.getGlcodeid().toString())).getName());
+                        chartOfAccountsHibernateDAO.findById(Long.valueOf(egBilldetails.getGlcodeid().toString()), false)
+                                .getName());
                 createcreateDeductionTypeDataTable.getDefaultCell().setHorizontalAlignment(Element.ALIGN_RIGHT);
                 createcreateDeductionTypeDataTable.getDefaultCell().setColspan(1);
                 createcreateDeductionTypeDataTable.addCell(resultTotCustomAry[0]);// Rs. amt all bill for workorder till billdate
@@ -768,8 +769,8 @@ public class ContractorBillPDFGenerator extends AbstractPDFGenerator {
             billGenNumber = egBillRegister.getBillnumber();
 
         // partbillNo
-        if (egBillRegister.getBillnumber() != null && egBillRegister.getPartbillNo() != null)
-            billNumber = egBillRegister.getPartbillNo().toString();
+        if (egBillRegister.getBillnumber() != null && egBillRegister.getBillSequenceNumber() != null)
+            billNumber = egBillRegister.getBillSequenceNumber().toString();
 
         if (egBillRegister.getBilldate() != null)
             billDate = sdf.format(egBillRegister.getBilldate());
@@ -833,7 +834,7 @@ public class ContractorBillPDFGenerator extends AbstractPDFGenerator {
     }
 
     public void getGlCodeForNetPayable() throws NumberFormatException, ApplicationException {
-        final List<CChartOfAccounts> coaPayableList = commonsService
+        final List<CChartOfAccounts> coaPayableList = chartOfAccountsHibernateDAO
                 .getAccountCodeByPurpose(Integer.valueOf(worksService.getWorksConfigValue(WORKS_NETPAYABLE_CODE)));
         // if(!coaPayableList.isEmpty()){
         if (coaPayableList != null)
@@ -889,7 +890,7 @@ public class ContractorBillPDFGenerator extends AbstractPDFGenerator {
             List<StateHistory> history = null;
             if (egBillRegister != null && egBillRegister.getCurrentState() != null
                     && egBillRegister.getCurrentState().getHistory() != null)
-                history = egBillRegister.getCurrentState().getHistory();
+                history = egBillRegister.getStateHistory();
 
             if (history != null) {
                 Collections.reverse(history);
@@ -986,10 +987,6 @@ public class ContractorBillPDFGenerator extends AbstractPDFGenerator {
         this.employeeService = employeeService;
     }
 
-    public void setCommonsService(final CommonsService commonsService) {
-        this.commonsService = commonsService;
-    }
-
     public void setWorksService(final WorksService worksService) {
         this.worksService = worksService;
     }
@@ -998,4 +995,5 @@ public class ContractorBillPDFGenerator extends AbstractPDFGenerator {
             final ContractorAdvanceService contractorAdvanceService) {
         this.contractorAdvanceService = contractorAdvanceService;
     }
+
 }

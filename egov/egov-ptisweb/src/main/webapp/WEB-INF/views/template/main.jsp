@@ -65,12 +65,12 @@
 		<script src="<c:url value='/resources/global/js/jquery/plugins/jquery.validate.min.js' context='/egi'/>"></script>
 		<script src="<c:url value='/resources/global/js/egov/custom.js' context='/egi'/>"></script>	
 		<script type="text/javascript" src="<c:url value='/resources/javascript/SASvalidation.js'/>"></script>
-	    <!--[if lt IE 9]><script src="resources/js/ie8-responsive-file-warning.js"></script><![endif]-->
+	    
 		
 		<!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
 		<!--[if lt IE 9]>
-			<script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
-			<script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+			<script src="/egi/resources/global/js/ie8/html5shiv.min.js"></script>
+			<script src="/egi/resources/global/js/ie8/respond.min.js"></script>
 		<![endif]-->
 	
 	</head>
@@ -112,6 +112,20 @@
 	                            e.preventDefault();
 	    	};
 	    	jQuery(document).on("keydown", disableRefresh);
+
+	    	function reCalculateTotalFooterWhenExport(tableIdWithOutPrefix)
+	    	{
+	    		$("#"+tableIdWithOutPrefix+" tfoot td").each(function( index ) {
+	    	   		 if(index!==0)
+	    	   		 {
+	    	   			 var totals=$(this).html().split("(");
+	    		    		 var str=""+totals[1];
+	    		    		 str=str.slice(0,-1);
+	    		    		 $(this).html(str);
+	    	   		 }
+	    	   	 });
+	    	     setTimeout(function(){ $('select[name="'+ tableIdWithOutPrefix +'_length"]').trigger('change'); }, 10);
+	    	}
 		</script>
     </body>
 </html>

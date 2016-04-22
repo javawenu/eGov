@@ -50,7 +50,7 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.struts2.convention.annotation.Action;
 import org.apache.struts2.convention.annotation.Result;
 import org.egov.commons.EgwStatus;
-import org.egov.commons.service.CommonsService;
+import org.egov.commons.dao.EgwStatusHibernateDAO;
 import org.egov.infra.web.struts.actions.BaseFormAction;
 import org.egov.infra.web.struts.annotation.ValidationErrorPageExt;
 import org.egov.infra.web.utils.EgovPaginatedList;
@@ -59,7 +59,7 @@ import org.egov.infstr.services.PersistenceService;
 import org.egov.infstr.utils.DateUtils;
 import org.egov.pims.model.PersonalInformation;
 import org.egov.pims.service.EmployeeServiceOld;
-import org.egov.works.models.contractorBill.ContractorBillRegister;
+import org.egov.works.contractorbill.entity.ContractorBillRegister;
 import org.egov.works.models.masters.Contractor;
 import org.egov.works.models.measurementbook.MBForCancelledBill;
 import org.egov.works.models.measurementbook.MBHeader;
@@ -90,8 +90,6 @@ public class SearchBillAction extends BaseFormAction {
     private EmployeeServiceOld employeeService;
     private ContractorBillService contractorBillService;
     private WorksService worksService;
-    @Autowired
-    private CommonsService commonsService;
     public static final String SEARCH = "search";
     private static final String BILL_MODULE_KEY = "CONTRACTORBILL";
     private static final String NEW_STATUS = "NEW";
@@ -113,6 +111,8 @@ public class SearchBillAction extends BaseFormAction {
     private EgovPaginatedList pagedResults;
     List<ContractorBillRegister> contractorBillList = null;
     private String estimateNo;
+    @Autowired
+    private EgwStatusHibernateDAO egwStatusHibernateDAO;
 
     // @Override
     @Override
@@ -122,7 +122,7 @@ public class SearchBillAction extends BaseFormAction {
     }
 
     public List<EgwStatus> getBillStatuses() {
-        final List<EgwStatus> statusList = commonsService.getStatusByModule(BILL_MODULE_KEY);
+        final List<EgwStatus> statusList = egwStatusHibernateDAO.getStatusByModule(BILL_MODULE_KEY);
         final List<EgwStatus> latestStatusList = new ArrayList<EgwStatus>();
         if (!statusList.isEmpty())
             for (final EgwStatus egwStatus : statusList)
@@ -234,7 +234,7 @@ public class SearchBillAction extends BaseFormAction {
             cancelBillService.persist(mbCB);
         }
 
-        contractorBillRegister.setStatus(commonsService.getStatusByModuleAndCode(BILL_MODULE_KEY,
+        contractorBillRegister.setStatus(egwStatusHibernateDAO.getStatusByModuleAndCode(BILL_MODULE_KEY,
                 ContractorBillRegister.BillStatus.CANCELLED.toString()));
         contractorBillRegister.setBillstatus(ContractorBillRegister.BillStatus.CANCELLED.toString());
 
@@ -349,7 +349,7 @@ public class SearchBillAction extends BaseFormAction {
             // To get workorder ID by passing work order number.
             final WorkOrder workOrderObj = (WorkOrder) getPersistenceService().find(
                     "from WorkOrder where workOrderNumber = ?", br.getWorkordernumber());
-            br.setWorkOrderId(workOrderObj.getId());
+            br.setWorkOrder(workOrderObj);
         }
         return billList;
     }
@@ -392,10 +392,6 @@ public class SearchBillAction extends BaseFormAction {
 
     public void setContractorBillService(final ContractorBillService contractorBillService) {
         this.contractorBillService = contractorBillService;
-    }
-
-    public void setCommonsService(final CommonsService commonsService) {
-        this.commonsService = commonsService;
     }
 
     public void setMeasurementBookService(final MeasurementBookServiceImpl measurementBookService) {

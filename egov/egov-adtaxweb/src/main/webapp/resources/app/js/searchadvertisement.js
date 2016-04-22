@@ -10,7 +10,7 @@ $(document).ready(function(){
 		},
 		queryTokenizer: Bloodhound.tokenizers.whitespace,
 		remote: {
-			url: '../agency/agencies?name=%QUERY',
+			url: '../agency/active-agencies?name=%QUERY',
 			filter: function (data) {
 				return $.map(data, function (ct) {
 					return {
@@ -105,14 +105,15 @@ $(document).ready(function(){
 			"aLengthMenu": [[10, 25, 50, -1], [10, 25, 50, "All"]],
 			"autoWidth": false,
 			"bDestroy": true,
-			"ajax": "/adtax/hoarding/search-adtax-result?"+$("#hoardingsearchform").serialize(),
+			"ajax": "/adtax/hoarding/search-adtax-result?"+$("#adtaxsearchform").serialize(),
 			"columns" : [
+			              { "data" : "agencyName", "title": "Agency"},
 						  { "data" : "advertisementNumber", "title":"Advertisement No."},
 						  { "data" : "applicationNumber", "title": "Application No."},
 						  { "data" : "applicationFromDate", "title": "Application Date"},
-						  { "data" : "agencyName", "title": "Agency"},
 						  { "data" : "pendingDemandAmount", "title": "Amount"},
 						  { "data" : "penaltyAmount", "title": "Penalty Amount"},
+						  { "data" : "totalAmount", "title": "Total Amount"},
 						  { "data" : "permissionNumber", "visible": false},
 						  { "data" : "permitStatus", "visible": false},
 						  { "data" : "id", "visible": false},
@@ -137,7 +138,7 @@ $(document).ready(function(){
 	$("#adtax_search").on('change','tbody tr td .dropchange',
 			function() {
 			//var applicationNumber = oTable.fnGetData($(this).parent().parent(), 1);
-			var adtaxid= oTable.fnGetData($(this).parent().parent(), 8);
+			var adtaxid= oTable.fnGetData($(this).parent().parent(), 9);
 			//var advertisementNumber = oTable.fnGetData($(this).parent().parent(), 0);
 						if (this.value == 0) {
 							var url = '/adtax/advertisement/permitOrder/'+ adtaxid;
@@ -180,10 +181,10 @@ $(document).ready(function(){
 						  { "data" : "ownerDetail", "title": "Owner"},
 						  { "data" : "financialYear", "title": "Financial Year"},
 						  { "data" : "id", "visible": false},
-						  { "data" : "","title": "Actions","sortable":false,
+						  {"title" : "Actions","sortable":false,
 				        	   render : function(data, type, row) {
-			        					   return ('<select class="dropchange" id="renewdropdown" ><option>Select from Below</option><option value="0">Renew Advertisement</option></select>');   
-			        				}}],
+return ('<select class="dropchange" id="renewdropdown" ><option>Select from Below</option><option value="0">Adtax Renewal</option></select>');   
+				        			   }}],
 						  "aaSorting": [[1, 'asc']] 
 				});
 		e.stopPropagation();
@@ -192,13 +193,14 @@ $(document).ready(function(){
 	
 	$("#renew_search").on('change','tbody tr td .dropchange',
 			function() {
-			var adtaxid= oTable.fnGetData($(this).parent().parent(), 8);
+			var adtaxid= oTable.fnGetData($(this).parent().parent(), 6);
 						if (this.value == 0) {
-							var url = '/adtax/advertisement/permitOrder/'+ adtaxid;
+							var url = '/adtax/advertisement/renewal/'+ adtaxid;
 							$('#renewalsearchform').attr('method', 'get');
 							$('#renewalsearchform').attr('action', url);
 							window.open(url,'window','scrollbars=yes,resizable=yes,height=700,width=800,status=yes');
 						}
 						}); 
+	
 });
 

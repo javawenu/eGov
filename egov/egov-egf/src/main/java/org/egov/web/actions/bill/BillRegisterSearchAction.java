@@ -42,6 +42,9 @@
  */
 package org.egov.web.actions.bill;
 
+
+import org.egov.infstr.services.PersistenceService;
+import org.springframework.beans.factory.annotation.Qualifier;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -71,6 +74,7 @@ import org.egov.model.bills.EgBillregistermis;
 import org.egov.utils.FinancialConstants;
 import org.egov.utils.VoucherHelper;
 import org.hibernate.Query;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * @author manoranjan
@@ -91,7 +95,13 @@ public class BillRegisterSearchAction extends BaseFormAction {
     private String billDateTo;
     private String expType;
     private List<Map<String, Object>> billList;
-
+   
+ @Autowired
+ @Qualifier("persistenceService")
+ private PersistenceService persistenceService;
+ @Autowired
+    private EgovMasterDataCaching masterDataCache;
+    
     public BillRegisterSearchAction() {
         billregister = new EgBillregister();
         billregister.setEgBillregistermis(new EgBillregistermis());
@@ -125,18 +135,17 @@ public class BillRegisterSearchAction extends BaseFormAction {
         expTypeList.add(FinancialConstants.STANDARD_EXPENDITURETYPE_SALARY);
         addDropdownData("expType", expTypeList);
         getHeaderFields();
-        final EgovMasterDataCaching masterCache = EgovMasterDataCaching.getInstance();
         if (headerFields.contains("department"))
-            addDropdownData("departmentList", masterCache.get("egi-department"));
+            addDropdownData("departmentList", masterDataCache.get("egi-department"));
         if (headerFields.contains("functionary"))
-            addDropdownData("functionaryList", masterCache
+            addDropdownData("functionaryList", masterDataCache
                     .get("egi-functionary"));
         if (headerFields.contains("fund"))
-            addDropdownData("fundList", masterCache.get("egi-fund"));
+            addDropdownData("fundList", masterDataCache.get("egi-fund"));
         if (headerFields.contains("fundsource"))
-            addDropdownData("fundsourceList", masterCache.get("egi-fundSource"));
+            addDropdownData("fundsourceList", masterDataCache.get("egi-fundSource"));
         if (headerFields.contains("field"))
-            addDropdownData("fieldList", masterCache.get("egi-ward"));
+            addDropdownData("fieldList", masterDataCache.get("egi-ward"));
         if (headerFields.contains("scheme"))
             addDropdownData("schemeList", Collections.EMPTY_LIST);
         if (headerFields.contains("subscheme"))
@@ -230,8 +239,8 @@ public class BillRegisterSearchAction extends BaseFormAction {
     private List<Object[]> getOwnersForWorkFlowState(final List<Long> stateIds)
     {
         List<Object[]> ownerNamesList = new ArrayList<Object[]>();
-        final String ownerNamesQueryStr = "select state.ownerUser.username,bill.state.id from User egusr,State state, EgBillregister bill"
-                + " where bill.state.id=state.id and bill.state.id in (:IDS)";
+        final String ownerNamesQueryStr = "select a.employee.username,bill.state.id from Assignment a,State state, EgBillregister bill"
+                + " where  bill.state.id=state.id and a.position.id = state.ownerPosition.id and bill.state.id in (:IDS)";
         int size = stateIds.size();
         if (size > 999)
         {
@@ -243,7 +252,7 @@ public class BillRegisterSearchAction extends BaseFormAction {
             {
                 newGLDList = new ArrayList<Object[]>();
                 toIndex += step;
-                final Query ownerNamesQuery = HibernateUtil.getCurrentSession().createQuery(ownerNamesQueryStr);
+                final Query ownerNamesQuery = persistenceService.getSession().createQuery(ownerNamesQueryStr);
                 ownerNamesQuery.setParameterList("IDS", stateIds.subList(fromIndex, toIndex));
                 newGLDList = ownerNamesQuery.list();
                 fromIndex = toIndex;
@@ -258,7 +267,7 @@ public class BillRegisterSearchAction extends BaseFormAction {
                 newGLDList = new ArrayList<Object[]>();
                 fromIndex = toIndex;
                 toIndex = fromIndex + size;
-                final Query ownerNamesQuery = HibernateUtil.getCurrentSession().createQuery(ownerNamesQueryStr);
+                final Query ownerNamesQuery = persistenceService.getSession().createQuery(ownerNamesQueryStr);
                 ownerNamesQuery.setParameterList("IDS", stateIds.subList(fromIndex, toIndex));
                 newGLDList = ownerNamesQuery.list();
                 if (newGLDList != null)
@@ -266,7 +275,7 @@ public class BillRegisterSearchAction extends BaseFormAction {
             }
 
         } else
-            ownerNamesList = HibernateUtil.getCurrentSession().createQuery(ownerNamesQueryStr)
+            ownerNamesList = persistenceService.getSession().createQuery(ownerNamesQueryStr)
             .setParameterList("IDS", stateIds)
             .list();
         return ownerNamesList;

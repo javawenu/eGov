@@ -714,12 +714,12 @@ function checkNumberMandatory(obj)
 function validateEmail( obj)
 {
        var objRegExp  = /^[a-z0-9]([a-z0-9_\-\.]*)@([a-z0-9_\-\.]*)(\.[a-z]{2,3}(\.[a-z]{2}){0,2})$/i;
-        if(obj.value!="")
+        if(obj.value)
           {
           if(!objRegExp.test(obj.value))
           {
           bootbox.alert('Pleasr Enter Valid Email Address');
-          obj.value="";
+          obj.value=""; 
           obj.focus();
           return false;
           }
@@ -945,8 +945,10 @@ function addOwner() {
 										{
 											return nextIdx;
 										}
-									});
+									});  
 
+							
+												
 							// if element is static attribute hold values for
 							// next row, otherwise it will be reset
 							if (!jQuery(this).data('static')) {
@@ -955,6 +957,9 @@ function addOwner() {
 								// set default selection for dropdown
 								if (jQuery(this).is("select")) {
 									jQuery(this).prop('selectedIndex', 0);
+								}
+								else if (jQuery(this).is("input:text")) {
+									jQuery(this).attr('value', '');
 								}
 							}
 							
@@ -1264,16 +1269,17 @@ function addFloor()
 {		
 	var tbl = document.getElementById('floorDetails');
     var rowO=tbl.rows.length;
-   //bootbox.alert("rowO="+rowO);
-    if(rowO<11)
+     // bootbox.alert("rowO="+rowO);
+    if(rowO<=50)
     {
+    	// bootbox.alert("rowO1="+rowO);
     	if(document.getElementById('Floorinfo') != null)
     	{
 	    		//get Next Row Index to Generate
 	    		var nextIdx = tbl.rows.length-1;
 	    		
 	    		//validate status variable for exiting function
-	    		var isValid=1;//for default have success value 0
+	    		var isValid=1;//for default have success value 0  
 	    		
 	    		//validate existing rows in table
 	    		jQuery("#floorDetails tr:not(:first)").find('input, select').each(function(){

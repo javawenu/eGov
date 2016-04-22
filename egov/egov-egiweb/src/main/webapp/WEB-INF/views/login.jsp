@@ -68,12 +68,12 @@
 		<link rel="stylesheet" href="/egi/resources/global/css/egov/custom.css?rnd=${applicationScope.buildno}">
 		<script src="/egi/resources/global/js/jquery/jquery.js" type="text/javascript"></script>
 		
-		<!--[if lt IE 9]><script src="resources/js/ie8-responsive-file-warning.js"></script><![endif]-->
+		
 		
 		<!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
 		<!--[if lt IE 9]>
-			<script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
-			<script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+			<script src="/egi/resources/global/js/ie8/html5shiv.min.js"></script>
+			<script src="/egi/resources/global/js/ie8/respond.min.js"></script>
 		<![endif]-->
 	</head>
 	<body class="page-body index">
@@ -160,6 +160,8 @@
 								<div class="form-group">
 									<div class="signin-title"><spring:message code="lbl.login"/></div>
 								</div>
+								<input style="display:none" type="text">
+								<input style="display:none" type="password" />
 								<div class="form-group">
 									<div class="input-group">
 										<div class="input-group-addon style-label">
@@ -178,7 +180,7 @@
 										</div>
 										<input type="password" class="form-control style-form"
 											name="j_password" id="j_password" placeholder="Password"
-											autocomplete="off" required="required" /> <span
+											autocomplete="new-password" required="required" /> <span
 											class="mandatory set-mandatory"></span>
 									</div>
 								</div>
@@ -193,14 +195,14 @@
 								<c:if test="${param.error}">
 								<div class="form-group">
 									<div class="text-center error-msg font-12">
-									${sessionScope.SPRING_SECURITY_LAST_EXCEPTION.message}
 										<c:choose>
 										<c:when test="${sessionScope.SPRING_SECURITY_LAST_EXCEPTION.message == 'Maximum sessions of {0} for this principal exceeded'}">
 											<spring:message code="msg.multiple.login"/>
 										</c:when>
-										<c:when test="${sessionScope.SPRING_SECURITY_LAST_EXCEPTION.message == 'User credentials have expired'}">
+										<c:when test="${sessionScope.SPRING_SECURITY_LAST_EXCEPTION.message == 'User account has expired'}">
 											<spring:message code="msg.cred.exprd1"/>
-											<a href="#" target="_blank" style="color: blue">
+											<a href="javascript:void(0);" data-toggle="modal"
+											   data-target="#fpassword" data-backdrop="static">
 											<spring:message code="msg.cred.exprd2"/>
 											</a> <spring:message code="msg.cred.exprd3"/>
 										</c:when>
@@ -338,15 +340,14 @@
 						<h4 class="modal-title">Enable Cookies</h4>
 					</div>
 					<div class="modal-body">
-						Oops! Your browser seems to have cookies disabled. Make sure cookies are enabled or try opening a new browser window.
+						Your browser seems to have cookies disabled. Make sure cookies are enabled or try opening a new browser window.
 					</div>
 				</div>
 			</div>
 		</div>
 		<script src="/egi/resources/global/js/bootstrap/bootstrap.js" type="text/javascript"></script>
 		<script src="/egi/resources/global/js/egov/custom.js?rnd=${applicationScope.buildno}" type="text/javascript"></script>
-		<script src="http://ajax.aspnetcdn.com/ajax/jquery.validate/1.9/jquery.validate.min.js"></script>
+		<script src="/egi/resources/global/js/jquery/plugins/jquery.validate.min.js"></script>
 		<script src="/egi/resources/js/app/login.js?rnd=${applicationScope.buildno}" type="text/javascript"></script>
 	</body>
 </html>
-<%session.invalidate();%>

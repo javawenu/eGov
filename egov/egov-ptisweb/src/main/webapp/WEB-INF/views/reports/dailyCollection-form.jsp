@@ -127,7 +127,18 @@ body
 								<form:option value="">
 									<spring:message code="lbl.option.select" />
 								</form:option>
-								<form:options items="${status}"  itemValue="id" itemLabel="description" />
+								<form:options items="${status}"  itemValue="description" itemLabel="description" />
+							</form:select>
+						</div>
+						
+						<label for="field-1" class="col-sm-2 control-label"><spring:message code="lbl.ward" /></label>
+						<div class="col-sm-3 add-margin">
+							<form:select name="ward" id="ward" path=""
+								cssClass="form-control" cssErrorClass="form-control error">
+								<form:option value="">
+									<spring:message code="lbl.default.all" />
+								</form:option>
+								<form:options items="${wards}" itemValue="id" itemLabel="name" />
 							</form:select>
 						</div>
 				</div>
@@ -165,9 +176,11 @@ body
 								<td></td>
 								<td></td>
 								<td></td>
+								<td></td>
 								<td></td>  
 								<td></td>
 								<td>Total</td>
+								<td></td>
 								<td></td>
 								<td></td>
 								<td></td>
@@ -196,4 +209,4 @@ body
 	src="<c:url value='/resources/global/js/bootstrap/bootstrap-datepicker.js' context='/egi'/>"
 	type="text/javascript"></script>
 <script type="text/javascript"
-	src="<c:url value='/resources/js/app/dailyCollectionReport.js'/>"></script>
+	src="<c:url value='/resources/js/app/dailyCollectionReport.js?rnd=${app_release_no}'/>"></script>

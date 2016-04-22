@@ -124,7 +124,9 @@ public class NewConnectionController extends GenericConnectionController {
         waterConnectionDetails.setConnectionStatus(ConnectionStatus.INPROGRESS);
         model.addAttribute("allowIfPTDueExists", waterTaxUtils.isNewConnectionAllowedIfPTDuePresent());
         model.addAttribute("additionalRule", waterConnectionDetails.getApplicationType().getCode());
-        prepareWorkflow(model, waterConnectionDetails, new WorkflowContainer());
+        WorkflowContainer workflowContainer= new WorkflowContainer();
+        workflowContainer.setAdditionalRule(waterConnectionDetails.getApplicationType().getCode());
+        prepareWorkflow(model, waterConnectionDetails, workflowContainer);
         model.addAttribute("currentUser", waterTaxUtils.getCurrentUserRole(securityUtils.getCurrentUser()));
         model.addAttribute("stateType", waterConnectionDetails.getClass().getSimpleName());
         model.addAttribute("documentName", waterTaxUtils.documentRequiredForBPLCategory());
@@ -171,7 +173,8 @@ public class NewConnectionController extends GenericConnectionController {
             final BindingResult resultBinder, final RedirectAttributes redirectAttributes,
             final HttpServletRequest request, final Model model, @RequestParam String workFlowAction,
             final BindingResult errors) {
-
+        String sourceChannel = request.getParameter("Source");
+        System.out.println("sourceChannel"+sourceChannel);
         validatePropertyID(waterConnectionDetails, resultBinder);
         waterConnectionDetailsService.validateWaterRateAndDonationHeader(waterConnectionDetails, resultBinder);
         final List<ApplicationDocuments> applicationDocs = new ArrayList<ApplicationDocuments>();
@@ -191,7 +194,9 @@ public class NewConnectionController extends GenericConnectionController {
         if (resultBinder.hasErrors()) {
             waterConnectionDetails.setApplicationDate(new Date());
             model.addAttribute("validateIfPTDueExists", waterTaxUtils.isNewConnectionAllowedIfPTDuePresent());
-            prepareWorkflow(model, waterConnectionDetails, new WorkflowContainer());
+            WorkflowContainer workflowContainer= new WorkflowContainer();
+            workflowContainer.setAdditionalRule(waterConnectionDetails.getApplicationType().getCode());
+           prepareWorkflow(model, waterConnectionDetails, workflowContainer);
             model.addAttribute("additionalRule", waterConnectionDetails.getApplicationType().getCode());
             model.addAttribute("currentUser", waterTaxUtils.getCurrentUserRole(securityUtils.getCurrentUser()));
             model.addAttribute("approvalPosOnValidate", request.getParameter("approvalPosition"));
@@ -221,7 +226,9 @@ public class NewConnectionController extends GenericConnectionController {
                     .getConnection().getPropertyIdentifier());
             if (userPosition == null) {
                 model.addAttribute("validateIfPTDueExists", waterTaxUtils.isNewConnectionAllowedIfPTDuePresent());
-                prepareWorkflow(model, waterConnectionDetails, new WorkflowContainer());
+                WorkflowContainer workflowContainer= new WorkflowContainer();
+                workflowContainer.setAdditionalRule(waterConnectionDetails.getApplicationType().getCode());
+                prepareWorkflow(model, waterConnectionDetails, workflowContainer);
                 model.addAttribute("additionalRule", waterConnectionDetails.getApplicationType().getCode());
                 model.addAttribute("approvalPosOnValidate", request.getParameter("approvalPosition"));
                 model.addAttribute("currentUser", waterTaxUtils.getCurrentUserRole(securityUtils.getCurrentUser()));
@@ -243,11 +250,11 @@ public class NewConnectionController extends GenericConnectionController {
                 waterConnectionDetails.setSource(Source.MEESEVA);
                 waterConnectionDetailsService.createNewWaterConnection(waterConnectionDetails, approvalPosition,
                         approvalComent, waterConnectionDetails.getApplicationType().getCode(), workFlowAction,
-                        meesevaParams);
+                        meesevaParams,sourceChannel);
             }
         } else
             waterConnectionDetailsService.createNewWaterConnection(waterConnectionDetails, approvalPosition,
-                    approvalComent, waterConnectionDetails.getApplicationType().getCode(), workFlowAction);
+                    approvalComent, waterConnectionDetails.getApplicationType().getCode(), workFlowAction,sourceChannel);
         if (LOG.isDebugEnabled())
             LOG.debug("createNewWaterConnection is completed ");
         final Assignment currentUserAssignment = assignmentService.getPrimaryAssignmentForGivenRange(securityUtils
@@ -319,7 +326,7 @@ public class NewConnectionController extends GenericConnectionController {
             final ApplicationDocuments applicationDocument, final int i, final BindingResult resultBinder,
             final Long categoryId, final String documentRequired) {
 
-        final ConnectionCategory connectionCategory = connectionCategoryService.findBy(categoryId);
+        final ConnectionCategory connectionCategory = connectionCategoryService.findOne(categoryId);
         if (connectionCategory != null && documentRequired != null
                 && connectionCategory.getCode().equalsIgnoreCase(WaterTaxConstants.CATEGORY_BPL)
                 && documentRequired.equalsIgnoreCase(applicationDocument.getDocumentNames().getDocumentName())) {
@@ -462,8 +469,8 @@ public class NewConnectionController extends GenericConnectionController {
 
     private void validateExisting(final WaterConnectionDetails waterConnectionDetails, final BindingResult errors) {
 
-        if (waterConnectionDetails.getExistingConnection().getArrears() == null)
-            errors.rejectValue("existingConnection.arrears", "err.required");
+        /*if (waterConnectionDetails.getExistingConnection().getArrears() == null)
+            errors.rejectValue("existingConnection.arrears", "err.required");*/
         if (waterConnectionDetails.getExistingConnection().getDonationCharges() == null)
             errors.rejectValue("existingConnection.donationCharges", "err.required");
        if (waterConnectionService.findByConsumerCode(waterConnectionDetails.getConnection().getConsumerCode())!=null)

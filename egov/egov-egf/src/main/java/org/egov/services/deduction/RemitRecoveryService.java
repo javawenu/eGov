@@ -40,8 +40,8 @@
 /**
  *
  */
-package org.egov.services.deduction;
-
+package org.egov.services.deduction;import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import java.math.BigDecimal;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -85,15 +85,15 @@ public class RemitRecoveryService {
             final Integer detailKeyId) throws ValidationException {
         final List<RemittanceBean> listRemitBean = new ArrayList<RemittanceBean>();
         final StringBuffer query = new StringBuffer(200);
-        query.append("select vh.name,vh.voucherNumber ,vh.voucherDate,egr.gldtlamt,gld.detailTypeId,gld.detailKeyId,egr.id ");
+        query.append("select vh.name,vh.voucherNumber ,vh.voucherDate,egr.gldtlamt,gld.detailTypeId.id,gld.detailKeyId,egr.id ");
         query.append(
                 " from CVoucherHeader vh ,Vouchermis mis , CGeneralLedger gl ,CGeneralLedgerDetail gld , EgRemittanceGldtl egr , Recovery rec  where ")
                 .
-                append("  rec.chartofaccounts.id = gl.glcodeId.id and gld.id = egr.generalledgerdetail.id and  gl.id = gld.generalLedgerId and vh.id = gl.voucherHeaderId.id ")
+                append("  rec.chartofaccounts.id = gl.glcodeId.id and gld.id = egr.generalledgerdetail.id and  gl.id = gld.generalLedgerId.id and vh.id = gl.voucherHeaderId.id ")
                 .
                 append(" and mis.voucherheaderid.id = vh.id  and vh.status=0  and vh.fundId.id=?  and  egr.gldtlamt - "
                         +
-                        " (select  case when sum(egd.remittedamt) = null then 0 else sum(egd.remittedamt) end  from EgRemittanceGldtl egr1,"
+                        " (select  case when sum(egd.remittedamt) is null then 0 else sum(egd.remittedamt) end  from EgRemittanceGldtl egr1,"
                         +
                         "EgRemittanceDetail egd,EgRemittance  eg,CVoucherHeader vh  where vh.status not in (1,2,4) and  eg.voucherheader.id=vh.id"
                         +
@@ -129,7 +129,7 @@ public class RemitRecoveryService {
                         +
                         " egr.GLDTLAMT      AS col_3_0_,  gld.DETAILTYPEID  AS col_4_0_,  gld.DETAILKEYID   AS col_5_0_,"
                         +
-                        " egr.ID            AS col_6_0_, (select  case when sum(egd.remittedamt) = null then 0 else sum(egd.remittedamt) end"
+                        " egr.ID            AS col_6_0_, (select  case when sum(egd.remittedamt) is null then 0 else sum(egd.remittedamt) end"
                         +
                         " from EG_REMITTANCE_GLDTL egr1,eg_remittance_detail egd,eg_remittance  eg,voucherheader vh"
                         +
@@ -145,7 +145,7 @@ public class RemitRecoveryService {
                         .append(voucherHeader.getFundId().getId())
                         .append(" AND egr.GLDTLAMT-"
                                 +
-                                " (select  case when sum(egd.remittedamt) = null then 0 else sum(egd.remittedamt) end from EG_REMITTANCE_GLDTL egr1,eg_remittance_detail egd,eg_remittance  eg,voucherheader vh"
+                                " (select  case when sum(egd.remittedamt) is null then 0 else sum(egd.remittedamt) end from EG_REMITTANCE_GLDTL egr1,eg_remittance_detail egd,eg_remittance  eg,voucherheader vh"
                                 +
                                 " where vh.status not in (1,2,4) and  eg.PAYMENTVHID=vh.id and egd.remittanceid=eg.id and egr1.id=egd.remittancegldtlid and egr1.id=egr.id)"
                                 +
@@ -182,7 +182,7 @@ public class RemitRecoveryService {
                         +
                         " egr.GLDTLAMT      AS col_3_0_,  gld.DETAILTYPEID  AS col_4_0_,  gld.DETAILKEYID   AS col_5_0_,"
                         +
-                        " egr.ID            AS col_6_0_, (select  case when sum(egd.remittedamt) = null then 0 else sum(egd.remittedamt) end"
+                        " egr.ID            AS col_6_0_, (select  case when sum(egd.remittedamt) is null then 0 else sum(egd.remittedamt) end"
                         +
                         " from EG_REMITTANCE_GLDTL egr1,eg_remittance_detail egd,eg_remittance  eg,voucherheader vh"
                         +
@@ -198,7 +198,7 @@ public class RemitRecoveryService {
                         .append(voucherHeader.getFundId().getId())
                         .append(" AND egr.GLDTLAMT-"
                                 +
-                                " (select  case when sum(egd.remittedamt) = null then 0 else sum(egd.remittedamt) end from EG_REMITTANCE_GLDTL egr1,eg_remittance_detail egd,eg_remittance  eg,voucherheader vh"
+                                " (select  case when sum(egd.remittedamt) is null then 0 else sum(egd.remittedamt) end from EG_REMITTANCE_GLDTL egr1,eg_remittance_detail egd,eg_remittance  eg,voucherheader vh"
                                 +
                                 " where vh.status not in (1,2,4) and  eg.PAYMENTVHID=vh.id and egd.remittanceid=eg.id and egr1.id=egd.remittancegldtlid and egr1.id=egr.id)"
                                 +
@@ -282,7 +282,7 @@ public class RemitRecoveryService {
     private void populateDetailsBySQL(final CVoucherHeader voucherHeader, final List<RemittanceBean> listRemitBean,
             final StringBuffer query) {
         RemittanceBean remitBean;
-        final SQLQuery searchSQLQuery = HibernateUtil.getCurrentSession().createSQLQuery(query.toString());
+        final SQLQuery searchSQLQuery = persistenceService.getSession().createSQLQuery(query.toString());
         final List<Object[]> list = searchSQLQuery.list();
         for (final Object[] element : list) {
             remitBean = new RemittanceBean();
@@ -398,7 +398,7 @@ public class RemitRecoveryService {
                             + inquery.toString()
                             +
                             " GROUP BY  vh.vouchernumber, miscbilldtl.billnumber , remgldtl.remittedamt, remdtl.ID,  gldtl.detailtypeid , gldtl.detailkeyid,vh.id,gld.voucherheaderid,billmis.BILLID");
-                    final Query sqlVoucherQuery = HibernateUtil.getCurrentSession().createSQLQuery(voucherQueryTwo.toString())
+                    final Query sqlVoucherQuery = persistenceService.getSession().createSQLQuery(voucherQueryTwo.toString())
                             .addScalar("remittedAmount").addScalar("billAmount").addScalar("voucherNumber")
                             .addScalar("billNumber").addScalar("remittanceDTId")
                             .addScalar("detailKeyTypeId").addScalar("detailKeyId").addScalar("voucherId").addScalar("billId")
@@ -422,7 +422,7 @@ public class RemitRecoveryService {
                     " GROUP BY  vh.vouchernumber, miscbilldtl.billnumber , remgldtl.remittedamt,    gldtl.detailtypeid , gldtl.detailkeyid,"
                     +
                     " remdtl.ID,vh.id,gld.voucherheaderid,billmis.BILLID");
-            final Query sqlVoucherQuery = HibernateUtil.getCurrentSession().createSQLQuery(voucherQueryTwo.toString())
+            final Query sqlVoucherQuery = persistenceService.getSession().createSQLQuery(voucherQueryTwo.toString())
                     .addScalar("remittedAmount").addScalar("billAmount").addScalar("voucherNumber")
                     .addScalar("billNumber").addScalar("remittanceDTId")
                     .addScalar("detailKeyTypeId").addScalar("detailKeyId").addScalar("voucherId").addScalar("billId")

@@ -438,6 +438,18 @@ label.error {
   width: calc(100% - 250px);
   padding-bottom: 40px;
 }
+.inline-main-content #inboxsearch {
+  padding: 5px 18px 5px 10px;
+}
+.inline-main-content .cleartext {
+  float: right;
+  margin-right: 4px;
+  margin-top: -22px;
+  color: #6b4f2c;
+  cursor: pointer;
+  font-size: 16px;
+  display: none;
+}
 .table-header {
   font-size: 20px;
 }
@@ -453,6 +465,9 @@ label.error {
 }
 .nav-pills > li a {
   padding: 5px;
+}
+.nav-pills > li a span {
+  margin: 0 3px;
 }
 /*Custom Header*/
 .navbar-custom {
@@ -1369,6 +1384,13 @@ label.error {
     display: none !important;
   }
 }
+.page-container .main-content .new-page-header {
+  font-family: semibold;
+  font-size: 20px;
+  color: #f2851f;
+  text-align: center;
+  padding: 0 15px 15px;
+}
 .page-container .main-content td.greybox input[type="text"],
 .page-container .main-content td.greybox select,
 .page-container .main-content td.bluebox input[type="text"],
@@ -1546,6 +1568,7 @@ label.error {
   cursor: pointer;
   background: #6b4f2c;
   border: 1px solid #6b4f2c;
+  color: #fff;
 }
 .form-group .input-group .input-group-addon i {
   color: #6b4f2c;
@@ -1678,7 +1701,6 @@ label.error {
 }
 .table tbody tr:hover {
   background: #f7f7f7;
-  cursor: pointer;
 }
 @media (max-width: 768px) {
   table.dataTable {
@@ -1710,17 +1732,21 @@ table.dataTable tbody {
     display: block;
   }
 }
+table.dataTable tbody tr:hover {
+  background: #f7f7f7;
+  cursor: pointer;
+}
+table.dataTable tbody.no-pointer tr:hover {
+  cursor: default;
+}
 table.dataTable thead th {
-  position: relative;
   background-image: none !important;
+  border: 1px solid #ccc;
 }
 table.dataTable thead th.sorting:after,
 table.dataTable th.sorting_asc:after,
 table.dataTable th.sorting_desc:after {
-  position: absolute;
-  top: 12px;
-  right: 8px;
-  display: block;
+  float: right;
   font-family: FontAwesome;
 }
 table.dataTable#official_inbox thead th.sorting:not(:last-child):after,

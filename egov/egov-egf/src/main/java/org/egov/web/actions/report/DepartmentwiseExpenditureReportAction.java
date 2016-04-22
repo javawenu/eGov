@@ -39,6 +39,9 @@
  ******************************************************************************/
 package org.egov.web.actions.report;
 
+
+import org.egov.infstr.services.PersistenceService;
+import org.springframework.beans.factory.annotation.Qualifier;
 import java.io.InputStream;
 import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
@@ -73,7 +76,8 @@ import org.egov.utils.ReportHelper;
 import org.hibernate.FlushMode;
 import org.hibernate.Query;
 import org.hibernate.transform.Transformers;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.beans.factory.annotation.Autowired;
+
 
 @Results(value = {
         @Result(name = "PDF", type = "stream", location = Constants.INPUT_STREAM, params = { Constants.INPUT_NAME,
@@ -87,7 +91,7 @@ import org.springframework.transaction.annotation.Transactional;
         "no-cache;filename=DepartmentwiseExpenditureReport.html" })
 })
 @ParentPackage("egov")
-@Transactional(readOnly = true)
+
 public class DepartmentwiseExpenditureReportAction extends BaseFormAction {
 
     /**
@@ -106,15 +110,20 @@ public class DepartmentwiseExpenditureReportAction extends BaseFormAction {
     static final String CURRENT = "current";
     static final String PREVIOUS = "previous";
     final static Logger LOGGER = Logger.getLogger(DepartmentwiseExpenditureReportAction.class);
-
+   
+ @Autowired
+ @Qualifier("persistenceService")
+ private PersistenceService persistenceService;
+ @Autowired
+    private EgovMasterDataCaching masterDataCache;
+    
     @Override
     public void prepare() {
-        HibernateUtil.getCurrentSession().setDefaultReadOnly(true);
-        HibernateUtil.getCurrentSession().setFlushMode(FlushMode.MANUAL);
-        final EgovMasterDataCaching masterCache = EgovMasterDataCaching.getInstance();
+        persistenceService.getSession().setDefaultReadOnly(true);
+        persistenceService.getSession().setFlushMode(FlushMode.MANUAL);
         super.prepare();
-        addDropdownData("fundDropDownList", masterCache.get("egi-fund"));
-        addDropdownData("financialYearList", getPersistenceService().findAllBy("from CFinancialYear where isActive=1 " +
+        addDropdownData("fundDropDownList", masterDataCache.get("egi-fund"));
+        addDropdownData("financialYearList", getPersistenceService().findAllBy("from CFinancialYear where isActive=true " +
                 "  and startingDate >='01-Apr-2010' order by finYearRange desc  "));
     }
 
@@ -527,7 +536,7 @@ public class DepartmentwiseExpenditureReportAction extends BaseFormAction {
 
     @SuppressWarnings("unchecked")
     public String getUlbName() {
-        final Query query = HibernateUtil.getCurrentSession().createSQLQuery("select name from companydetail");
+        final Query query = persistenceService.getSession().createSQLQuery("select name from companydetail");
         final List<String> result = query.list();
         if (result != null)
             return result.get(0);

@@ -53,7 +53,6 @@ import org.apache.log4j.Logger;
 import org.egov.commons.Accountdetailtype;
 import org.egov.commons.CChartOfAccounts;
 import org.egov.commons.Fund;
-import org.egov.commons.service.CommonsService;
 import org.egov.egf.commons.EgovCommon;
 import org.egov.infra.exception.ApplicationRuntimeException;
 import org.egov.infstr.services.PersistenceService;
@@ -64,7 +63,7 @@ import org.egov.works.models.estimate.FinancialDetail;
 import org.egov.works.services.ContractorBillService;
 import org.egov.works.services.DepositWorksUsageService;
 
-public class DepositWorksUsageServiceImpl extends BaseServiceImpl<DepositWorksUsage, Long>implements
+public class DepositWorksUsageServiceImpl extends BaseServiceImpl<DepositWorksUsage, Long> implements
         DepositWorksUsageService {
     private static final Logger LOGGER = Logger.getLogger(DepositWorksUsageServiceImpl.class);
     private EgovCommon egovCommon;
@@ -225,9 +224,6 @@ public class DepositWorksUsageServiceImpl extends BaseServiceImpl<DepositWorksUs
 
     public void setEgovCommon(final EgovCommon egovCommon) {
         this.egovCommon = egovCommon;
-    }
-
-    public void setCommonsService(final CommonsService commonsService) {
     }
 
     @Override

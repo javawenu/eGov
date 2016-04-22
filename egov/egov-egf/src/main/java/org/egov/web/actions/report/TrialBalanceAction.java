@@ -39,10 +39,14 @@
  ******************************************************************************/
 package org.egov.web.actions.report;
 
+
+import org.egov.infstr.services.PersistenceService;
+import org.springframework.beans.factory.annotation.Qualifier;
 import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigDecimal;
 import java.text.DecimalFormat;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -71,6 +75,7 @@ import org.egov.infra.admin.master.entity.City;
 import org.egov.infra.admin.master.service.AppConfigValueService;
 import org.egov.infra.admin.master.service.CityService;
 import org.egov.infra.exception.ApplicationRuntimeException;
+import org.egov.infra.validation.exception.ValidationException;
 import org.egov.infra.web.struts.actions.BaseFormAction;
 import org.egov.infstr.utils.EgovMasterDataCaching;
 import org.egov.infstr.utils.HibernateUtil;
@@ -85,7 +90,7 @@ import org.hibernate.transform.Transformers;
 import org.hibernate.type.BigDecimalType;
 import org.hibernate.type.StringType;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
+
 
 import com.exilant.eGov.src.reports.TrialBalanceBean;
 
@@ -102,7 +107,6 @@ import com.exilant.eGov.src.reports.TrialBalanceBean;
         "no-cache;filename=trialBalance.html" })
        })
 @ParentPackage("egov")
-@Transactional(readOnly = true)
 public class TrialBalanceAction extends BaseFormAction {
 
     /**
@@ -138,16 +142,20 @@ public class TrialBalanceAction extends BaseFormAction {
     List<TrialBalanceBean> nonZeroItemsList = new ArrayList<TrialBalanceBean>();
     private ReportHelper reportHelper;
     private List<Fund> fundList;
-    private final EgovMasterDataCaching masterCache = EgovMasterDataCaching.getInstance();
     private Map<String, BigDecimal> fundWiseTotalMap = new LinkedHashMap<String, BigDecimal>();
     private FinancialYearDAO financialYearDAO;
     private String removeEntrysWithZeroAmount = "";
-    @Autowired
+   
+ @Autowired
+ @Qualifier("persistenceService")
+ private PersistenceService persistenceService;
+ @Autowired
     private AppConfigValueService appConfigValuesService;
-
-    public void setFinancialYearDAO(final FinancialYearDAO financialYearDAO) {
-        this.financialYearDAO = financialYearDAO;
-    }
+    private Date startDate = new Date();
+    private Date endDate = new Date();
+    final SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+    @Autowired
+    private EgovMasterDataCaching masterDataCache;
 
     @Override
     public Object getModel() {
@@ -157,15 +165,15 @@ public class TrialBalanceAction extends BaseFormAction {
     @Override
     public void prepare()
     {
-        HibernateUtil.getCurrentSession().setDefaultReadOnly(true);
-        HibernateUtil.getCurrentSession().setFlushMode(FlushMode.MANUAL);
+        persistenceService.getSession().setDefaultReadOnly(true);
+        persistenceService.getSession().setFlushMode(FlushMode.MANUAL);
         super.prepare();
 
-        addDropdownData("fundList", masterCache.get("egi-fund"));
-        addDropdownData("departmentList", masterCache.get("egi-department"));
-        addDropdownData("functionaryList", masterCache.get("egi-functionary"));
-        addDropdownData("fieldList", masterCache.get("egi-ward"));
-        addDropdownData("functionList", masterCache.get("egi-function"));
+        addDropdownData("fundList", masterDataCache.get("egi-fund"));
+        addDropdownData("departmentList", masterDataCache.get("egi-department"));
+        addDropdownData("functionaryList", masterDataCache.get("egi-functionary"));
+        addDropdownData("fieldList", masterDataCache.get("egi-ward"));
+        addDropdownData("functionList", masterDataCache.get("egi-function"));
 
     }
     @Action(value = "/report/trialBalance-newForm")
@@ -212,6 +220,37 @@ public class TrialBalanceAction extends BaseFormAction {
     @Action(value = "/report/trialBalance-search")
     public String search()
     {
+    	if (rb.getReportType().equalsIgnoreCase("daterange"))
+    	{
+    	String sDate=parameters.get("fromDate")[0];
+    	String eDate=parameters.get("toDate")[0];
+        Date dt=new Date();
+        Date dd=dt;
+            try {
+				dt = sdf.parse(sDate);
+			} catch (ParseException e1) {
+				
+				e1.printStackTrace();
+			}
+        
+        	CFinancialYear finYearByDate = financialYearDAO.getFinYearByDate(dt);
+        	SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
+        	try {
+				dd = sdf.parse(eDate);
+			} catch (ParseException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
+            String endFormat = formatter.format(dd);
+            	String	endDate1 =formatter.format(finYearByDate.getEndingDate());
+            	
+            	if(endFormat.compareTo(endDate1)>0)
+            	{
+                    	addActionError(getText("Start Date and End Date should be in same financial year"));
+                    	return "new";
+                    
+            	}
+    	}
         try {
             final List<AppConfigValues> configValues = appConfigValuesService.
                     getConfigValuesByModuleAndKey(FinancialConstants.MODULE_NAME_APPCONFIG,
@@ -231,7 +270,7 @@ public class TrialBalanceAction extends BaseFormAction {
         else
         {
             if (rb.getFundId() == null)
-                fundList = masterCache.get("egi-fund");
+                fundList = masterDataCache.get("egi-fund");
             else
             {
                 fundList = new ArrayList<Fund>();
@@ -239,7 +278,7 @@ public class TrialBalanceAction extends BaseFormAction {
             }
             gererateReportForAsOnDate();
         }
-        if (al.size() > 1)
+        if (al.size() >= 1)
             return exportTrialBalance();
         else
         {
@@ -268,7 +307,7 @@ public class TrialBalanceAction extends BaseFormAction {
         if (rb.getFundId() != null)
             fundcondition = " and fundid=:fundId";
         else
-            fundcondition = " and fundid in (select id from fund where isactive=1 and isnotleaf!=1 )";
+            fundcondition = " and fundid in (select id from fund where isactive=true and isnotleaf!=true )";
         // if(LOGGER.isInfoEnabled()) LOGGER.info("fund cond query  "+fundcondition);
         if (null != rb.getDepartmentId() || null != rb.getFunctionaryId()) {
             voucherMisTable = ",vouchermis mis ";
@@ -298,7 +337,7 @@ public class TrialBalanceAction extends BaseFormAction {
             defaultStatusExclude = listAppConfVal.get(0).getValue();
         else
             throw new ApplicationRuntimeException("Exlcude statusses not  are not defined for Reports");
-        final String query = " SELECT gl.glcode AS \"accCode\" ,coa.name AS \"accName\" ,vh.fundid AS \"fundId\",(SUM(debitamount)+SUM((SELECT case when SUM(OPENINGDEBITBALANCE) = NULL then 0 else SUM(OPENINGDEBITBALANCE) end FROM transactionsummary WHERE"
+        final String query = " SELECT gl.glcode AS \"accCode\" ,coa.name AS \"accName\" ,vh.fundid AS \"fundId\",(SUM(debitamount)+SUM((SELECT case when SUM(OPENINGDEBITBALANCE)  is null  then 0 else SUM(OPENINGDEBITBALANCE) end FROM transactionsummary WHERE"
                 + " financialyearid=(SELECT id FROM financialyear WHERE startingdate<=:toDate AND endingdate>=:toDate)"
                 + " AND glcodeid =(SELECT id FROM chartofaccounts WHERE glcode=gl.glcode) AND fundid=vh.fundid"
                 + fundcondition
@@ -307,7 +346,7 @@ public class TrialBalanceAction extends BaseFormAction {
                 + tsFunctionIdCond
                 + tsFieldIdCond
                 + "))/COUNT(*))-"
-                + " (SUM(creditamount)+SUM((SELECT  case when SUM(OPENINGCREDITBALANCE) = NULL then 0 else SUM(OPENINGCREDITBALANCE) end FROM"
+                + " (SUM(creditamount)+SUM((SELECT  case when SUM(OPENINGCREDITBALANCE)  is null  then 0 else SUM(OPENINGCREDITBALANCE) end FROM"
                 + " transactionsummary WHERE financialyearid=(SELECT id FROM financialyear  WHERE startingdate<=:toDate AND endingdate>=:toDate)"
                 + " AND glcodeid =(SELECT id FROM chartofaccounts WHERE glcode=gl.glcode) AND fundid=vh.fundid"
                 + fundcondition
@@ -331,7 +370,7 @@ public class TrialBalanceAction extends BaseFormAction {
                 + functionIdCond
                 + fieldIdCond
                 + " GROUP BY gl.glcode,coa.name,vh.fundid    HAVING (SUM(debitamount)>0 OR SUM(creditamount)>0)    And"
-                + " (SUM(debitamount)+SUM((SELECT case when SUM(OPENINGDEBITBALANCE)=NULL then 0 else SUM(OPENINGDEBITBALANCE) end FROM"
+                + " (SUM(debitamount)+SUM((SELECT case when SUM(OPENINGDEBITBALANCE) IS NULL then 0 else SUM(OPENINGDEBITBALANCE) end FROM"
                 + " transactionsummary WHERE  financialyearid=(SELECT id FROM financialyear       WHERE startingdate <=:toDate"
                 + " AND endingdate >=:toDate) AND glcodeid =(SELECT id FROM chartofaccounts WHERE glcode=gl.glcode) "
                 + fundcondition
@@ -340,7 +379,7 @@ public class TrialBalanceAction extends BaseFormAction {
                 + tsFunctionIdCond
                 + tsFieldIdCond
                 + "))/COUNT(*))-"
-                + " (SUM(creditamount)+SUM((SELECT  case when SUM(OPENINGCREDITBALANCE)=NULL then 0 else SUM(OPENINGCREDITBALANCE) end FROM"
+                + " (SUM(creditamount)+SUM((SELECT  case when SUM(OPENINGCREDITBALANCE) IS NULL then 0 else SUM(OPENINGCREDITBALANCE) end FROM"
                 + " transactionsummary WHERE financialyearid=(SELECT id FROM financialyear    WHERE startingdate<=:toDate AND endingdate>=:toDate) "
                 + " AND glcodeid =(SELECT id FROM chartofaccounts WHERE glcode=gl.glcode)  "
                 + fundcondition
@@ -350,7 +389,7 @@ public class TrialBalanceAction extends BaseFormAction {
                 + tsFieldIdCond
                 + "))/COUNT(*) )<>0"
                 + " union"
-                + " SELECT coa.glcode AS \"accCode\" ,coa.name AS \"accName\" , fu.id as \"fundId\", SUM((SELECT case when SUM(OPENINGDEBITBALANCE) = NULL then 0 else SUM(OPENINGDEBITBALANCE) end "
+                + " SELECT coa.glcode AS \"accCode\" ,coa.name AS \"accName\" , fu.id as \"fundId\", SUM((SELECT case when SUM(OPENINGDEBITBALANCE) IS NULL then 0 else SUM(OPENINGDEBITBALANCE) end "
                 + " FROM transactionsummary WHERE financialyearid=(SELECT id FROM financialyear WHERE  startingdate<=:toDate AND endingdate>=:toDate)"
                 + " AND glcodeid =(SELECT id FROM chartofaccounts WHERE  glcode=coa.glcode) AND fundid= (select id from fund where id=fu.id)"
                 + " "
@@ -359,7 +398,7 @@ public class TrialBalanceAction extends BaseFormAction {
                 + tsfunctionaryCond
                 + tsFunctionIdCond
                 + tsFieldIdCond
-                + ")) - SUM((SELECT  case when SUM(OPENINGCREDITBALANCE)=NULL then 0 else SUM(OPENINGCREDITBALANCE) end as \"amount\" FROM transactionsummary WHERE"
+                + ")) - SUM((SELECT  case when SUM(OPENINGCREDITBALANCE) IS NULL then 0 else SUM(OPENINGCREDITBALANCE) end as \"amount\" FROM transactionsummary WHERE"
                 + " financialyearid=(SELECT id FROM financialyear       WHERE startingdate<=:toDate AND endingdate>=:toDate) AND glcodeid =(SELECT id FROM chartofaccounts"
                 + " WHERE glcode=coa.glcode)AND fundid= (select id from fund where id=fu.id)"
                 + fundcondition
@@ -390,7 +429,7 @@ public class TrialBalanceAction extends BaseFormAction {
                 + fundcondition
                 + ")"
                 + " GROUP BY coa.glcode,coa.name, fu.id"
-                + " HAVING((SUM((SELECT case when SUM(OPENINGDEBITBALANCE)=NULL then 0 else SUM(OPENINGDEBITBALANCE) end FROM transactionsummary WHERE"
+                + " HAVING((SUM((SELECT case when SUM(OPENINGDEBITBALANCE) IS NULL then 0 else SUM(OPENINGDEBITBALANCE) end FROM transactionsummary WHERE"
                 + " financialyearid=(SELECT id FROM financialyear       WHERE startingdate<=:toDate AND endingdate>=:toDate) AND glcodeid =(SELECT id FROM chartofaccounts WHERE glcode=coa.glcode) "
                 + fundcondition
                 + tsDeptCond
@@ -398,7 +437,7 @@ public class TrialBalanceAction extends BaseFormAction {
                 + tsFunctionIdCond
                 + tsFieldIdCond
                 + " )) >0 )"
-                + " OR (SUM((SELECT  case when SUM(OPENINGCREDITBALANCE)=NULL then 0 else SUM(OPENINGCREDITBALANCE) end FROM transactionsummary WHERE financialyearid=(SELECT id FROM financialyear WHERE startingdate<=:toDate AND endingdate>=:toDate)"
+                + " OR (SUM((SELECT  case when SUM(OPENINGCREDITBALANCE) IS NULL then 0 else SUM(OPENINGCREDITBALANCE) end FROM transactionsummary WHERE financialyearid=(SELECT id FROM financialyear WHERE startingdate<=:toDate AND endingdate>=:toDate)"
                 + " AND glcodeid =(SELECT id FROM chartofaccounts WHERE glcode=coa.glcode)     "
                 + fundcondition
                 + tsDeptCond
@@ -408,7 +447,7 @@ public class TrialBalanceAction extends BaseFormAction {
         try
         {
             new Double(0);
-            final SQLQuery SQLQuery = HibernateUtil.getCurrentSession().createSQLQuery(query);
+            final SQLQuery SQLQuery = persistenceService.getSession().createSQLQuery(query);
             SQLQuery.addScalar("accCode")
             .addScalar("accName")
             .addScalar("fundId", StringType.INSTANCE)
@@ -619,7 +658,7 @@ public class TrialBalanceAction extends BaseFormAction {
                 " GROUP BY ts.glcodeid,coa.glcode,coa.name ORDER BY coa.glcode ASC";
         if (LOGGER.isDebugEnabled())
             LOGGER.debug("Query Str" + openingBalanceStr);
-        final Query openingBalanceQry = HibernateUtil.getCurrentSession().createSQLQuery(openingBalanceStr)
+        final Query openingBalanceQry = persistenceService.getSession().createSQLQuery(openingBalanceStr)
                 .addScalar("accCode")
                 .addScalar("accName")
                 .addScalar("creditOPB", BigDecimalType.INSTANCE)
@@ -661,7 +700,7 @@ public class TrialBalanceAction extends BaseFormAction {
                 " AND fy.startingdate<=:fromDate AND fy.endingdate>=:toDate" +
                 " AND vh.status not in (" + defaultStatusExclude + ")" +
                 " GROUP BY gl.glcodeid,coa.glcode,coa.name ORDER BY coa.glcode ASC";
-        final Query tillDateOPBQry = HibernateUtil.getCurrentSession().createSQLQuery(tillDateOPBStr)
+        final Query tillDateOPBQry = persistenceService.getSession().createSQLQuery(tillDateOPBStr)
                 .addScalar("accCode")
                 .addScalar("accName")
                 .addScalar("tillDateCreditOPB", BigDecimalType.INSTANCE)
@@ -704,7 +743,7 @@ public class TrialBalanceAction extends BaseFormAction {
                 " AND fy.startingdate<=:fromDate AND fy.endingdate>=:toDate" +
                 " AND vh.status not in (" + defaultStatusExclude + ") " +
                 " GROUP BY gl.glcodeid,coa.glcode,coa.name ORDER BY coa.glcode ASC";
-        final Query currentDebitCreditQry = HibernateUtil.getCurrentSession().createSQLQuery(currentDebitCreditStr)
+        final Query currentDebitCreditQry = persistenceService.getSession().createSQLQuery(currentDebitCreditStr)
                 .addScalar("accCode")
                 .addScalar("accName")
                 .addScalar("creditAmount", BigDecimalType.INSTANCE)
@@ -1066,6 +1105,24 @@ public class TrialBalanceAction extends BaseFormAction {
 			AppConfigValueService appConfigValuesService) {
 		this.appConfigValuesService = appConfigValuesService;
 	}
-    
+	public void setEndDate(final Date endDate) {
+        this.endDate = endDate;
+    }
 
+    public Date getEndDate() {
+        return endDate;
+    }
+
+    public void setStartDate(final Date startDate) {
+        this.startDate = startDate;
+    }
+
+    public Date getStartDate() {
+        return startDate;
+    }
+    public void setFinancialYearDAO(final FinancialYearDAO financialYearDAO) {
+        this.financialYearDAO = financialYearDAO;
+    }
+    
+    
 }

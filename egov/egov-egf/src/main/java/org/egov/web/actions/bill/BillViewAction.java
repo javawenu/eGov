@@ -65,9 +65,8 @@ import org.egov.model.bills.EgBilldetails;
 import org.egov.model.bills.EgBillregister;
 import org.egov.utils.Constants;
 import org.egov.web.actions.voucher.VoucherSearchAction;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.beans.factory.annotation.Autowired;
 
-@Transactional(readOnly = true)
 @ParentPackage("egov")
 @Results({
     @Result(name = Constants.VIEW, location = "billView-" + Constants.VIEW + ".jsp")
@@ -79,7 +78,8 @@ public class BillViewAction extends BaseFormAction
     EgBillregister egBillRegister = new EgBillregister();
     List<Map<String, Object>> billDetailsList = new ArrayList<Map<String, Object>>();
     List<Map<String, Object>> subledgerList = new ArrayList<Map<String, Object>>();
-
+    @Autowired
+    private EgovCommon egovCommon;
     public List<Map<String, Object>> getSubledgerList() {
         return subledgerList;
     }
@@ -189,9 +189,8 @@ public class BillViewAction extends BaseFormAction
             LOGGER.debug("-----------detailtype::" + detailtype.getId());
         if (LOGGER.isDebugEnabled())
             LOGGER.debug("-----------detailkeyid::" + detailkeyid);
-        final EgovCommon common = new EgovCommon();
-        common.setPersistenceService(persistenceService);
-        final EntityType entityType = common.getEntityType(detailtype, detailkeyid);
+        egovCommon.setPersistenceService(persistenceService);
+        final EntityType entityType = egovCommon.getEntityType(detailtype, detailkeyid);
         tempMap.put(Constants.DETAILKEY, entityType.getName());
         tempMap.put(Constants.DETAILTYPE_NAME, detailtype.getName());
         if (LOGGER.isDebugEnabled())

@@ -30,6 +30,9 @@
  ******************************************************************************/
 package org.egov.web.actions.contra;
 
+
+
+import org.egov.infstr.services.PersistenceService;
 import java.math.BigDecimal;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -59,21 +62,25 @@ import org.egov.model.instrument.InstrumentOtherDetails;
 import org.egov.model.instrument.InstrumentVoucher;
 import org.egov.model.voucher.VoucherTypeBean;
 import org.egov.services.contra.ContraService;
+import org.egov.services.instrument.InstrumentHeaderService;
+import org.egov.services.instrument.InstrumentOtherDetailsService;
 import org.egov.services.instrument.InstrumentService;
+import org.egov.services.instrument.InstrumentVoucherService;
 import org.egov.services.voucher.VoucherService;
 import org.egov.utils.Constants;
 import org.egov.utils.FinancialConstants;
 import org.egov.web.actions.voucher.BaseVoucherAction;
 import org.hibernate.search.annotations.CharFilterDef;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.beans.factory.annotation.Qualifier;
+
 
 import com.exilant.GLEngine.ChartOfAccounts;
 import com.exilant.GLEngine.Transaxtion;
 
-@Transactional(readOnly = true)
+
 @Results({
-    @Result(name = ContraCTBAction.NEW, location = "contraCTB-" + ContraCTBAction.NEW + ".jsp")
+        @Result(name = ContraCTBAction.NEW, location = "contraCTB-" + ContraCTBAction.NEW + ".jsp")
 })
 public class ContraCTBAction extends BaseVoucherAction
 {
@@ -87,8 +94,21 @@ public class ContraCTBAction extends BaseVoucherAction
     private String message;
     private boolean close;
     private InstrumentService instrumentService;
+   
+ @Autowired
+ @Qualifier("persistenceService")
+ private PersistenceService persistenceService;
+ @Autowired
+    @Qualifier("instrumentHeaderService")
+    private InstrumentHeaderService instrumentHeaderService;
     @Autowired
-	private ChartOfAccounts chartOfAccounts;
+    @Qualifier("instrumentVoucherService")
+    private InstrumentVoucherService instrumentVoucherService;
+    @Autowired
+    @Qualifier("instrumentOtherDetailsService")
+    private InstrumentOtherDetailsService instrumentOtherDetailsService;
+    @Autowired
+    private ChartOfAccounts chartOfAccounts;
 
     public InstrumentService getInstrumentService() {
         return instrumentService;
@@ -170,9 +190,9 @@ public class ContraCTBAction extends BaseVoucherAction
                             instrHeader);
                     if (LOGGER.isDebugEnabled())
                         LOGGER.debug("cash deposit amount : = " + instrHeader.getInstrumentAmount());
-                    instrumentService.instrumentHeaderService.update(instrHeader);
-                    instrumentService.instrumentVouherService.update(iVoucher);
-                    instrumentService.instrumentOtherDetailsService.update(iOther);
+                    instrumentHeaderService.update(instrHeader);
+                    instrumentVoucherService.update(iVoucher);
+                    instrumentOtherDetailsService.update(iOther);
                     contraService.updateIntoContraJournal(voucherHeader, contraBean);
                     contraService.updateBankreconciliation(instrHeader, contraBean);
                     voucherService.deleteGLDetailByVHId(voucherHeader.getId());
@@ -184,7 +204,7 @@ public class ContraCTBAction extends BaseVoucherAction
                     // contraService.postIntoBankreconciliation(voucherHeader,contraBean);
                     final List<InstrumentHeader> instrumentList = instrumentService
                             .addToInstrument(createInstruments(contraBean));
-                    HibernateUtil.getCurrentSession().flush();
+                    persistenceService.getSession().flush();
                     final Bankaccount bankAccount = (Bankaccount) persistenceService.find("from Bankaccount where id=?",
                             Integer.valueOf(contraBean.getAccountNumberId()));
                     final Map valuesMap = contraService.prepareForUpdateInstrumentDeposit(bankAccount.getChartofaccounts()
@@ -197,7 +217,7 @@ public class ContraCTBAction extends BaseVoucherAction
                 if (LOGGER.isDebugEnabled())
                     LOGGER.debug("going to post into transactions");
                 final List<Transaxtion> transactions = contraService.postInTransaction(voucherHeader, contraBean);
-                HibernateUtil.getCurrentSession().flush();
+                persistenceService.getSession().flush();
                 Transaxtion txnList[] = new Transaxtion[transactions.size()];
                 txnList = transactions.toArray(txnList);
                 final SimpleDateFormat formatter = new SimpleDateFormat("dd-MMM-yyyy");

@@ -1,61 +1,70 @@
-<!--  #-------------------------------------------------------------------------------
-# eGov suite of products aim to improve the internal efficiency,transparency, 
-#      accountability and the service delivery of the government  organizations.
-#   
-#       Copyright (C) <2015>  eGovernments Foundation
-#   
-#       The updated version of eGov suite of products as by eGovernments Foundation 
-#       is available at http://www.egovernments.org
-#   
-#       This program is free software: you can redistribute it and/or modify
-#       it under the terms of the GNU General Public License as published by
-#       the Free Software Foundation, either version 3 of the License, or
-#       any later version.
-#   
-#       This program is distributed in the hope that it will be useful,
-#       but WITHOUT ANY WARRANTY; without even the implied warranty of
-#       MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#       GNU General Public License for more details.
-#   
-#       You should have received a copy of the GNU General Public License
-#       along with this program. If not, see http://www.gnu.org/licenses/ or 
-#       http://www.gnu.org/licenses/gpl.html .
-#   
-#       In addition to the terms of the GPL license to be adhered to in using this
-#       program, the following additional terms are to be complied with:
-#   
-#   	1) All versions of this program, verbatim or modified must carry this 
-#   	   Legal Notice.
-#   
-#   	2) Any misrepresentation of the origin of the material is prohibited. It 
-#   	   is required that all modified versions of this material be marked in 
-#   	   reasonable ways as different from the original version.
-#   
-#   	3) This license does not grant any rights to any user of the program 
-#   	   with regards to rights under trademark law for use of the trade names 
-#   	   or trademarks of eGovernments Foundation.
-#   
-#     In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
-#-------------------------------------------------------------------------------  -->
+<!--
+  ~ eGov suite of products aim to improve the internal efficiency,transparency,
+  ~    accountability and the service delivery of the government  organizations.
+  ~
+  ~     Copyright (C) <2015>  eGovernments Foundation
+  ~
+  ~     The updated version of eGov suite of products as by eGovernments Foundation
+  ~     is available at http://www.egovernments.org
+  ~
+  ~     This program is free software: you can redistribute it and/or modify
+  ~     it under the terms of the GNU General Public License as published by
+  ~     the Free Software Foundation, either version 3 of the License, or
+  ~     any later version.
+  ~
+  ~     This program is distributed in the hope that it will be useful,
+  ~     but WITHOUT ANY WARRANTY; without even the implied warranty of
+  ~     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  ~     GNU General Public License for more details.
+  ~
+  ~     You should have received a copy of the GNU General Public License
+  ~     along with this program. If not, see http://www.gnu.org/licenses/ or
+  ~     http://www.gnu.org/licenses/gpl.html .
+  ~
+  ~     In addition to the terms of the GPL license to be adhered to in using this
+  ~     program, the following additional terms are to be complied with:
+  ~
+  ~         1) All versions of this program, verbatim or modified must carry this
+  ~            Legal Notice.
+  ~
+  ~         2) Any misrepresentation of the origin of the material is prohibited. It
+  ~            is required that all modified versions of this material be marked in
+  ~            reasonable ways as different from the original version.
+  ~
+  ~         3) This license does not grant any rights to any user of the program
+  ~            with regards to rights under trademark law for use of the trade names
+  ~            or trademarks of eGovernments Foundation.
+  ~
+  ~   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
+  -->
 <%@ taglib prefix="s" uri="/WEB-INF/tags/struts-tags.tld"%>
 <script>
 function showDetails(glcode){           
-		var deptId = "<s:property value="balanceSheet.department.id"/>";
-		var functionaryId = "<s:property value="balanceSheet.functionary.id"/>";
+		var deptId = '<s:property value="balanceSheet.department.id"/>';
+		var functionaryId = '<s:property value="balanceSheet.functionary.id"/>';
 		var functionName = '<s:property value="functionName"/>';
-		var functionId = "<s:property value="balanceSheet.function.id"/>";
+		var functionId = '<s:property value="balanceSheet.function.id"/>';
 		var fieldId = '<s:property value="balanceSheet.field.id"/>';	   
 		var fundId='<s:property value="balanceSheet.fund.id"/>';
 		var startDate='<s:date name="%{currentYearfromDate}" format="dd/MM/yyyy"/>';
         var endDate='<s:date name="%{currentYeartoDate}" format="dd/MM/yyyy"/>';
+        var todayDate = new Date();
+		 var todayMonth = todayDate.getMonth() + 1;
+		 var todayDay = todayDate.getDate();
+		 var todayYear = todayDate.getFullYear();
+		 var todayDateText = todayDay + "/" + todayMonth + "/" +  todayYear;
 		
+			if(endDate > todayDateText)
+				{ 
+				endDate=todayDateText;
+				}
 		 var functionCode1=functionName+"~"+functionId;
 		if(functionId==0){
 			functionCode1="";
 			functionId="";
 			}                   
 		
-		window.open('/EGF/Reports/GeneralLedger.jsp?fromBean=1&glCode1='+glcode+'&fund_id='+fundId+'&startDate='+startDate+'&endDate='+endDate+'&departmentId='+deptId+'&functionaryId='+functionaryId+'&functionCodeId='+functionId+'&functionCode='+functionCode1+'&fieldId='+fieldId,'','resizable=yes,height=650,width=900,scrollbars=yes,left=30,top=30,status=no');
+		window.open('/EGF/report/generalLedgerReport-searchDrilldown.action?fromBean=1&glCode1='+glcode+'&fund_id='+fundId+'&startDate='+startDate+'&endDate='+endDate+'&departmentId='+deptId+'&functionaryId='+functionaryId+'&functionCodeId='+functionId+'&functionCode='+functionCode1+'&fieldId='+fieldId,'','resizable=yes,height=650,width=900,scrollbars=yes,left=30,top=30,status=no');
 	}
 	
 function showPreviousYearDetails(glcode)
@@ -69,11 +78,22 @@ function showPreviousYearDetails(glcode)
         var startDate='<s:date name="%{previousYearfromDate}" format="dd/MM/yyyy"/>';
         var endDate='<s:date name="%{previousYeartoDate}" format="dd/MM/yyyy"/>';
          var functionCode1=functionName+"~"+functionId;
+         var todayDate = new Date();
+		 var todayMonth = todayDate.getMonth() + 1;
+		 var todayDay = todayDate.getDate();
+		 var todayYear = todayDate.getFullYear();
+		 var todayDateText = todayDay + "/" + todayMonth + "/" +  todayYear;
+		
+			if(endDate > todayDateText)
+				{ 
+				endDate=todayDateText;
+				}
+         
  		if(functionId==0){
 			functionCode1="";
 			functionId="";
 			}                   
-		window.open('/EGF/Reports/GeneralLedger.jsp?fromBean=1&glCode1='+glcode+'&fund_id='+fundId+'&startDate='+startDate+'&endDate='+endDate+'&departmentId='+deptId+'&functionaryId='+functionaryId+'&functionCodeId='+functionId+'&functionCode='+functionCode1+'&fieldId='+fieldId,'','resizable=yes,height=650,width=900,scrollbars=yes,left=30,top=30,status=no');
+		window.open('/EGF/report/generalLedgerReport-searchDrilldown.action?fromBean=1&glCode1='+glcode+'&fund_id='+fundId+'&startDate='+startDate+'&endDate='+endDate+'&departmentId='+deptId+'&functionaryId='+functionaryId+'&functionCodeId='+functionId+'&functionCode='+functionCode1+'&fieldId='+fieldId,'','resizable=yes,height=650,width=900,scrollbars=yes,left=30,top=30,status=no');
 
 }
 	

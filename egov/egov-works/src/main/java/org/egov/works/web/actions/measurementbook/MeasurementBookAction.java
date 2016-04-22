@@ -57,7 +57,7 @@ import org.apache.struts2.convention.annotation.Action;
 import org.apache.struts2.convention.annotation.ParentPackage;
 import org.apache.struts2.convention.annotation.Result;
 import org.egov.commons.EgwStatus;
-import org.egov.commons.service.CommonsService;
+import org.egov.commons.dao.EgwStatusHibernateDAO;
 import org.egov.eis.entity.Assignment;
 import org.egov.eis.entity.EmployeeView;
 import org.egov.eis.service.AssignmentService;
@@ -91,7 +91,6 @@ import org.egov.works.services.impl.MeasurementBookServiceImpl;
 import org.egov.works.services.impl.WorkOrderServiceImpl;
 import org.egov.works.utils.DateConversionUtil;
 import org.egov.works.utils.WorksConstants;
-import org.egov.works.web.actions.estimate.AjaxEstimateAction;
 import org.hibernate.Query;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -117,6 +116,9 @@ public class MeasurementBookAction extends BaseFormAction {
     private EmployeeServiceOld employeeServiceOld;
     @Autowired
     private UserService userService;
+    @Autowired
+    private EgwStatusHibernateDAO egwStatusHibernateDAO;
+
     private EmployeeView mbPreparedByView;
     private MeasurementBookService measurementBookService;
     private WorksService worksService;
@@ -164,17 +166,11 @@ public class MeasurementBookAction extends BaseFormAction {
     private String dispDesignation;
     private Long estimateId;
     private PersonalInformationService personalInformationService;
-    private EisUtilService eisService;
-
     private static final String ACTION_NAME = "actionName";
-    @Autowired
-    private CommonsService commonsService;
     private String activitySearchMode;
     private boolean isLegacyMB;
     private static final String NON_TENDERED = "nonTendered";
     private static final String LUMP_SUM = "lumpSum";
-    private static final String SEARCH = "search";
-    private static final String INBOX = "inbox";
     private String cancellationReason;
     private String cancelRemarks;
     private Long mbId;
@@ -203,11 +199,8 @@ public class MeasurementBookAction extends BaseFormAction {
         ajaxMBAction.setPersonalInformationService(personalInformationService);
         if (id != null) {
             mbHeader = measurementBookService.findById(id, false);
-            if (mbHeader != null && mbHeader.getMbPreparedBy() != null) {
-                mbPreparedByView = (EmployeeView) getPersistenceService().find("from EmployeeView where id = ?",
-                        mbHeader.getMbPreparedBy().getIdPersonalInformation());
+            if (mbHeader != null)
                 workOrderEstimateList.add(mbHeader.getWorkOrderEstimate());
-            }
         } else if (workOrderId != null) {
             workOrderEstimateList.addAll(getPersistenceService().findAllByNamedQuery(
                     "getWorkOrderEstimateByWorkOrderId", workOrderId));
@@ -221,8 +214,6 @@ public class MeasurementBookAction extends BaseFormAction {
 
         super.prepare();
         setupDropdownDataExcluding("workOrder");
-        populatePreparedByList(ajaxMBAction, mbHeader.getWorkOrder() != null);
-        setMBPreparedBy(getIdPersonalInformationFromParams());
         addDropdownData("executingDepartmentList", getPersistenceService().findAllBy("from DepartmentImpl"));
         if (getLatestAssignmentForCurrentLoginUser() != null)
             departmentId = getLatestAssignmentForCurrentLoginUser().getDepartment().getId();
@@ -279,82 +270,6 @@ public class MeasurementBookAction extends BaseFormAction {
 
     protected MBHeader calculateMBdetails(final MBHeader mbHeader, final boolean isPersistedObject) {
         return measurementBookService.calculateMBDetails(mbHeader, isPersistedObject);
-    }
-
-    protected void populatePreparedByList(final AjaxMeasurementBookAction ajaxMBAction,
-            final boolean executingDeptPopulated) {
-        if (executingDeptPopulated) {
-            if (mode != null && mode.equalsIgnoreCase(SEARCH)) {
-                ajaxMBAction.setExecutingDepartment(workOrderEstimateList.get(0).getEstimate().getExecutingDepartment()
-                        .getId());
-                ajaxMBAction.usersInExecutingDepartment();
-                addDropdownData("preparedByList", ajaxMBAction.getUsersInExecutingDepartment());
-            } else if (sourcepage != null && sourcepage.equalsIgnoreCase(INBOX) && !canUserModify()
-                    && !(mbHeader != null && mbHeader.getEgwStatus().getCode().equalsIgnoreCase("REJECTED"))) {
-                ajaxMBAction.setExecutingDepartment(workOrderEstimateList.get(0).getEstimate().getExecutingDepartment()
-                        .getId());
-                ajaxMBAction.usersInExecutingDepartment();
-                addDropdownData("preparedByList", ajaxMBAction.getUsersInExecutingDepartment());
-            } else if (id == null || mbHeader == null || mbHeader.getId() == null || canUserModify()
-                    || mbHeader != null && mbHeader.getEgwStatus().getCode().equalsIgnoreCase("REJECTED")) {
-                final AjaxEstimateAction ajaxEstimateAction = new AjaxEstimateAction();
-                ajaxEstimateAction.setPersistenceService(getPersistenceService());
-                ajaxEstimateAction.setAssignmentService(assignmentService);
-                ajaxEstimateAction.setEisService(eisService);
-                ajaxEstimateAction.setExecutingDepartment(workOrderEstimateList.get(0).getEstimate()
-                        .getExecutingDepartment().getId());
-                String loggedInUserEmployeeCode = null;
-                if (mbHeader != null && mbHeader.getMbPreparedBy() != null)
-                    loggedInUserEmployeeCode = mbHeader.getMbPreparedBy().getEmployeeCode();
-                else {
-                    final Assignment latestAssignment = getLatestAssignmentForCurrentLoginUser();
-                    if (latestAssignment != null)
-                        loggedInUserEmployeeCode = latestAssignment.getEmployee().getCode();
-                }
-                ajaxEstimateAction.setEmployeeCode(loggedInUserEmployeeCode);
-                ajaxEstimateAction.usersInExecutingDepartment();
-                if (ajaxEstimateAction.getUsersInExecutingDepartment() != null
-                        && ajaxEstimateAction.getUsersInExecutingDepartment().size() == 1) {
-                    // TODO: Please check the below 2 lines -- edited by Vaibhav
-                    defaultPreparedById = ((List<EmployeeView>) ajaxEstimateAction.getUsersInExecutingDepartment())
-                            .get(0).getId().intValue();
-                    defaultDesgination = ((List<EmployeeView>) ajaxEstimateAction.getUsersInExecutingDepartment())
-                            .get(0).getDepartment().getName();
-                }
-                addDropdownData("preparedByList", ajaxEstimateAction.getUsersInExecutingDepartment());
-            } else {
-                ajaxMBAction.setExecutingDepartment(workOrderEstimateList.get(0).getEstimate().getExecutingDepartment()
-                        .getId());
-                ajaxMBAction.usersInExecutingDepartment();
-                addDropdownData("preparedByList", ajaxMBAction.getUsersInExecutingDepartment());
-            }
-        } else
-            addDropdownData("preparedByList", Collections.emptyList());
-    }
-
-    protected Integer getIdPersonalInformationFromParams() {
-        final String[] ids = parameters.get("mbPreparedBy");
-        if (ids != null && ids.length > 0) {
-            parameters.remove("mbPreparedBy");
-            final String id = ids[0];
-            if (id != null && id.length() > 0)
-                return Integer.parseInt(id);
-        }
-        return null;
-    }
-
-    protected void setMBPreparedBy(final Integer idPersonalInformation) {
-        if (validMBPreparedBy(idPersonalInformation)) {
-            mbHeader.setMbPreparedBy(employeeServiceOld.getEmloyeeById(idPersonalInformation));
-            mbPreparedByView = (EmployeeView) getPersistenceService().find("from EmployeeView where id = ?",
-                    idPersonalInformation);
-        }
-    }
-
-    protected boolean validMBPreparedBy(final Integer idPersonalInformation) {
-        if (idPersonalInformation != null && idPersonalInformation > 0)
-            return true;
-        return false;
     }
 
     public String loadSerachForActivity() {
@@ -661,7 +576,7 @@ public class MeasurementBookAction extends BaseFormAction {
         // }
 
         if (SAVE_ACTION.equals(actionName) && mbHeader.getEgwStatus() == null)
-            mbHeader.setEgwStatus(commonsService.getStatusByModuleAndCode("MBHeader", "NEW"));
+            mbHeader.setEgwStatus(egwStatusHibernateDAO.getStatusByModuleAndCode("MBHeader", "NEW"));
 
         mbHeader = measurementBookService.persist(mbHeader);
         if (!actionName.isEmpty())
@@ -847,7 +762,7 @@ public class MeasurementBookAction extends BaseFormAction {
 
     public String cancelApprovedMB() {
         final MBHeader mbHeader = measurementBookService.findById(mbId, false);
-        mbHeader.setEgwStatus(commonsService.getStatusByModuleAndCode("MBHeader",
+        mbHeader.setEgwStatus(egwStatusHibernateDAO.getStatusByModuleAndCode("MBHeader",
                 MBHeader.MeasurementBookStatus.CANCELLED.toString()));
 
         final PersonalInformation prsnlInfo = employeeServiceOld.getEmpForUserId(worksService.getCurrentLoggedInUserId());
@@ -1172,14 +1087,6 @@ public class MeasurementBookAction extends BaseFormAction {
         this.userService = userService;
     }
 
-    public CommonsService getCommonsService() {
-        return commonsService;
-    }
-
-    public void setCommonsService(final CommonsService commonsService) {
-        this.commonsService = commonsService;
-    }
-
     public String getActivitySearchMode() {
         return activitySearchMode;
     }
@@ -1261,7 +1168,6 @@ public class MeasurementBookAction extends BaseFormAction {
     }
 
     public void setEisService(final EisUtilService eisService) {
-        this.eisService = eisService;
     }
 
     public Integer getDefaultPreparedById() {

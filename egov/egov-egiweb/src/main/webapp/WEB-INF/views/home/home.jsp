@@ -38,6 +38,7 @@
   ~   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
   --%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib uri="http://www.springframework.org/tags" prefix="spring" %>
 <!DOCTYPE html>
 <html class="no-js" oncontextmenu="return false;">
 	<head>
@@ -47,7 +48,8 @@
 		<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 		<meta name="description" content="eGov Urban Portal" />
 		<meta name="author" content="" />
-		
+		<spring:eval expression="@environment.getProperty('user.pwd.strength')" var="pwdstrengthmsg"/>
+		<spring:message code="usr.pwd.strength.msg.${pwdstrengthmsg}" var="pwdmsg" htmlEscape="true"/>
 		<title>eGov Urban Portal</title>
 		
 		<link rel="icon" href="/egi/resources/global/images/favicon.png" sizes="32x32">
@@ -62,12 +64,12 @@
 		<script src="<c:url value='/resources/global/js/bootstrap/bootbox.min.js'/>"></script>
 		<script src="<c:url value='/resources/global/js/bootstrap/bootstrap.js'/>"></script>
 		<script src="<c:url value='/resources/global/js/multi-level-menu/jquery.multilevelpushmenu.js'/>"></script>
-		<!--[if lt IE 9]><script src="resources/js/ie8-responsive-file-warning.js"></script><![endif]-->
+		
 		
 		<!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
 		<!--[if lt IE 9]>
-			<script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
-			<script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+			<script src="/egi/resources/global/js/ie8/html5shiv.min.js"></script>
+			<script src="/egi/resources/global/js/ie8/respond.min.js"></script>
 		<![endif]-->
 		<style>
 		body{padding:0;}
@@ -220,7 +222,7 @@
 								</div>
 								<div class="col-md-6 col-xs-6 add-margin text-right">
 									<span class="inline-elem">Search</span>
-									<span class="inline-elem"><input type="text" id="inboxsearch" class="form-control input-sm"></span>
+									<span class="inline-elem"><input type="text" id="inboxsearch" class="form-control input-sm search-table"><span class="fa fa-times-circle cleartext"></span></span>
 								</div>
 							</div>
 							<div class="row">
@@ -249,7 +251,7 @@
 								</div>
 								<div class="col-md-6 col-xs-6 add-margin text-right">
 									<span class="inline-elem">Search</span>
-									<span class="inline-elem"><input type="text" id="draftsearch" class="form-control input-sm"></span>
+									<span class="inline-elem"><input type="text" id="draftsearch" class="form-control input-sm search-table"><span class="fa fa-times-circle cleartext"></span></span>
 								</div>
 							</div>
 							<table class="table table-bordered datatable" id="official_drafts" style="width:100%;">
@@ -275,7 +277,7 @@
 								<div class="col-md-6 col-xs-6 add-margin text-right">
 									
 									<span class="inline-elem">Search</span>
-									<span class="inline-elem"><input type="text" id="notifysearch" class="form-control input-sm"></span>
+									<span class="inline-elem"><input type="text" id="notifysearch" class="form-control input-sm search-table"><span class="fa fa-times-circle cleartext"></span></span>
 								</div>
 							</div>
 							<table class="table table-bordered datatable" id="official_notify" style="width:100%;">
@@ -361,6 +363,7 @@
 									<label class="control-label">Old Password</label>
 								</div>
 								<div class="col-md-8 add-margin">
+									<input style="display:none">
 									<input type="password" class="form-control" id="old-pass" required="required">
 								</div>
 							</div>
@@ -369,7 +372,7 @@
 									<label class="control-label">New Password</label>
 								</div>
 								<div class="col-md-8 add-margin">
-									<input type="password" class="form-control check-password" id="new-pass" minlength="8" maxlength="32" data-container="#wrap" data-toggle="popover" data-content="Minimum 8 to 32 characters long and should contain upper case, lower case alphabet,number and special character except [& < > # % \" ' / and space]">
+									<input type="password" class="form-control check-password" id="new-pass" maxlength="32" data-container="#wrap" data-toggle="popover" data-content="${pwdmsg}">
 								</div>
 							</div>
 							<div class="form-group">
@@ -377,7 +380,7 @@
 									<label class="control-label">Re-type Password</label>
 								</div>
 								<div class="col-md-8 add-margin">
-									<input type="password" class="form-control check-password" id="retype-pass" minlength="8" maxlength="32">
+									<input type="password" class="form-control check-password" id="retype-pass" maxlength="32">
 									<div class="password-error error-msg display-hide">Password is incorrect</div>
 								</div>
 							</div>
@@ -398,6 +401,12 @@
 			<script>
 			$('.change-password').modal('show');
 			$('.pass-cancel').attr('disabled','disabled');
+			</script>
+		</c:if>
+		<c:if test="${warn_pwd_expire}">
+			<script>
+				var pwdExpireInDays = ${pwd_expire_in_days};
+				bootbox.alert("Your password will expire in "+pwdExpireInDays+" day(s), please update your password.");
 			</script>
 		</c:if>
 		<div class="modal fade favourites" data-backdrop="static">

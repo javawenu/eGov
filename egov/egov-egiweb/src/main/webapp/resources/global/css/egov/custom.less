@@ -523,6 +523,21 @@ b, label, strong{
     overflow-x: hidden;
     width: ~"calc(100% - 250px)";
     padding-bottom: 40px;
+    
+    #inboxsearch{
+    	padding: 5px 18px 5px 10px;
+    }
+    
+    .cleartext {
+	    float: right;
+	    margin-right: 4px;
+	    margin-top: -22px;
+	    color: @basecolor;
+	    cursor:pointer;
+	    .font-size(16px);
+	    display:none;
+	}
+        
 }
 
 .table-header {
@@ -544,6 +559,10 @@ b, label, strong{
     
     a {
         padding: 5px;
+        
+        span{
+        	margin: 0 3px;
+        }
     }
 }
 
@@ -1526,6 +1545,14 @@ b, label, strong{
             }
         }
         
+        .new-page-header {
+		    font-family: semibold;
+		    .font-size(20px);
+		    color: @active;
+		    text-align: center;
+		    padding: 0 15px 15px;
+		}
+        
         td.greybox input[type="text"], td.greybox select, td.bluebox input[type="text"], td.bluebox select
         {
             width:auto;
@@ -1679,6 +1706,7 @@ b, label, strong{
     cursor: pointer;
     background: @basecolor;
     border: 1px solid @basecolor;
+    color:@whitecolor;
     
     i {
         color: @basecolor;
@@ -1847,9 +1875,8 @@ b, label, strong{
     tbody tr:hover
     {
         background:#f7f7f7;
-        cursor:pointer;
     }
-    
+     
 }
 
 table.dataTable{
@@ -1857,6 +1884,7 @@ table.dataTable{
     @media (max-width: 768px){
         display:block;
     }
+    
     thead{
         @media (max-width: 768px){
             display: none;
@@ -1869,6 +1897,7 @@ table.dataTable{
         }
         
     }
+    
     tbody{
     	.font-size(13px);
         @media (max-width: 768px){
@@ -1881,18 +1910,26 @@ table.dataTable{
             }
         }
     }
+    
+    tbody tr:hover
+    {
+        background:#f7f7f7;
+        cursor:pointer;
+    }
+    
+    tbody.no-pointer tr:hover
+    {
+        cursor:default;
+    }
 }
 
 table.dataTable thead th {
-    position: relative;
     background-image: none !important;
+    border:1px solid #ccc;
 }
 
 table.dataTable thead th.sorting:after, table.dataTable th.sorting_asc:after, table.dataTable th.sorting_desc:after {
-    position: absolute;
-    top: 12px;
-    right: 8px;
-    display: block;
+    float:right;
     font-family: FontAwesome;
 }
 

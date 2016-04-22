@@ -47,8 +47,8 @@ import javax.validation.Valid;
 import org.apache.log4j.Logger;
 import org.egov.commons.Accountdetailkey;
 import org.egov.commons.Accountdetailtype;
+import org.egov.commons.dao.AccountdetailtypeHibernateDAO;
 import org.egov.commons.service.AccountDetailKeyService;
-import org.egov.commons.service.CommonsService;
 import org.egov.eis.entity.Employee;
 import org.egov.eis.entity.enums.EmployeeStatus;
 import org.egov.eis.repository.EmployeeTypeRepository;
@@ -85,9 +85,10 @@ public class CreateEmployeeController {
     @Autowired
     private BoundaryTypeService boundaryTypeService;
 
+    
+    
     @Autowired
-    private CommonsService commonsService;
-
+    private AccountdetailtypeHibernateDAO accountdetailtypeHibernateDAO;
     @Autowired
     private AccountDetailKeyService accountDetailKeyService;
 
@@ -114,8 +115,7 @@ public class CreateEmployeeController {
         }
         employeeService.create(employee);
 
-        final Accountdetailtype accountdetailtype = commonsService
-                .getAccountDetailTypeByName(EisConstants.ROLE_EMPLOYEE);
+        final Accountdetailtype accountdetailtype = accountdetailtypeHibernateDAO.getAccountdetailtypeByName(EisConstants.ROLE_EMPLOYEE);
         final Accountdetailkey adk = new Accountdetailkey();
         adk.setAccountdetailtype(accountdetailtype);
         adk.setGroupid(1);

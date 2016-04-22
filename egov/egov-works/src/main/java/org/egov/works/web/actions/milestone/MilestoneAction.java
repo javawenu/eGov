@@ -50,7 +50,7 @@ import org.apache.struts2.convention.annotation.ParentPackage;
 import org.apache.struts2.convention.annotation.Result;
 import org.apache.struts2.interceptor.validation.SkipValidation;
 import org.egov.commons.EgwTypeOfWork;
-import org.egov.commons.service.CommonsService;
+import org.egov.commons.dao.EgwStatusHibernateDAO;
 import org.egov.infra.admin.master.entity.User;
 import org.egov.infra.admin.master.service.UserService;
 import org.egov.infra.exception.ApplicationRuntimeException;
@@ -80,7 +80,7 @@ public class MilestoneAction extends BaseFormAction {
     private String messageKey;
     private static final String MILESTONE_MODULE_KEY = "Milestone";
     @Autowired
-    private CommonsService commonsService;
+    private EgwStatusHibernateDAO egwStatusHibernateDAO;
     @Autowired
     private UserService userService;
     private String actionName;
@@ -135,7 +135,7 @@ public class MilestoneAction extends BaseFormAction {
         final String actionName = parameters.get("actionName")[0];
 
         if (id == null)
-            milestone.setEgwStatus(commonsService.getStatusByModuleAndCode(MILESTONE_MODULE_KEY, "NEW"));
+            milestone.setEgwStatus(egwStatusHibernateDAO.getStatusByModuleAndCode(MILESTONE_MODULE_KEY, "NEW"));
 
         milestone = milestoneService.persist(milestone);
         milestoneWorkflowService.transition(actionName, milestone, milestone.getWorkflowapproverComments());
@@ -313,10 +313,6 @@ public class MilestoneAction extends BaseFormAction {
 
     public void setMilestoneWorkflowService(final WorkflowService<Milestone> milestoneWorkflowService) {
         this.milestoneWorkflowService = milestoneWorkflowService;
-    }
-
-    public void setCommonsService(final CommonsService commonsService) {
-        this.commonsService = commonsService;
     }
 
     public void setWorksService(final WorksService worksService) {

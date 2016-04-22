@@ -39,6 +39,9 @@
  ******************************************************************************/
 package org.egov.web.actions.report;
 
+
+import org.egov.infstr.services.PersistenceService;
+import org.springframework.beans.factory.annotation.Qualifier;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -81,19 +84,25 @@ import org.egov.services.deduction.RemitRecoveryService;
 import org.egov.utils.Constants;
 import org.egov.utils.FinancialConstants;
 import org.hibernate.FlushMode;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.beans.factory.annotation.Autowired;
+
 
 @Results(value = {
         @Result(name = "PDF", type = "stream", location = "inputStream", params = { "inputName", "inputStream", "contentType",
-                "application/pdf", "contentDisposition", "no-cache;filename=PendingTDSReport.pdf" }),
-                @Result(name = "XLS", type = "stream", location = "inputStream", params = { "inputName", "inputStream", "contentType",
-                        "application/xls", "contentDisposition", "no-cache;filename=PendingTDSReport.xls" }),
-                        @Result(name = "summary-PDF", type = "stream", location = "inputStream", params = { "inputName", "inputStream",
-                                "contentType", "application/pdf", "contentDisposition", "no-cache;filename=TdsSummaryReport.pdf" }),
-                                @Result(name = "summary-XLS", type = "stream", location = "inputStream", params = { "inputName", "inputStream",
-                                        "contentType", "application/xls", "contentDisposition", "no-cache;filename=TdsSummaryReport.xls" })
+                "application/pdf", "contentDisposition", "no-cache;filename=DeductionDetailedReport.pdf" }),
+        @Result(name = "XLS", type = "stream", location = "inputStream", params = { "inputName", "inputStream", "contentType",
+                "application/xls", "contentDisposition", "no-cache;filename=DeductionDetailedReport.xls" }),
+        @Result(name = "summary-PDF", type = "stream", location = "inputStream", params = { "inputName", "inputStream",
+                "contentType", "application/pdf", "contentDisposition", "no-cache;filename=DeductionsRemittanceSummary.pdf" }),
+        @Result(name = "summary-XLS", type = "stream", location = "inputStream", params = { "inputName", "inputStream",
+                "contentType", "application/xls", "contentDisposition", "no-cache;filename=DeductionsRemittanceSummary.xls" }),
+        @Result(name = "results", location = "pendingTDSReport-results.jsp"),
+        @Result(name = "entities", location = "pendingTDSReport-entities.jsp"),
+        @Result(name = "summaryForm", location = "pendingTDSReport-summaryForm.jsp"),
+        @Result(name = "reportForm", location = "pendingTDSReport-reportForm.jsp"),
+        @Result(name = "summaryResults", location = "pendingTDSReport-summaryResults.jsp")
 })
-@Transactional(readOnly = true)
+
 @ParentPackage("egov")
 public class PendingTDSReportAction extends BaseFormAction {
     /**
@@ -107,20 +116,28 @@ public class PendingTDSReportAction extends BaseFormAction {
     private InputStream inputStream;
     private ReportService reportService;
     private String partyName = "";
+    private String type = "";
     private Integer detailKey;
     private boolean showRemittedEntries = false;
     private List<RemittanceBean> pendingTDS = new ArrayList<RemittanceBean>();
     private List<TDSEntry> remittedTDS = new ArrayList<TDSEntry>();
+    private List<TDSEntry> inWorkflowTDS = new ArrayList<TDSEntry>();
     private Recovery recovery = new Recovery();
     private Fund fund = new Fund();
     private Department department = new Department();
+   
+ @Autowired
+ @Qualifier("persistenceService")
+ private PersistenceService persistenceService;
+ @Autowired
     private EgovCommon egovCommon;
     private final List<EntityType> entitiesList = new ArrayList<EntityType>();
     private RemitRecoveryService remitRecoveryService;
     private FinancialYearHibernateDAO financialYearDAO;
     private String message = "";
+    private String mode = "";
     private static Logger LOGGER = Logger.getLogger(PendingTDSReportAction.class);
-
+    
     public void setFinancialYearDAO(final FinancialYearHibernateDAO financialYearDAO) {
         this.financialYearDAO = financialYearDAO;
     }
@@ -131,6 +148,7 @@ public class PendingTDSReportAction extends BaseFormAction {
 
     @Override
     public String execute() throws Exception {
+        mode = "deduction";
         return "reportForm";
     }
 
@@ -141,13 +159,14 @@ public class PendingTDSReportAction extends BaseFormAction {
 
     @Override
     public void prepare() {
-        HibernateUtil.getCurrentSession().setDefaultReadOnly(true);
-        HibernateUtil.getCurrentSession().setFlushMode(FlushMode.MANUAL);
+        persistenceService.getSession().setDefaultReadOnly(true);
+        persistenceService.getSession().setFlushMode(FlushMode.MANUAL);
         super.prepare();
-        addDropdownData("departmentList", persistenceService.findAllBy("from Department order by deptName"));
-        addDropdownData("fundList", persistenceService.findAllBy(" from Fund where isactive=1 and isnotleaf=0 order by name"));
+        addDropdownData("departmentList", persistenceService.findAllBy("from Department order by name"));
+        addDropdownData("fundList", persistenceService.findAllBy(" from Fund where isactive=true and isnotleaf=false order by name"));  
+
         addDropdownData("recoveryList",
-                persistenceService.findAllBy(" from Recovery where isactive=1 order by chartofaccounts.glcode"));
+                persistenceService.findAllBy(" from Recovery where isactive=true order by chartofaccounts.glcode"));
     }
 
     @Action(value = "/report/pendingTDSReport-ajaxLoadData")
@@ -203,6 +222,8 @@ public class PendingTDSReportAction extends BaseFormAction {
     Map<String, Object> getParamMap() {
         final Map<String, Object> paramMap = new HashMap<String, Object>();
         paramMap.put("remittedTDSJasper", this.getClass().getResourceAsStream("/reports/templates/remittedTDSReport.jasper"));
+        paramMap.put("inWorkflowTDSJasper", this.getClass().getResourceAsStream("/reports/templates/inWorkflowTDSReport.jasper"));
+        paramMap.put("inWorkflowTDS", inWorkflowTDS);
         if (showRemittedEntries)
             paramMap.put("remittedTDS", remittedTDS);
         else
@@ -213,10 +234,13 @@ public class PendingTDSReportAction extends BaseFormAction {
         {
             final String formatedFromDate = Constants.DDMMYYYYFORMAT2.format(fromDate);
             paramMap.put("fromDate", formatedFromDate);
-            paramMap.put("heading", "Pending TDS report From " + formatedFromDate + "  to " + formatedAsOndate);
+            paramMap.put("heading", "Deduction detailed report for "+ recovery.getType() +" From " + formatedFromDate + "  to " + formatedAsOndate);
+            paramMap.put("summaryheading", "Deductions remittance summary for "+ recovery.getType() +" From " + formatedFromDate + "  to " + formatedAsOndate);
             paramMap.put("fromDateText", "From Date :      " + formatedFromDate);
-        } else
-            paramMap.put("heading", "Pending TDS report as on " + formatedAsOndate);
+        } else{
+            paramMap.put("heading", "Deduction detailed report for "+ recovery.getType() +" as on " + formatedAsOndate);
+            paramMap.put("summaryheading", "Deductions remittance summary for "+ recovery.getType() +" as on " + formatedAsOndate);
+        }
         fund = (Fund) persistenceService.find("from Fund where id=?", fund.getId());
         paramMap.put("fundName", fund.getName());
         paramMap.put("partyName", partyName);
@@ -224,6 +248,7 @@ public class PendingTDSReportAction extends BaseFormAction {
             department = (Department) persistenceService.find("from Department where id=?", department.getId());
             paramMap.put("departmentName", department.getName());
         }
+        recovery = (Recovery) persistenceService.find("from Recovery where id=?", recovery.getId());
         paramMap.put("recoveryName", recovery.getRecoveryName());
         return paramMap;
     }
@@ -233,36 +258,94 @@ public class PendingTDSReportAction extends BaseFormAction {
         if (getFieldErrors().size() > 0)
             return;
         recovery = (Recovery) persistenceService.find("from Recovery where id=?", recovery.getId());
+        type = recovery.getType();
         String deptQuery = "";
         String partyNameQuery = "";
         final RemittanceBean remittanceBean = new RemittanceBean();
         remittanceBean.setRecoveryId(recovery.getId());
+        if (department.getId() != null && department.getId() != -1)
+            deptQuery = " and egRemittanceGldtl.generalledgerdetail.generalLedgerId.voucherHeaderId.vouchermis.departmentid.id="
+                    + department.getId();
+        if (detailKey != null && detailKey != -1)
+            partyNameQuery = " and egRemittanceGldtl.generalledgerdetail.detailkeyid=" + detailKey;
         if (fromDate != null)
             remittanceBean.setFromDate(Constants.DDMMYYYYFORMAT1.format(fromDate));
         pendingTDS = remitRecoveryService.getRecoveryDetailsForReport(remittanceBean, getVoucherHeader(), detailKey);
+        final StringBuffer query1 = new StringBuffer(1000);
+        List<EgRemittanceDetail> result1 = new ArrayList<EgRemittanceDetail>();
+        query1.append("from EgRemittanceDetail where  egRemittanceGldtl.generalledgerdetail.generalLedgerId.glcodeId.id=? "
+                +
+                "and egRemittance.fund.id=? and egRemittance.voucherheader.status = 5 and egRemittanceGldtl.generalledgerdetail.generalLedgerId.voucherHeaderId.status=0 and "
+                +
+                "egRemittanceGldtl.generalledgerdetail.generalLedgerId.voucherHeaderId.voucherDate <= ? ");
+        if (fromDate != null)
+            query1.append(" and egRemittanceGldtl.generalledgerdetail.generalLedgerId.voucherHeaderId.voucherDate >= ?");
+        query1.append(deptQuery).append(partyNameQuery);
+        query1.append(" order by egRemittanceGldtl.generalledgerdetail.generalLedgerId.voucherHeaderId.voucherNumber ");
+        if (fromDate != null)
+            result1 = persistenceService.findAllBy(query1.toString(), recovery.getChartofaccounts().getId(), fund.getId(),
+                    asOnDate, fromDate);
+        else
+            result1 = persistenceService.findAllBy(query1.toString(), recovery.getChartofaccounts().getId(), fund.getId(),
+                    asOnDate);
+        Boolean createPartialRow1 = false;
+        for (final EgRemittanceDetail entry : result1) {
+            createPartialRow1 = false;
+            for (final TDSEntry tdsExists : inWorkflowTDS)
+                if (tdsExists.getEgRemittanceGlDtlId().intValue() == entry.getEgRemittanceGldtl().getId().intValue())
+                    createPartialRow1 = true;
+            TDSEntry tds = new TDSEntry();
+            tds.setEgRemittanceGlDtlId(entry.getEgRemittanceGldtl().getId());
+            if (!createPartialRow1)
+                tds = createTds(entry);
+            tds.setRemittedOn(Constants.DDMMYYYYFORMAT2.format(entry.getEgRemittance().getVoucherheader().getVoucherDate()));
+            tds.setAmount(entry.getRemittedamt());
+            if (entry.getEgRemittance().getVoucherheader() != null)
+                tds.setPaymentVoucherNumber(entry.getEgRemittance().getVoucherheader().getVoucherNumber());
+            final List<InstrumentVoucher> ivList = persistenceService.findAllBy("from InstrumentVoucher where" +
+                    " instrumentHeaderId.statusId.description in(?,?,?) and voucherHeaderId=?"
+                    , FinancialConstants.INSTRUMENT_DEPOSITED_STATUS, FinancialConstants.INSTRUMENT_CREATED_STATUS,
+                    FinancialConstants.INSTRUMENT_RECONCILED_STATUS, entry.getEgRemittance().getVoucherheader());
+            boolean isMultiple = false;
+            for (final InstrumentVoucher iv : ivList)
+            {
+                if (entry.getRemittedamt().compareTo(iv.getInstrumentHeaderId().getInstrumentAmount()) != 0)
+                    isMultiple = true;
+
+                tds.setChequeNumber(iv.getInstrumentHeaderId().getInstrumentNumber());
+                if (isMultiple)
+                    tds.setChequeNumber(tds.getChequeNumber() + "-MULTIPLE");
+                tds.setChequeAmount(iv.getInstrumentHeaderId().getInstrumentAmount());
+                if (iv.getInstrumentHeaderId().getInstrumentDate() != null)
+                    tds.setDrawnOn(Constants.DDMMYYYYFORMAT2.format(iv.getInstrumentHeaderId().getInstrumentDate()));
+            }
+            inWorkflowTDS.add(tds);
+        }
         if (showRemittedEntries) {
             if (department.getId() != null && department.getId() != -1)
-                deptQuery = " and egRemittanceGldtl.generalledgerdetail.generalledger.voucherHeaderId.vouchermis.departmentid.id="
+                deptQuery = " and egRemittanceGldtl.generalledgerdetail.generalLedgerId.voucherHeaderId.vouchermis.departmentid.id="
                         + department.getId();
             if (detailKey != null && detailKey != -1)
                 partyNameQuery = " and egRemittanceGldtl.generalledgerdetail.detailkeyid=" + detailKey;
             final StringBuffer query = new StringBuffer(1000);
+           
             List<EgRemittanceDetail> result = new ArrayList<EgRemittanceDetail>();
-            query.append("from EgRemittanceDetail where  egRemittanceGldtl.generalledgerdetail.generalledger.glcodeId.id=? "
+            query.append("from EgRemittanceDetail where  egRemittanceGldtl.generalledgerdetail.generalLedgerId.glcodeId.id=? "
                     +
-                    "and egRemittance.fund.id=? and egRemittance.voucherheader.status=0 and egRemittanceGldtl.generalledgerdetail.generalledger.voucherHeaderId.status=0 and "
+                    "and egRemittance.fund.id=? and egRemittance.voucherheader.status = 0 and egRemittanceGldtl.generalledgerdetail.generalLedgerId.voucherHeaderId.status=0 and "
                     +
-                    "egRemittanceGldtl.generalledgerdetail.generalledger.voucherHeaderId.voucherDate <= ? ");
+                    "egRemittanceGldtl.generalledgerdetail.generalLedgerId.voucherHeaderId.voucherDate <= ? ");
             if (fromDate != null)
-                query.append(" and egRemittanceGldtl.generalledgerdetail.generalledger.voucherHeaderId.voucherDate >= ?");
+                query.append(" and egRemittanceGldtl.generalledgerdetail.generalLedgerId.voucherHeaderId.voucherDate >= ?");
             query.append(deptQuery).append(partyNameQuery);
-            query.append(" order by egRemittanceGldtl.generalledgerdetail.generalledger.voucherHeaderId.voucherNumber ");
+            query.append(" order by egRemittanceGldtl.generalledgerdetail.generalLedgerId.voucherHeaderId.voucherNumber ");
             if (fromDate != null)
                 result = persistenceService.findAllBy(query.toString(), recovery.getChartofaccounts().getId(), fund.getId(),
                         asOnDate, fromDate);
             else
                 result = persistenceService.findAllBy(query.toString(), recovery.getChartofaccounts().getId(), fund.getId(),
                         asOnDate);
+            
             Boolean createPartialRow = false;
             for (final EgRemittanceDetail entry : result) {
                 createPartialRow = false;
@@ -296,6 +379,7 @@ public class PendingTDSReportAction extends BaseFormAction {
                 }
                 remittedTDS.add(tds);
             }
+           
         }
     }
 
@@ -304,6 +388,7 @@ public class PendingTDSReportAction extends BaseFormAction {
      */
     private void populateSummaryData() {
         recovery = (Recovery) persistenceService.find("from Recovery where id=?", recovery.getId());
+        type = recovery.getType();
         String deptQuery = "";
         String partyNameQuery = "";
         if (department.getId() != null && department.getId() != -1)
@@ -329,11 +414,11 @@ public class PendingTDSReportAction extends BaseFormAction {
                     + "','dd/MM/yyyy') " + deptQuery + partyNameQuery + " group by er.month,vh.name order by er.month,vh.name";
             if (LOGGER.isDebugEnabled())
                 LOGGER.debug(qry);
-            result = HibernateUtil.getCurrentSession().createSQLQuery(qry).list();
+            result = persistenceService.getSession().createSQLQuery(qry).list();
             // Query to get total deduction
-            final String qryTolDeduction = "SELECT type,MONTH,SUM(gldtamt) FROM (SELECT DISTINCT er.month AS MONTH,ergl.gldtlamt           AS gldtamt,"
+            final String qryTolDeduction = "SELECT type,MONTH,SUM(gldtamt) FROM (SELECT DISTINCT er.month AS MONTH,ergl.gldtlamt AS gldtamt,"
                     +
-                    "ergl.gldtlid,vh.name AS type FROM eg_remittance_detail erd,voucherheader vh1 RIGHT OUTER JOIN eg_remittance er ON vh1.id=er.paymentvhid,"
+                    "ergl.gldtlid as gldtlid,vh.name AS type FROM eg_remittance_detail erd,voucherheader vh1 RIGHT OUTER JOIN eg_remittance er ON vh1.id=er.paymentvhid,"
                     +
                     "voucherheader vh,vouchermis mis,generalledger gl,generalledgerdetail gld,fund f, eg_remittance_gldtl ergl WHERE erd.remittancegldtlid= ergl.id"
                     +
@@ -350,8 +435,8 @@ public class PendingTDSReportAction extends BaseFormAction {
                     + "','dd/MM/yyyy') and "
                     + " vh.voucherDate >= to_date('"
                     + Constants.DDMMYYYYFORMAT2.format(financialYearDAO.getFinancialYearByDate(asOnDate).getStartingDate())
-                    + "','dd/MM/yyyy') " + deptQuery + partyNameQuery + ")group by type,month";
-            resultTolDeduction = HibernateUtil.getCurrentSession().createSQLQuery(qryTolDeduction).list();
+                    + "','dd/MM/yyyy') " + deptQuery + partyNameQuery + ") as temptable group by type,month";
+            resultTolDeduction = persistenceService.getSession().createSQLQuery(qryTolDeduction).list();
         } catch (final ApplicationRuntimeException e) {
             message = e.getMessage();
             return;
@@ -403,12 +488,12 @@ public class PendingTDSReportAction extends BaseFormAction {
         if (entry.getEgRemittanceGldtl().getRecovery() != null)
             tds.setPartyCode(entry.getEgRemittanceGldtl().getRecovery().getEgPartytype().getCode());
         tds.setEgRemittanceGlDtlId(entry.getEgRemittanceGldtl().getId());
-        tds.setNatureOfDeduction(entry.getEgRemittanceGldtl().getGeneralledgerdetail().getGeneralledger().getVoucherHeaderId()
+        tds.setNatureOfDeduction(entry.getEgRemittanceGldtl().getGeneralledgerdetail().getGeneralLedgerId().getVoucherHeaderId()
                 .getName());
-        tds.setVoucherNumber(entry.getEgRemittanceGldtl().getGeneralledgerdetail().getGeneralledger().getVoucherHeaderId()
+        tds.setVoucherNumber(entry.getEgRemittanceGldtl().getGeneralledgerdetail().getGeneralLedgerId().getVoucherHeaderId()
                 .getVoucherNumber());
         tds.setVoucherDate(Constants.DDMMYYYYFORMAT2.format(entry.getEgRemittanceGldtl().getGeneralledgerdetail()
-                .getGeneralledger().getVoucherHeaderId().getVoucherDate()));
+                .getGeneralLedgerId().getVoucherHeaderId().getVoucherDate()));
         final EntityType entityType = getEntity(entry);
         if (entityType != null) {
             tds.setPartyName(entityType.getName());
@@ -420,12 +505,11 @@ public class PendingTDSReportAction extends BaseFormAction {
     }
 
     private EntityType getEntity(final EgRemittanceDetail entry) {
-        final EgovCommon common = new EgovCommon();
-        common.setPersistenceService(persistenceService);
-        final Integer detailKeyId = entry.getEgRemittanceGldtl().getGeneralledgerdetail().getDetailkeyid().intValue();
+        egovCommon.setPersistenceService(persistenceService);
+        final Integer detailKeyId = entry.getEgRemittanceGldtl().getGeneralledgerdetail().getDetailKeyId().intValue();
         EntityType entityType = null;
         try {
-            entityType = common.getEntityType(entry.getEgRemittanceGldtl().getGeneralledgerdetail().getAccountdetailtype(),
+            entityType = egovCommon.getEntityType(entry.getEgRemittanceGldtl().getGeneralledgerdetail().getDetailTypeId(),
                     detailKeyId);
         } catch (final ApplicationException e) {
             e.printStackTrace();
@@ -479,10 +563,6 @@ public class PendingTDSReportAction extends BaseFormAction {
         return null;
     }
 
-    public void setEgovCommon(final EgovCommon egovCommon) {
-        this.egovCommon = egovCommon;
-    }
-
     public void setReportService(final ReportService reportService) {
         this.reportService = reportService;
     }
@@ -521,6 +601,14 @@ public class PendingTDSReportAction extends BaseFormAction {
 
     public List<TDSEntry> getRemittedTDS() {
         return remittedTDS;
+    }
+
+    public List<TDSEntry> getInWorkflowTDS() {
+        return inWorkflowTDS;
+    }
+
+    public void setInWorkflowTDS(List<TDSEntry> inWorkflowTDS) {
+        this.inWorkflowTDS = inWorkflowTDS;
     }
 
     public void setRecovery(final Recovery recovery) {
@@ -573,6 +661,22 @@ public class PendingTDSReportAction extends BaseFormAction {
 
     public void setFromDate(final Date fromDate) {
         this.fromDate = fromDate;
+    }
+
+    public String getMode() {
+        return mode;
+    }
+
+    public void setMode(String mode) {
+        this.mode = mode;
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
     }
 
 }

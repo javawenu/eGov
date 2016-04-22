@@ -38,25 +38,23 @@
 # In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
 #-------------------------------------------------------------------------------*/
 
-function validate(name,value)
+function validate()
 {
 
 	
-	document.getElementById("actionName").value= name;
 	if(!validateForm_contingentBill())
 	{
 		document.getElementById("tabber0").tabber.tabShow(0);
 		undoLoadingMask() ;
 		return false;
 	}
-	
-	/*if(document.getElementById("nextLevel").value != "END"){
-		if(!validateUser(name,value)){
-			undoLoadingMask() ;
+	if(document.getElementById("contingentBill_commonBean_billNumber")){
+		var billNumber = document.getElementById("contingentBill_commonBean_billNumber").value;
+		if(billNumber== null || billNumber == ""){
+			bootbox.alert("Please select bill number");
 			return false;
 		}
-	}*/
-
+	}
 	var len=billDetailsTableFinal.getRecordSet().getLength();
 	if( len!=undefined && len>=1)
 	{
@@ -71,16 +69,13 @@ function validate(name,value)
 		undoLoadingMask() ;
 		return false;
 	}
-	/*if(document.getElementById("billDetailsTableSubledger") && document.getElementById("billDetailsTableSubledger").rows.length>1)
-		return;
-	else
-	{
-		var payto=document.getElementById("commonBean.payto").value;
-		if(payto.trim()=="")
-			bootbox.alert(enterpayto);
-		else
-			return true;
-	}*/
+	var billDate = document.getElementById("billDate").value;
+  
+
+//    if (myDate > today) {
+//        bootbox.alert("Bill date is greater than today's date ");
+//        return false
+//    }
 	
 return true;
 }
@@ -667,6 +662,7 @@ function splitEntities(obj)
 {
 	
 var entity=obj.value;
+var detailKey  = document.getElementById("detailKey").value;
 if(entity.trim()!="")
 {
 var entity_array=entity.split("`~`");
@@ -679,7 +675,7 @@ document.getElementById("detailName").value=entity_array[0].split("`-`")[1];
 document.getElementById("commonBean.payto").value=entity_array[0].split("`-`")[1];
 //bootbox.alert(document.getElementById("commonBean.payto").value);
 }
-else
+else if(detailKey == null || detailKey== "")
 {
 //bootbox.alert(invalidEntityselected);
 obj.value="";

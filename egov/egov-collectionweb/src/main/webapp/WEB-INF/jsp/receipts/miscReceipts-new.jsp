@@ -37,7 +37,8 @@
   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
  -->
 <script type="text/javascript" src="${pageContext.request.contextPath}/resources/js/MiscReceipts.js?rnd=${app_release_no}"></script>        
-<script type="text/javascript" src="${pageContext.request.contextPath}/resources/js/MiscReceiptsService.js?rnd=${app_release_no}"></script>   
+<script type="text/javascript" src="${pageContext.request.contextPath}/resources/js/MiscReceiptsService.js?rnd=${app_release_no}"></script> 
+<script type="text/javascript" src="${pageContext.request.contextPath}/resources/js/autocomplete-debug.js?rnd=${app_release_no}"></script>  
 <style type="text/css">
     #codescontainer {position:absolute;left:11em;width:9%;text-align: left;}
     #codescontainer .yui-ac-content {position:absolute;width:350px;border:1px solid #404040;background:#fff;overflow:hidden;z-index:9050;}
@@ -90,6 +91,72 @@ function validateMiscReceipt()
     }
     return true;
 }
+
+jQuery(document).ready(function(){
+	jQuery( "#voucherDate" ).datepicker({ 
+   	 format: 'dd/mm/yyyy',
+   	 autoclose:true,
+   	 onRender: function(date) {
+      	    return date.valueOf() < now.valueOf() ? 'disabled' : '';
+      	  }
+	  }).on('changeDate', function(ev) {
+		  var string=jQuery(this).val();
+		  if(!(string.indexOf("_") > -1)){
+			  isDatepickerOpened=false; 
+	      	  validateVoucherDate(this);
+		  }
+	  }).data('datepicker');
+});
+
+function validateVoucherDate(obj)
+{
+      document.getElementById("receipt_dateerror_area").style.display="none";
+	  document.getElementById("receipt_dateerror_area").innerHTML="";
+	  if(jQuery(obj).val())
+	  {
+		  var dmy=jQuery(obj).val().split('/');
+
+		  if(dmy.length === 3)
+		  {
+			  var seldate=new Date(dmy[2],(dmy[1]-1), dmy[0]);
+			  if(seldate>new Date())
+			  {
+				  document.getElementById("receipt_dateerror_area").style.display="block";
+			      document.getElementById("receipt_dateerror_area").innerHTML+=
+							'<s:text name="billreceipt.receipt.futuredate.errormessage" />'+'<br/>';
+				  jQuery(obj).val('');
+				  scrolltop();
+				  return false;
+			  }
+		  }
+		 
+	  }
+	
+		/*trim(obj,obj.value);
+		document.getElementById("receipt_dateerror_area").style.display="none";
+		document.getElementById("receipt_dateerror_area").innerHTML="";
+	   	if(obj.value!="");
+		if(!validateNotFutureDate(obj.value,currDate)){
+		   document.getElementById("receipt_dateerror_area").style.display="block";
+	       document.getElementById("receipt_dateerror_area").innerHTML+=
+					'<s:text name="billreceipt.manualreceipt.futuredate.errormessage" />'+ '<br>';
+	       obj.value = "";
+	       // obj.focus();
+	       obj.tabIndex="-1";
+	       var keyCode = document.all? window.event.keyCode:event.which;
+		   if(keyCode==9) {
+	       window.scroll(0,0);
+	       }
+	       window.scroll(0,0);
+	       return false;
+		}*/
+
+		
+	  return true;
+	
+	
+}
+
 
 function resetMisc(){
     document.getElementById("voucherDate").value=currDate;
@@ -341,8 +408,13 @@ var valid=true;
                         valid=false;
                 
                 }
-                
             </s:if>
+            <s:if test="%{isFieldMandatory('function')}">                     
+			 if(null!= document.getElementById('functionId') && document.getElementById('functionId').value == -1){
+				 document.getElementById("receipt_error_area").innerHTML+='<s:text name="miscreceipt.functioncode.errormessage" />'+ '<br>';                                
+				valid=false;
+			 }            
+			</s:if>
 
             if(null != document.getElementById('serviceCategoryid') && document.getElementById('serviceCategoryid').value == -1){
 
@@ -371,8 +443,6 @@ var totaldbamt=0,totalcramt=0;
                 
     var makeCreditDetailTable = function() {
         var creditDetailColumns = [
-            {key:"functionid",hidden:true,width:0, formatter:createTextFieldFormatterCredit(VOUCHERCREDITDETAILLIST,".functionIdDetail","hidden",VOUCHERCREDITDETAILTABLE)},
-            {key:"function",label:'Function',minWidth:90, formatter:createTextFieldFormatterForFunctionCredit(VOUCHERCREDITDETAILLIST,".functionDetail",VOUCHERCREDITDETAILTABLE)},
             {key:"glcodeid",hidden:true,width:10, formatter:createTextFieldFormatterCredit(VOUCHERCREDITDETAILLIST,".glcodeIdDetail","hidden",VOUCHERCREDITDETAILTABLE)},
             {key:"accounthead", label:'Account Head <span class="mandatory"></span>',formatter:createLongTextFieldFormatterCredit(VOUCHERCREDITDETAILLIST,".accounthead",VOUCHERCREDITDETAILTABLE)},               
             {key:"glcode",label:'Account Code ', formatter:createTextFieldFormatterCredit(VOUCHERCREDITDETAILLIST,".glcodeDetail","text",VOUCHERCREDITDETAILTABLE)},
@@ -411,16 +481,12 @@ var totaldbamt=0,totalcramt=0;
         });
         <s:iterator value="billCreditDetailslist" status="stat">
                 billCreditDetailsTable.addRow({SlNo:billCreditDetailsTable.getRecordSet().getLength()+1,
-                    "functionid":'<s:property value="functionIdDetail"/>',
-                    "function":'<s:property value="functionDetail"/>',
                     "glcodeid":'<s:property value="glcodeIdDetail"/>',
                     "glcode":'<s:property value="glcodeDetail"/>',
                     "accounthead":'<s:property value="accounthead"/>',
                     "creditamount":'<s:property value="%{creditAmountDetail}"/>'
                 });
                 var index = '<s:property value="#stat.index"/>';
-                updateGridMisc(VOUCHERCREDITDETAILLIST,'functionIdDetail',index,'<s:property value="functionIdDetail"/>');
-                updateGridMisc(VOUCHERCREDITDETAILLIST,'functionDetail',index,'<s:property value="functionDetail"/>');
                 updateGridMisc(VOUCHERCREDITDETAILLIST,'glcodeIdDetail',index,'<s:property value="glcodeIdDetail"/>');
                 updateGridMisc(VOUCHERCREDITDETAILLIST,'glcodeDetail',index,'<s:property value="glcodeDetail"/>');
                 updateGridMisc(VOUCHERCREDITDETAILLIST,'accounthead',index,'<s:property value="accounthead"/>');
@@ -641,30 +707,30 @@ var totaldbamt=0,totalcramt=0;
  
  
      <tr>
-          <td width="4%" class="bluebox2">&nbsp;</td>
-         <td width="21%" class="bluebox2"><s:text name="viewReceipt.receiptdate"/><span class="mandatory"/></td>
+          <td width="4%" class="bluebox">&nbsp;</td>
+         <td width="21%" class="bluebox"><s:text name="viewReceipt.receiptdate"/><span class="mandatory"/></td>
                   <s:date name="voucherDate" var="cdFormat" format="dd/MM/yyyy"/>
-          <td width="24%" class="bluebox2">
-                <s:textfield id="voucherDate" name="voucherDate" onfocus="javascript:vDateType='3';" onkeyup="DateFormat(this,this.value,event,false,'3')"/>
-                <a href="javascript:show_calendar('forms[0].voucherDate');" onmouseover="window.status='Date Picker';return true;"  onmouseout="window.status='';return true;"  >
-                <img src="/egi/images/calendaricon.gif" alt="Date" width="18" height="18" border="0" align="middle" />
-                </a><div class="highlight2" style="width:80px">DD/MM/YYYY</div>             
+          <td width="24%" class="bluebox">
+                <s:textfield id="voucherDate" name="voucherDate" onfocus="javascript:vDateType='3';" onkeyup="DateFormat(this,this.value,event,false,'3')"  onblur="validateVoucherDate(this)" data-inputmask="'mask': 'd/m/y'"/>
+                <div class="highlight2" style="width:80px">DD/MM/YYYY</div>             
           </td>
-               
+          <td width="21%" class="bluebox"><s:text name="challan.narration"/></td>
+		    <td width="24%" class="bluebox"><s:textarea name="referenceDesc" id="referenceDesc" value="%{referenceDesc}" cols="18" rows="1" maxlength="250" onkeyup="return ismaxlength(this)"/></td>
+	    
            <s:if test="%{shouldShowHeaderField('field')}">
-           <td width="21%" class="bluebox2"><s:text name="miscreceipt.field"/><s:if test="%{isFieldMandatory('field')}"><span class="bluebox"><span class="mandatory"/></s:if></td>
-          <td width="24%" class="bluebox2"><s:select headerKey="-1" headerValue="%{getText('miscreceipt.select')}" name="boundaryId" id="boundaryId" cssClass="selectwk" list="dropdownData.fieldList" listKey="id" listValue="name"  /> </td>
+           <td width="21%" class="bluebox"><s:text name="miscreceipt.field"/><s:if test="%{isFieldMandatory('field')}"><span class="bluebox"><span class="mandatory"/></s:if></td>
+          <td width="24%" class="bluebox"><s:select headerKey="-1" headerValue="%{getText('miscreceipt.select')}" name="boundaryId" id="boundaryId" cssClass="selectwk" list="dropdownData.fieldList" listKey="id" listValue="name"  /> </td>
             </s:if>
            <s:else>
-            <td colspan=2 class="bluebox2"></td>
+            <td colspan=2 class="bluebox"></td>
             </s:else>
          
            <s:if test="%{shouldShowHeaderField('vouchernumber')}">
-           <td width="21%" class="bluebox2"><s:text name="miscreceipt.voucher.number"/><span class="mandatory"/></td>
-        <td width="30%" class="bluebox2"><s:textfield name="voucherNum" id="voucherNum" maxlength="16"/></td>
+           <td width="21%" class="bluebox"><s:text name="miscreceipt.voucher.number"/><span class="mandatory"/></td>
+        <td width="30%" class="bluebox"><s:textfield name="voucherNum" id="voucherNum" maxlength="16"/></td>
         </s:if>
         <s:else>
-        <td colspan=2 class="bluebox2"></td>
+        <td colspan=2 class="bluebox"></td>
         </s:else>
         
         <tr>
@@ -685,10 +751,10 @@ var totaldbamt=0,totalcramt=0;
         
         <s:if test="%{shouldShowHeaderField('fund') || shouldShowHeaderField('department')}">
          <tr>
-          <td width="4%" class="bluebox2">&nbsp;</td>
+          <td width="4%" class="bluebox">&nbsp;</td>
            <s:if test="%{shouldShowHeaderField('fund')}">
-          <td width="21%" class="bluebox2"><s:text name="miscreceipt.fund"/><s:if test="%{isFieldMandatory('fund')}"><span class="bluebox"><span class="mandatory"/></s:if></td>
-          <td width="24%" class="bluebox2"><s:select headerKey="-1" headerValue="%{getText('miscreceipt.select')}" name="fundId" id="fundId" cssClass="selectwk" onChange="setFundId();getSchemelist(this);getBankBranchList(this);" list="dropdownData.fundList" listKey="id" listValue="name" value="%{fund.id}" />
+          <td width="21%" class="bluebox"><s:text name="miscreceipt.fund"/><s:if test="%{isFieldMandatory('fund')}"><span class="bluebox"><span class="mandatory"/></s:if></td>
+          <td width="24%" class="bluebox"><s:select headerKey="-1" headerValue="%{getText('miscreceipt.select')}" name="fundId" id="fundId" cssClass="selectwk" onChange="setFundId();getSchemelist(this);getBankBranchList(this);" list="dropdownData.fundList" listKey="id" listValue="name" value="%{fund.id}" />
           <egov:ajaxdropdown id="bankBranchMasterDropdown" fields="['Text','Value']" dropdownId='bankBranchMaster'
                 url='receipts/ajaxBankRemittance-bankBranchList.action' selectedValue="%{bankbranch.id}"/> 
           <egov:ajaxdropdown id="schemeIdDropdown" fields="['Text','Value']" dropdownId='schemeId' url='receipts/ajaxReceiptCreate-ajaxLoadSchemes.action' />
@@ -696,14 +762,26 @@ var totaldbamt=0,totalcramt=0;
           </td>
           </s:if>
            <s:else>
-            <td colspan=2 class="bluebox2"></td>
+            <td colspan=2 class="bluebox"></td>
             </s:else>
               <s:if test="%{shouldShowHeaderField('department')}">
-           <td width="21%" class="bluebox2"><s:text name="miscreceipt.department"/><s:if test="%{isFieldMandatory('department')}"><span class="bluebox"><span class="mandatory"/></s:if></td>
-          <td width="24%" class="bluebox2"><s:select headerKey="-1" headerValue="%{getText('miscreceipt.select')}" name="deptId" id="deptId" cssClass="selectwk" list="dropdownData.departmentList" listKey="id" listValue="name"  /> </td>
+           <td width="21%" class="bluebox"><s:text name="miscreceipt.department"/><s:if test="%{isFieldMandatory('department')}"><span class="bluebox"><span class="mandatory"/></s:if></td>
+          <td width="24%" class="bluebox"><s:select headerKey="-1" headerValue="%{getText('miscreceipt.select')}" name="deptId" id="deptId" cssClass="selectwk" list="dropdownData.departmentList" listKey="id" listValue="name"  /> </td>
             </s:if>
            <s:else>
-            <td colspan=2 class="bluebox2"></td>
+            <td colspan=2 class="bluebox"></td>
+            </s:else>
+         </tr>
+         </s:if>
+          <s:if test="%{shouldShowHeaderField('function')}">
+         <tr>
+         <s:if test="%{shouldShowHeaderField('function')}">
+         <td width="4%" class="bluebox">&nbsp;</td>
+           <td width="21%" class="bluebox"><s:text name="miscreceipt.function"/><s:if test="%{isFieldMandatory('function')}"><span class="bluebox"><span class="mandatory"/></s:if></td>
+          <td width="24%" class="bluebox"><s:select headerKey="-1" headerValue="%{getText('miscreceipt.select')}" name="functionId" id="functionId" cssClass="selectwk" list="dropdownData.functionList" listKey="id" listValue="name"  /> </td>
+            </s:if>
+           <s:else>
+            <td colspan=2 class="bluebox"></td>
             </s:else>
          </tr>
          </s:if>
@@ -711,7 +789,7 @@ var totaldbamt=0,totalcramt=0;
         <tr>
           <td width="4%" class="bluebox">&nbsp;</td>
           <s:if test="%{shouldShowHeaderField('fundsource')}">
-           <td width="21%" class="bluebox"><s:text name="miscreceipt.fundingsource"/> <s:if test="%{isFieldMandatory('fundsource')}"><span class="bluebox2"><span class="mandatory"/></s:if></td>
+           <td width="21%" class="bluebox"><s:text name="miscreceipt.fundingsource"/> <s:if test="%{isFieldMandatory('fundsource')}"><span class="bluebox"><span class="mandatory"/></s:if></td>
          <td width="30%" class="bluebox"><s:select headerKey="-1" headerValue="%{getText('miscreceipt.select')}" name="fundSourceId" id="fundSourceId" onclick="checkfund()" onchange="setFundSourceId();" cssClass="selectwk" list="dropdownData.fundsourceList" listKey="id" listValue="name"  /></td>
          <s:hidden label="receiptMisc.fundsource.id" id="receiptMisc.fundsource.id"  name="receiptMisc.fundsource.id"/>
          </s:if>
@@ -719,7 +797,7 @@ var totaldbamt=0,totalcramt=0;
         <td colspan=2 class="bluebox"></td>
         </s:else>
         <s:if test="%{shouldShowHeaderField('functionary')}">
-          <td width="21%" class="bluebox"><s:text name="miscreceipt.functionary"/>  <s:if test="%{isFieldMandatory('functionary')}"><span class="bluebox2"><span class="mandatory"/></s:if> </td>
+          <td width="21%" class="bluebox"><s:text name="miscreceipt.functionary"/>  <s:if test="%{isFieldMandatory('functionary')}"><span class="bluebox"><span class="mandatory"/></s:if> </td>
          <td width="30%" class="bluebox"><s:select headerKey="-1" headerValue="%{getText('miscreceipt.select')}" name="receiptMisc.idFunctionary.id" id="receiptMisc.idFunctionary.id" cssClass="selectwk" list="dropdownData.functionaryList" listKey="id" listValue="name"  /></td>
          
          </s:if>
@@ -730,17 +808,17 @@ var totaldbamt=0,totalcramt=0;
         </s:if>
           <s:if test="%{shouldShowHeaderField('scheme')}">
           <tr>
-          <td width="4%" class="bluebox2">&nbsp;</td>
-          <td width="21%" class="bluebox2"><s:text name="miscreceipt.scheme"/> <s:if test="%{isFieldMandatory('scheme')}"><span class="mandatory"/></s:if>  </td>
-          <td width="24%" class="bluebox2">
+          <td width="4%" class="bluebox">&nbsp;</td>
+          <td width="21%" class="bluebox"><s:text name="miscreceipt.scheme"/> <s:if test="%{isFieldMandatory('scheme')}"><span class="mandatory"/></s:if>  </td>
+          <td width="24%" class="bluebox">
           <s:select headerKey="-1" headerValue="%{getText('miscreceipt.select')}" name="schemeId" id="schemeId" onclick="checkfund()" onchange="setSchemeId();getSubSchemelist(this)" cssClass="selectwk" list="dropdownData.schemeList" listKey="id" listValue="name"  value="%{scheme.id}" /> 
           <egov:ajaxdropdown id="subschemeId" fields="['Text','Value']" dropdownId='subschemeId' url='receipts/ajaxReceiptCreate-ajaxLoadSubSchemes.action' />
           <s:hidden label="receiptMisc.scheme.id" id="receiptMisc.scheme.id"  name="receiptMisc.scheme.id"/>
           </td>
           
-          <td width="21%" class="bluebox2"><s:text name="miscreceipt.subscheme"/> <s:if test="%{isFieldMandatory('subscheme')}"><span class="mandatory"/></s:if>  </td>
+          <td width="21%" class="bluebox"><s:text name="miscreceipt.subscheme"/> <s:if test="%{isFieldMandatory('subscheme')}"><span class="mandatory"/></s:if>  </td>
 
-         <td width="30%" class="bluebox2">
+         <td width="30%" class="bluebox">
           <s:select headerKey="-1" headerValue="%{getText('miscreceipt.select')}" name="subschemeId" id="subschemeId" onchange="setSubSchemeId();getFundSourcelist(this)" onclick="checkscheme()" cssClass="selectwk" list="dropdownData.subschemeList" listKey="id" listValue="name"  /></td>
           <egov:ajaxdropdown id="fundSourceId" fields="['Text','Value']" dropdownId='fundSourceId'
            url='../../EGF/voucher/common-ajaxLoadFundSource.action'  />

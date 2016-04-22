@@ -39,20 +39,51 @@
  */
 package org.egov.commons.dao;
 
-import java.lang.reflect.Field;
-
 import org.egov.commons.Accountdetailtype;
 import org.egov.infra.exception.ApplicationException;
-import org.egov.infstr.dao.GenericHibernateDAO;
 import org.hibernate.Query;
 import org.hibernate.Session;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-public class AccountdetailtypeHibernateDAO extends GenericHibernateDAO {
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+import java.lang.reflect.Field;
+import java.util.List;
 
-    public AccountdetailtypeHibernateDAO(final Class persistentClass, final Session session) {
-        super(persistentClass, session);
+@Service
+public class AccountdetailtypeHibernateDAO  {
+    @Transactional
+    public Accountdetailtype update(final Accountdetailtype entity) {
+        getCurrentSession().update(entity);
+        return entity;
     }
 
+    @Transactional
+    public Accountdetailtype create(final Accountdetailtype entity) {
+        getCurrentSession().persist(entity);
+        return entity;
+    }
+
+    @Transactional
+    public void delete(Accountdetailtype entity) {
+        getCurrentSession().delete(entity);
+    }
+
+    public Accountdetailtype findById(Number id, boolean lock) {
+        return (Accountdetailtype) getCurrentSession().load(Accountdetailtype.class, id);
+    }
+
+    public List<Accountdetailtype> findAll() {
+        return (List<Accountdetailtype>) getCurrentSession().createCriteria(Accountdetailtype.class).list();
+    }
+
+    @PersistenceContext
+    private EntityManager entityManager;
+
+   
+
+   
     /**
      * This API will return the detailtypeid for the object that is passed. If
      * this master is mapped in the accountdetailtype , it will return the id
@@ -73,8 +104,8 @@ public class AccountdetailtypeHibernateDAO extends GenericHibernateDAO {
         try {
             final Field tableNameField = Class.forName(master.getClass().getName()).getDeclaredField("tablename");
             tableNameField.setAccessible(true);
-            final Query query = getCurrentSession()
-                    .createQuery("select adt.id from Accountdetailtype adt where UPPER(tablename)=:tableName");
+            final Query query = getCurrentSession().createQuery(
+                    "select adt.id from Accountdetailtype adt where UPPER(tablename)=:tableName");
             query.setString("tableName", ((String) tableNameField.get(master)).toUpperCase());
             Integer detailtypeid = null;
             if (query.uniqueResult() != null)
@@ -93,5 +124,10 @@ public class AccountdetailtypeHibernateDAO extends GenericHibernateDAO {
         final Query qry = getCurrentSession().createQuery("from Accountdetailtype where name =:name");
         qry.setString("name", name);
         return (Accountdetailtype) qry.uniqueResult();
+    }
+
+    
+    protected Session getCurrentSession() {
+        return entityManager.unwrap(Session.class);
     }
 }

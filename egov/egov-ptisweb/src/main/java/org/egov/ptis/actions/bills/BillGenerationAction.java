@@ -49,7 +49,8 @@ import static org.egov.ptis.constants.PropertyTaxConstants.BILLTYPE_MANUAL;
 import static org.egov.ptis.constants.PropertyTaxConstants.FILESTORE_MODULE_NAME;
 import static org.egov.ptis.constants.PropertyTaxConstants.NOTICE_TYPE_BILL;
 import static org.egov.ptis.constants.PropertyTaxConstants.PTMODULENAME;
-import static org.egov.ptis.constants.PropertyTaxConstants.STRING_EMPTY;
+import static org.egov.ptis.constants.PropertyTaxConstants.STRING_EMPTY;  
+import static org.egov.ptis.constants.PropertyTaxConstants.QUERY_DEMAND_BILL_STATUS;
 
 import java.io.File;
 import java.io.InputStream;
@@ -96,9 +97,11 @@ import org.egov.ptis.domain.entity.property.PropertyImpl;
 import org.egov.ptis.domain.service.bill.BillService;
 import org.egov.ptis.domain.service.property.PropertyService;
 import org.egov.ptis.notice.PtNotice;
+import org.egov.ptis.service.DemandBill.DemandBillService;
 import org.hibernate.Query;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.ApplicationContext;
 
 import com.opensymphony.xwork2.validator.annotations.Validations;
 
@@ -116,6 +119,7 @@ public class BillGenerationAction extends PropertyTaxBaseAction {
     private static final long serialVersionUID = -6600897692089941070L;
 
     private final Logger LOGGER = Logger.getLogger(getClass());
+    private static final String DEMAND_BILL = "demandBill";
     protected static final String COMMON_FORM = "commonForm";
     public static final String BILL = "bill";
     public static final String STATUS_BILLGEN = "billsGenStatus";
@@ -156,6 +160,9 @@ public class BillGenerationAction extends PropertyTaxBaseAction {
 
     @Autowired
     private PropertyDAO propertyDao;
+    
+    @Autowired
+    private ApplicationContext beanProvider;
 
     @Override
     public StateAware getModel() {
@@ -226,6 +233,15 @@ public class BillGenerationAction extends PropertyTaxBaseAction {
         }
         return BILL;
     }
+    
+    @Action(value = "/bills/billGeneration-generateDemandBill")
+    public String generateDemandBill() {
+        DemandBillService demandBillService = (DemandBillService) beanProvider.getBean("demandBillService");
+        ReportOutput reportOutput = demandBillService.generateDemandBill(indexNumber);
+        getSession().remove(ReportConstants.ATTRIB_EGOV_REPORT_OUTPUT_MAP);
+        reportId = ReportViewerUtil.addReportToSession(reportOutput, getSession());
+        return BILL;
+    }
 
     @Action(value = "/bills/billGeneration-billsGenStatus")
     public String billsGenStatus() {
@@ -236,27 +252,17 @@ public class BillGenerationAction extends PropertyTaxBaseAction {
                 ptBillServiceImpl.getModule(), new Date());
         final StringBuilder billQueryString = new StringBuilder();
         final StringBuilder propQueryString = new StringBuilder();
-        billQueryString
-                .append("select bndry.boundaryNum, count(bndry.boundaryNum) ")
-                .append("from EgBill bill, Boundary bndry, PtNotice notice left join notice.basicProperty bp ")
-                .append("where bp.propertyID.ward.id=bndry.id ").append("and bp.active = true ")
-                .append("and bill.is_History = 'N' ").append("and :FromDate <= bill.issueDate ")
-                .append("and :ToDate >= bill.issueDate ")
-                .append("and bill.egBillType.code = :BillType ")
-                .append("and bill.billNo = notice.noticeNo ")
-                .append("and notice.noticeType = 'Bill' ")
-                .append("and notice.fileStore is not null ").append("group by bndry.boundaryNum ")
-                .append("order by bndry.boundaryNum");
 
-        propQueryString.append("select bndry.boundaryNum, count(bndry.boundaryNum) ")
-                .append("from Boundary bndry, PropertyID pid left join pid.basicProperty bp ")
-                .append("where bp.active = true and pid.ward.id = bndry.id ")
-                .append("group by bndry.boundaryNum ").append("order by bndry.boundaryNum");
-        final Query billQuery = getPersistenceService().getSession().createQuery(
-                billQueryString.toString());
+        propQueryString.append("select bndry.boundaryNum,bndry.name, count(bndry.boundaryNum) ")
+                .append("from Boundary bndry, PropertyID pid left join pid.basicProperty bp where bp.upicNo is not null and bp.active = true and ")
+                .append("bp.source = 'M' and bp.isBillCreated = 'N' and pid.ward.id = bndry.id ")
+                .append("and bp.id not in (select basicProperty from PropertyStatusValues group by basicProperty having count(basicProperty) > 0 ) ")
+                .append(" and bp.id in (select basicProperty from PropertyImpl where status = 'A' and isExemptedFromTax = true ) ")
+                .append("group by bndry.name, bndry.boundaryNum ").append("order by bndry.boundaryNum, bndry.name");
+      
+        final Query billQuery = getPersistenceService().getSession().getNamedQuery(QUERY_DEMAND_BILL_STATUS);
         billQuery.setDate("FromDate", currInst.getFromDate());
         billQuery.setDate("ToDate", currInst.getToDate());
-        billQuery.setString("BillType", BILLTYPE_MANUAL);
         final List<Object> billList = billQuery.list();
         LOGGER.info("billList : " + billList);
         final Query propQuery = getPersistenceService().getSession().createQuery(
@@ -267,15 +273,16 @@ public class BillGenerationAction extends PropertyTaxBaseAction {
         for (final Object props : propList) {
             reportInfo = new ReportInfo();
             final Object[] propObj = (Object[]) props;
-            reportInfo.setWardNo(String.valueOf(propObj[0]));
-            reportInfo.setTotalNoProps(Integer.valueOf(((Long) propObj[1]).toString()));
+            reportInfo.setWardNo(String.valueOf(propObj[0])+'-'+String.valueOf(propObj[1]));
+            reportInfo.setTotalNoProps(Integer.valueOf(((Long) propObj[2]).toString()));
 
             reportInfo.setTotalGenBills(0);
+            String propWardNo = String.valueOf(propObj[0]);
             String wardNo;
             for (final Object bills : billList) {
                 final Object[] billObj = (Object[]) bills;
                 wardNo = String.valueOf(billObj[0]);
-                if (reportInfo.getWardNo().equals(wardNo)) {
+                if (propWardNo.equals(wardNo)) {
                     reportInfo.setTotalGenBills(Integer.valueOf(((Long) billObj[1]).toString()));
                     break;
                 }

@@ -78,13 +78,13 @@
 	    }
 	    </s:if>
 	    if(name=="Forward" || name=="forward" || name=="approve" || name=="Approve") {
-	    	 if (approverComments == null || approverComments == "") { 
+	    	 if (approverComments == null || approverComments == "" || approverComments.trim().length == 0) { 
 	    		 bootbox.alert("Please Enter Approver Remarks ");
 				return false;
 	    	}  
 	    }
 	    if ((name=="Reject" || name=="reject")) {
-	    	if (approverComments == null || approverComments == "") {
+	    	if (approverComments == null || approverComments == "" || approverComments.trim().length == 0) {
 	    		bootbox.alert("Please Enter Rejection Remarks ");
 				return false;
 	    	}
@@ -97,7 +97,7 @@
 	<s:hidden id="workFlowAction" name="workFlowAction"/>
 	<table>
 		<tr>
-			<td><s:iterator value="%{getValidActions()}" var="name">
+			<td><s:iterator value="validActions" var="name">
 					<s:if test="%{name!=''}">
 					<td>
 						<s:submit type="submit" cssClass="buttonsubmit custom-button" value="%{name}"

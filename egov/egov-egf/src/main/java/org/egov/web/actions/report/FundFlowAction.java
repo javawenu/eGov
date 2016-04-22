@@ -39,6 +39,9 @@
  ******************************************************************************/
 package org.egov.web.actions.report;
 
+
+import org.egov.infstr.services.PersistenceService;
+import org.springframework.beans.factory.annotation.Qualifier;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.math.BigDecimal;
@@ -73,9 +76,10 @@ import org.hibernate.Query;
 import org.hibernate.SQLQuery;
 import org.hibernate.transform.Transformers;
 import org.hibernate.type.LongType;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.beans.factory.annotation.Autowired;
 
-@Transactional(readOnly = true)
+
+
 @Results({
     @Result(name = FundFlowAction.NEW, location = "fundFlow-" + FundFlowAction.NEW + ".jsp"),
     @Result(name = "report", location = "fundFlow-report.jsp"),
@@ -91,7 +95,6 @@ import org.springframework.transaction.annotation.Transactional;
 public class FundFlowAction extends BaseFormAction {
     private static Logger LOGGER = Logger.getLogger(FundFlowAction.class);
     private static final long serialVersionUID = 1L;
-    EgovMasterDataCaching masterCache = EgovMasterDataCaching.getInstance();
     private List<FundFlowBean> receiptList;
     private List<FundFlowBean> concurrancePaymentList;
     private List<FundFlowBean> outStandingPaymentList;
@@ -108,7 +111,13 @@ public class FundFlowAction extends BaseFormAction {
     Date openignBalanceCalculatedDate;
     private FundFlowService fundFlowService;
     private String mode;
-
+   
+ @Autowired
+ @Qualifier("persistenceService")
+ private PersistenceService persistenceService;
+ @Autowired
+    private EgovMasterDataCaching masterDataCache;
+    
     @Override
     public Object getModel() {
         return null;
@@ -116,7 +125,7 @@ public class FundFlowAction extends BaseFormAction {
 
     @Override
     public void prepare() {
-        addDropdownData("fundList", masterCache.get("egi-fund"));
+        addDropdownData("fundList", masterDataCache.get("egi-fund"));
     }
 
     @Action(value = "/report/fundFlow-beforeSearch")
@@ -145,7 +154,7 @@ public class FundFlowAction extends BaseFormAction {
                 + sqlformat.format(asOnDate) + "' ");
         if (fund != null && fund != -1)
             alreadyExistsQryStr.append(" and ba.fundId=" + fund + " ");
-        final Query alreadyExistsQry = HibernateUtil.getCurrentSession()
+        final Query alreadyExistsQry = persistenceService.getSession()
                 .createSQLQuery(alreadyExistsQryStr.toString());
         final List existsList = alreadyExistsQry.list();
         if (existsList.size() > 0) {
@@ -424,7 +433,7 @@ public class FundFlowAction extends BaseFormAction {
                 + sqlformat.format(asOnDate) + "' ");
         if (fund != null && fund != -1)
             alreadyExistsQryStr.append("and ba.fundId=" + fund + " ");
-        final Query alreadyExistsQry = HibernateUtil.getCurrentSession()
+        final Query alreadyExistsQry = persistenceService.getSession()
                 .createSQLQuery(alreadyExistsQryStr.toString());
         final List existsList = alreadyExistsQry.list();
         if (existsList.size() > 0)
@@ -557,7 +566,7 @@ public class FundFlowAction extends BaseFormAction {
         for (final FundFlowBean fbean : finalList) {
 
             fbean.setReportDate(asOnDate);
-            // HibernateUtil.getCurrentSession().evict(fbean);
+            // persistenceService.getSession().evict(fbean);
             persistenceService.persist(fbean);
         }
         addActionMessage(getText("fundflowreport.update.succesful"));
@@ -600,7 +609,7 @@ public class FundFlowAction extends BaseFormAction {
             if (LOGGER.isDebugEnabled())
                 LOGGER.debug(" Opening Balance Qry "
                         + openingBalanceQryStr.toString());
-            final Query openingBalanceQry = HibernateUtil.getCurrentSession()
+            final Query openingBalanceQry = persistenceService.getSession()
                     .createSQLQuery(openingBalanceQryStr.toString()).addScalar(
                             "bankAccountId").addScalar("accountNumber")
                             .addScalar("openingBalance").setResultTransformer(
@@ -647,7 +656,7 @@ public class FundFlowAction extends BaseFormAction {
         if (fund2 != null && fund2 != -1)
             currentOpbAndRcptQryStr.append(" and ba.fundId=" + fund2 + " ");
 
-        final Query currentOpbAndRcptQry = HibernateUtil.getCurrentSession()
+        final Query currentOpbAndRcptQry = persistenceService.getSession()
                 .createSQLQuery(currentOpbAndRcptQryStr.toString()).addScalar(
                         "openingBalance").addScalar("currentReceipt")
                         .addScalar("id", LongType.INSTANCE).addScalar("accountNumber")
@@ -909,7 +918,7 @@ public class FundFlowAction extends BaseFormAction {
 
     @SuppressWarnings("unchecked")
     private String getUlbName() {
-        final SQLQuery query = HibernateUtil.getCurrentSession().createSQLQuery(
+        final SQLQuery query = persistenceService.getSession().createSQLQuery(
                 "select name from companydetail");
         final List<String> result = query.list();
         if (result != null)

@@ -281,7 +281,7 @@ var codeObj;
 var acccodeArray;
 function loadDropDownCodes()
 {
-	var	url = "/EGF/commons/Process.jsp?type=getAllCoaNames";
+	var	url = "/EGF/voucher/common-ajaxGetAllCoaNames.action";
 	var req2 = initiateRequest();
 	req2.onreadystatechange = function()
 	{
@@ -305,7 +305,7 @@ var rebatecodeObj;
 var rebacccodeArray;
 function loadDropDownRebateCodes()
 {
-	var	url = "/EGF/commons/Process.jsp?type=getAllCoaNames";
+	var	url = "/EGF/voucher/common-ajaxGetAllCoaNames.action";
 	var req3 = initiateRequest();
 	req3.onreadystatechange = function()
 	{
@@ -329,7 +329,7 @@ var funcObj;
 var funcArray;
 function loadDropDownCodesFunction()
 {
-	var url = "/EGF/commons/Process.jsp?type=getAllFunctionCode";
+	var url = "/EGF/voucher/common-ajaxGetAllFunctionName.action";
 	var req4 = initiateRequest();
 	req4.onreadystatechange = function()
 	{
@@ -358,7 +358,7 @@ function autocompletecodeFunctionCredit(obj,myEvent)
 	
 	var posSrc=findPos(src); 
 	target.style.left=posSrc[0]+"px";	
-	target.style.top=posSrc[1]+22+"px";
+	target.style.top=posSrc[1]-40+"px";
 	target.style.width=650;	
 		
 	var fObj=obj;
@@ -398,7 +398,7 @@ function autocompletecodeFunctionRebate(obj,myEvent)
 	
 	var posSrc=findPos(src); 
 	target.style.left=posSrc[0]+"px";	
-	target.style.top=posSrc[1]+22+"px";
+	target.style.top=posSrc[1]-40+"px";
 	target.style.width=650;	
 		
 	var fObj=obj;
@@ -474,7 +474,7 @@ function autocompletecode(obj,myEvent)
 	var target = document.getElementById('codescontainer');	
 	var posSrc=findPos(src); 
 	target.style.left=posSrc[0];	
-	target.style.top=posSrc[1]+22;
+	target.style.top=posSrc[1]-40;
 	target.style.width=450;	
 	codeObj
 	var coaCodeObj=obj;
@@ -519,7 +519,7 @@ function autocompletecodeRebate(obj,myEvent)
 	var target = document.getElementById('rebatecodescontainer');	
 	var posSrc=findPos(src); 
 	target.style.left=posSrc[0];	
-	target.style.top=posSrc[1]+22;
+	target.style.top=posSrc[1]-40;
 	target.style.width=450;	
 		
 	
@@ -558,10 +558,10 @@ function getRowIndex(obj)
 }
 function fillNeibrAfterSplitGlcodeCredit(obj)
 {
-
 	var temp = obj.value;
 	temp = temp.split("`-`");
 	var currRow=getRowIndex(obj);
+	var glcodeId = document.getElementById('billCreditDetailslist['+currRow+'].glcodeIdDetail').value;
 	if(temp.length>1)
 	{ 
 		obj.value=temp[0];
@@ -569,13 +569,14 @@ function fillNeibrAfterSplitGlcodeCredit(obj)
 		document.getElementById('billCreditDetailslist['+currRow+'].glcodeDetail').value=temp[1];
 		check();
 	}
-	else{
+	else if(glcodeId==null || glcodeId==""){
 		document.getElementById('billCreditDetailslist['+currRow+'].glcodeIdDetail').value="";
 		document.getElementById('billCreditDetailslist['+currRow+'].glcodeDetail').value="";
 		document.getElementById('billCreditDetailslist['+currRow+'].accounthead').value="";
 	}
 	
 }
+
 function fillNeibrAfterSplitGlcodeRebate(obj)
 {
 
@@ -856,7 +857,7 @@ var onDropdownChange = function(index,obj) {
 		}
 		selecteddetailtype=document.getElementById('subLedgerlist['+obj.value+'].detailType.id').value;
 		//document.getElementById('subLedgerlist['+obj.value+'].subledgerCode').value= subledgerid.options[subledgerid.selectedIndex].text;
-		var url = path+'/receipts/ajaxReceiptCreate!getDetailType.action?accountCode='+accountCode+'&index='+obj.value+'&selectedDetailType='+selecteddetailtype+'&onload=false';
+		var url = path+'/receipts/ajaxReceiptCreate-getDetailType.action?accountCode='+accountCode+'&index='+obj.value+'&selectedDetailType='+selecteddetailtype+'&onload=false';
 		var transaction = YAHOO.util.Connect.asyncRequest('POST', url, postType, null);
 };
 var postType = {
@@ -1500,7 +1501,7 @@ var  currRow=getRowIndex(obj);
 
 			if(onElementFocused(obj)){
 				ShowImage(obj);//To start loading image
-				var url =   path+ "/receipts/ajaxReceiptCreate!getCodeNew.action?detailTypeId="+detailtypeidObj.value+"&filterKey="+obj.value;
+				var url =   path+ "/receipts/ajaxReceiptCreate-getCodeNew.action?detailTypeId="+detailtypeidObj.value+"&filterKey="+obj.value;
 				var transaction = YAHOO.util.Connect.asyncRequest('POST', url, callbackAutoCompleteEntities, null);
 			}
 		}
@@ -1522,7 +1523,7 @@ var callbackAutoCompleteEntities = {
 	var posSrc=findPos(src); 
 	
 	target.style.left=posSrc[0]+"px";	
-	target.style.top=posSrc[1]+22+"px";
+	target.style.top=posSrc[1]-40+"px";
 	target.style.width=650;	
 	      		
 	

@@ -115,7 +115,6 @@ public class MeasurementBookPDFAction extends BaseFormAction {
         reportParams.put("mbDate", dateFormatter.format(mbHeader.getMbDate()));
         reportParams.put("reportTitle", getText("page.title.measurement.book"));
         reportParams.put("approvalDetails", createApprovalDetailsTable(mbHeader));
-        reportParams.put("preparedBy", mbHeader.getMbPreparedBy().getEmployeeName());
         return reportParams;
     }
 
@@ -254,7 +253,7 @@ public class MeasurementBookPDFAction extends BaseFormAction {
             String code = "";
             final List<ApprovalDetails> approvalDetList = new ArrayList<ApprovalDetails>();
             if (mbHeader.getCurrentState() != null && mbHeader.getCurrentState().getHistory() != null)
-                history = mbHeader.getCurrentState().getHistory();
+                history = mbHeader.getStateHistory();
             if (history != null) {
                 Collections.reverse(history);
                 for (final StateHistory state : history)

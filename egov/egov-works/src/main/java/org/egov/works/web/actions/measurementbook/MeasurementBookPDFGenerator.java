@@ -139,10 +139,6 @@ public class MeasurementBookPDFGenerator extends AbstractPDFGenerator {
                 mbTable = createMbData(mbTable, mbHeader);
             document.add(mbTable);
             document.add(spacer());
-            if (mbHeader != null && mbHeader.getMbPreparedBy() != null)
-                document.add(makePara(8, pdfLabel.get("mbpdf.preparedby") + " "
-                        + mbHeader.getMbPreparedBy().getEmployeeName()));
-
             document.newPage();
             // approval details table
 
@@ -180,7 +176,7 @@ public class MeasurementBookPDFGenerator extends AbstractPDFGenerator {
             List<StateHistory> history = null;
             String code = "";
             if (mbHeader.getCurrentState() != null && mbHeader.getCurrentState().getHistory() != null)
-                history = mbHeader.getCurrentState().getHistory();
+                history = mbHeader.getStateHistory();
             if (history != null) {
                 Collections.reverse(history);
                 for (final StateHistory ad : history)

@@ -39,6 +39,9 @@
  ******************************************************************************/
 package org.egov.web.actions.budget;
 
+
+
+import org.egov.infstr.services.PersistenceService;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -55,6 +58,7 @@ import org.apache.struts2.convention.annotation.Action;
 import org.apache.struts2.convention.annotation.ParentPackage;
 import org.apache.struts2.convention.annotation.Result;
 import org.apache.struts2.convention.annotation.Results;
+import org.apache.struts2.interceptor.validation.SkipValidation;
 import org.egov.commons.CFinancialYear;
 import org.egov.commons.CFunction;
 import org.egov.commons.Functionary;
@@ -84,16 +88,17 @@ import org.egov.utils.BudgetDetailConfig;
 import org.egov.utils.BudgetDetailHelper;
 import org.egov.utils.Constants;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.beans.factory.annotation.Qualifier;
 
 import com.opensymphony.xwork2.ActionContext;
 import com.opensymphony.xwork2.util.ValueStack;
 
-@Transactional(readOnly = true)
+
 @ParentPackage("egov")
 @Results({
     @Result(name = Constants.DETAILLIST, location = "budgetSearch-" + Constants.DETAILLIST + ".jsp"),
-    @Result(name = Constants.BUDGETS, location = "budgetSearch-" + Constants.BUDGETS + ".jsp")
+    @Result(name = Constants.BUDGETS, location = "budgetSearch-" + Constants.BUDGETS + ".jsp"),
+    @Result(name = Constants.LIST, location = "budgetSearch-" + Constants.LIST + ".jsp")
 })
 public class BudgetSearchAction extends BaseFormAction {
     private static final long serialVersionUID = 1L;
@@ -139,10 +144,18 @@ public class BudgetSearchAction extends BaseFormAction {
     protected String nextfinYearRange = "";
     private String previousfinYearRange = "";
     private String twopreviousfinYearRange = "";
-    private @Autowired AppConfigValueService appConfigValuesService;
+   
+ @Autowired
+ @Qualifier("persistenceService")
+ protected PersistenceService persistenceService;
+ @Autowired
+    private AppConfigValueService appConfigValuesService;
     private boolean shouldShowREAppropriations = true;
     List<AppConfigValues> excludeList = new ArrayList<AppConfigValues>();
-
+    @Autowired
+    @Qualifier("masterDataCache")
+    private EgovMasterDataCaching masterDataCache;
+  
     public String getMessage() {
         return message;
     }
@@ -251,31 +264,31 @@ public class BudgetSearchAction extends BaseFormAction {
     public void prepare() {
         super.prepare();
         if (!parameters.containsKey("skipPrepare")) {
-            final EgovMasterDataCaching masterCache = EgovMasterDataCaching.getInstance();
+        	System.out.println(parameters);
             headerFields = budgetDetailConfig.getHeaderFields();
             gridFields = budgetDetailConfig.getGridFields();
             // setupDropdownDataExcluding(Constants.SUB_SCHEME);
-            dropdownData.put("budgetGroupList", masterCache.get("egf-budgetGroup"));
+            dropdownData.put("budgetGroupList", masterDataCache.get("egf-budgetGroup"));
             dropdownData.put("budgetList", budgetDetailService.findApprovedBudgetsForFY(getFinancialYear()));
             if (LOGGER.isDebugEnabled())
                 LOGGER.debug("done findApprovedBudgetsForFY");
             dropdownData.put("financialYearList",
-                    persistenceService.findAllBy("from CFinancialYear where isActive=1 order by finYearRange desc"));
+                    persistenceService.findAllBy("from CFinancialYear where isActive=true order by finYearRange desc"));
             if (shouldShowField(Constants.SUB_SCHEME))
                 dropdownData.put("subSchemeList", Collections.EMPTY_LIST);
             if (shouldShowField(Constants.FUNCTIONARY))
-                dropdownData.put("functionaryList", masterCache.get("egi-functionary"));
+                dropdownData.put("functionaryList", masterDataCache.get("egi-functionary"));
             if (shouldShowField(Constants.FUNCTION))
-                dropdownData.put("functionList", masterCache.get("egi-function"));
+                dropdownData.put("functionList", masterDataCache.get("egi-function"));
             if (shouldShowField(Constants.SCHEME))
-                dropdownData.put("schemeList", persistenceService.findAllBy("from Scheme where isActive=1 order by name"));
+                dropdownData.put("schemeList", persistenceService.findAllBy("from Scheme where isActive=true order by name"));
             if (shouldShowField(Constants.EXECUTING_DEPARTMENT))
-                dropdownData.put("executingDepartmentList", masterCache.get("egi-department"));
+                dropdownData.put("executingDepartmentList", masterDataCache.get("egi-department"));
             if (shouldShowField(Constants.BOUNDARY))
                 dropdownData.put("boundaryList", persistenceService.findAllBy("from Boundary order by name"));
             if (shouldShowField(Constants.FUND))
                 dropdownData.put("fundList",
-                        persistenceService.findAllBy("from Fund where isNotLeaf=0 and isActive=1 order by name"));
+                        persistenceService.findAllBy("from Fund where isActive=true order by name"));
         }
     }
 
@@ -292,7 +305,7 @@ public class BudgetSearchAction extends BaseFormAction {
             disableBudget = true;
         }
         if (budgetDetail.getBudget() != null) {
-            HibernateUtil.getCurrentSession().refresh(budgetDetail.getBudget());
+            persistenceService.getSession().refresh(budgetDetail.getBudget());
 
             if (budgetDetail.getBudget().getFinancialYear() == null)
                 budgetDetail.setBudget(budgetService.find("from Budget where id=?", budgetDetail.getBudget().getId()));
@@ -322,6 +335,7 @@ public class BudgetSearchAction extends BaseFormAction {
     }
 
     // serach screen
+    @Action(value = "/budget/budgetSearch-groupedBudgets")
     public String groupedBudgets() {
         final Budget budget = budgetDetail.getBudget();
         // Dont restrict search by the selected budget, but by all budgets in the tree of selected budget
@@ -332,6 +346,8 @@ public class BudgetSearchAction extends BaseFormAction {
         else
             budgetList.addAll(budgetDetailService.findBudgetTree(budget, budgetDetail));
         getSession().put(Constants.SEARCH_CRITERIA_KEY, budgetDetail);
+        if (budgetList.isEmpty())
+        	addActionError(getText("budget.no.details.found"));
         return Constants.LIST;
     }
 
@@ -369,7 +385,7 @@ public class BudgetSearchAction extends BaseFormAction {
             final Budget Budget = budgetService.findById(Long.valueOf(parameters.get("budget.id")[0]), false);
             setTopBudget(Budget);
         }
-        final BudgetDetail criteria = (BudgetDetail) HibernateUtil.getCurrentSession().createCriteria(
+        final BudgetDetail criteria = (BudgetDetail) persistenceService.getSession().createCriteria(
                 Constants.SEARCH_CRITERIA_KEY);
         criteria.setBudget(budgetDetail.getBudget());
         if (LOGGER.isDebugEnabled())
@@ -406,10 +422,12 @@ public class BudgetSearchAction extends BaseFormAction {
     }
 
     // for search screen
-    @Action(value = "/budget/budgetSearch-groupedBudgetDetailList")
+	@Action(value = "/budget/budgetSearch-groupedBudgetDetailList")
     public String groupedBudgetDetailList() {
-        final BudgetDetail criteria = (BudgetDetail) HibernateUtil.getCurrentSession().createCriteria(
-                Constants.SEARCH_CRITERIA_KEY);
+    	
+    	final BudgetDetail criteria = new BudgetDetail();
+        /*final BudgetDetail criteria =  (BudgetDetail) persistenceService.getSession().createCriteria(
+                Constants.SEARCH_CRITERIA_KEY);*/
         Budget budget = budgetDetail.getBudget();
         if (budget != null && budget.getId() != null) {
             budget = (Budget) persistenceService.find("from Budget where id=?", budget.getId());
@@ -500,14 +518,20 @@ public class BudgetSearchAction extends BaseFormAction {
     }
 
     private void populateActualData(final CFinancialYear financialYear) {
-        String fromDate = Constants.DDMMYYYYFORMAT1.format(financialYear.getStartingDate());
+        String fromDate = Constants.DDMMYYYYFORMAT2.format(financialYear.getStartingDate());
+        String toVoucherDate=Constants.DDMMYYYYFORMAT2.format(new Date());
         final List<Object[]> result = budgetDetailService.fetchActualsForFYDate(fromDate,
-                "case when b.as_on_date = null then current_date else b.as_on_date end", mandatoryFields);
+        		toVoucherDate, mandatoryFields);
         for (final Object[] row : result)
             budgetDetailIdsAndAmount.put(row[0].toString(), row[1].toString());
-        fromDate = Constants.DDMMYYYYFORMAT1.format(subtractYear(financialYear.getStartingDate()));
-        final List<Object[]> previousYearResult = budgetDetailService.fetchActualsForFYDate(fromDate,
-                "case when b.as_on_date = null then current_date+numtoyminterval(-1,'year') else b.as_on_date+numtoyminterval(-1,'year') end",
+        fromDate = Constants.DDMMYYYYFORMAT2.format(subtractYear(financialYear.getStartingDate()));
+        
+        Calendar cal = Calendar.getInstance();
+		cal.setTime(new Date());       
+		cal.add(Calendar.YEAR, -1);
+		String	toVoucherDate1=Constants.DDMMYYYYFORMAT2.format(cal.getTime());
+        
+        final List<Object[]> previousYearResult = budgetDetailService.fetchActualsForFYDate(fromDate,toVoucherDate1,
                 mandatoryFields);
         for (final Object[] row : previousYearResult)
             previousYearBudgetDetailIdsAndAmount.put(row[0].toString(), row[1].toString());
@@ -676,5 +700,23 @@ public class BudgetSearchAction extends BaseFormAction {
     public void setNextfinYearRange(final String nextfinYearRange) {
         this.nextfinYearRange = nextfinYearRange;
     }
+
+	public AppConfigValueService getAppConfigValuesService() {
+		return appConfigValuesService;
+	}
+
+	public EgovMasterDataCaching getMasterDataCache() {
+		return masterDataCache;
+	}
+
+	public void setAppConfigValuesService(
+			AppConfigValueService appConfigValuesService) {
+		this.appConfigValuesService = appConfigValuesService;
+	}
+
+	public void setMasterDataCache(EgovMasterDataCaching masterDataCache) {
+		this.masterDataCache = masterDataCache;
+	}
+    
 
 }

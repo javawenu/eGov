@@ -40,23 +40,53 @@
 package org.egov.commons.dao;
 
 import org.egov.commons.Vouchermis;
-import org.egov.infstr.dao.GenericHibernateDAO;
 import org.hibernate.Query;
 import org.hibernate.Session;
+import org.springframework.transaction.annotation.Transactional;
 
-public class VouchermisHibernateDAO extends GenericHibernateDAO {
-	public VouchermisHibernateDAO() {
-		super(Vouchermis.class, null);
-	}
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+import java.util.List;
 
-	public VouchermisHibernateDAO(final Class persistentClass, final Session session) {
-		super(persistentClass, session);
-	}
+public class VouchermisHibernateDAO  {
+    @Transactional
+    public Vouchermis update(final Vouchermis entity) {
+        getCurrentSession().update(entity);
+        return entity;
+    }
 
-	public Vouchermis getVouchermisByVhId(final Integer vhId) {
-		final Query qry = getCurrentSession().createQuery("from Vouchermis where voucherheaderid =:vhId");
-		qry.setInteger("vhId", vhId);
-		return (Vouchermis) qry.uniqueResult();
-	}
+    @Transactional
+    public Vouchermis create(final Vouchermis entity) {
+        getCurrentSession().persist(entity);
+        return entity;
+    }
+
+    @Transactional
+    public void delete(Vouchermis entity) {
+        getCurrentSession().delete(entity);
+    }
+
+    public Vouchermis findById(Number id, boolean lock) {
+        return (Vouchermis) getCurrentSession().load(Vouchermis.class, id);
+    }
+
+    public List<Vouchermis> findAll() {
+        return (List<Vouchermis>) getCurrentSession().createCriteria(Vouchermis.class).list();
+    }
+
+    @PersistenceContext
+    private EntityManager entityManager;
+
+    
+    public Session getCurrentSession() {
+        return entityManager.unwrap(Session.class);
+    }
+
+
+    public Vouchermis getVouchermisByVhId(final Integer vhId) {
+        final Query qry = getCurrentSession().createQuery("from Vouchermis where voucherheaderid =:vhId");
+        qry.setInteger("vhId", vhId);
+        return (Vouchermis) qry.uniqueResult();
+    }
 
 }

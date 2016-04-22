@@ -39,6 +39,9 @@
  ******************************************************************************/
 package org.egov.web.actions.report;
 
+
+import org.egov.infstr.services.PersistenceService;
+import org.springframework.beans.factory.annotation.Qualifier;
 import java.io.InputStream;
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -71,7 +74,8 @@ import org.egov.utils.BudgetDetailHelper;
 import org.egov.utils.Constants;
 import org.egov.utils.ReportHelper;
 import org.hibernate.FlushMode;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.beans.factory.annotation.Autowired;
+
 
 import com.opensymphony.xwork2.ActionContext;
 import com.opensymphony.xwork2.util.ValueStack;
@@ -83,7 +87,6 @@ import com.opensymphony.xwork2.util.ValueStack;
                         "application/xls", "contentDisposition", "no-cache;filename=BudgetReport.xls" })
 })
 @ParentPackage("egov")
-@Transactional(readOnly = true)
 public class BudgetReportAction extends BaseFormAction {
     /**
      *
@@ -104,7 +107,13 @@ public class BudgetReportAction extends BaseFormAction {
     private String currentYearRange = "";
     private String nextYearRange = "";
     private String lastYearRange = "";
-
+   
+ @Autowired
+ @Qualifier("persistenceService")
+ private PersistenceService persistenceService;
+ @Autowired
+    private EgovMasterDataCaching masterDataCache;
+    
     public void setFinancialYearDAO(final FinancialYearDAO financialYearDAO) {
         this.financialYearDAO = financialYearDAO;
     }
@@ -129,8 +138,8 @@ public class BudgetReportAction extends BaseFormAction {
 
     @Override
     public void prepare() {
-        HibernateUtil.getCurrentSession().setDefaultReadOnly(true);
-        HibernateUtil.getCurrentSession().setFlushMode(FlushMode.MANUAL);
+        persistenceService.getSession().setDefaultReadOnly(true);
+        persistenceService.getSession().setFlushMode(FlushMode.MANUAL);
         super.prepare();
         setupDropdownsInHeader();
     }
@@ -158,10 +167,9 @@ public class BudgetReportAction extends BaseFormAction {
     }
 
     private void setupDropdownsInHeader() {
-        final EgovMasterDataCaching masterCache = EgovMasterDataCaching.getInstance();
         setupDropdownDataExcluding(Constants.SUB_SCHEME);
-        dropdownData.put("budgetGroupList", masterCache.get("egf-budgetGroup"));
-        dropdownData.put("executingDepartmentList", masterCache.get("egi-department"));
+        dropdownData.put("budgetGroupList", masterDataCache.get("egf-budgetGroup"));
+        dropdownData.put("executingDepartmentList", masterDataCache.get("egi-department"));
         addDropdownData("financialYearList", budgetService.getFYForNonApprovedBudgets());
         final List<String> isbereList = new ArrayList<String>();
         isbereList.add("BE");

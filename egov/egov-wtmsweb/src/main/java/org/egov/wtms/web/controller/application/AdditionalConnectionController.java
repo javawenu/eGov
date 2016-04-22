@@ -101,7 +101,9 @@ public class AdditionalConnectionController extends GenericConnectionController 
             @ModelAttribute final WaterConnectionDetails addConnection, final Model model,
             @PathVariable final String consumerCode) {
         final WaterConnection connection = waterConnectionService.findByConsumerCode(consumerCode);
-        prepareWorkflow(model, addConnection, new WorkflowContainer());
+        WorkflowContainer workflowContainer= new WorkflowContainer();
+        workflowContainer.setAdditionalRule(addConnection.getApplicationType().getCode());
+        prepareWorkflow(model, addConnection, workflowContainer);
         parentConnectionDetails = waterConnectionDetailsService.getParentConnectionDetails(
                 connection.getPropertyIdentifier(), ConnectionStatus.ACTIVE);
         loadBasicDetails(addConnection, model, parentConnectionDetails);
@@ -133,7 +135,7 @@ public class AdditionalConnectionController extends GenericConnectionController 
     public String create(@Valid @ModelAttribute final WaterConnectionDetails addConnection,
             final BindingResult resultBinder, final RedirectAttributes redirectAttributes, final Model model,
             @RequestParam String workFlowAction, final HttpServletRequest request, final BindingResult errors) {
-
+        String sourceChannel = request.getParameter("Source");
         final WaterConnectionDetails parent = waterConnectionDetailsService.findByConnection(addConnection
                 .getConnection().getParentConnection());
         final String message = additionalConnectionService.validateAdditionalConnection(parent);
@@ -165,7 +167,9 @@ public class AdditionalConnectionController extends GenericConnectionController 
             final WaterConnectionDetails parentConnectionDetails = waterConnectionDetailsService
                     .getActiveConnectionDetailsByConnection(addConnection.getConnection());
             loadBasicDetails(addConnection, model, parentConnectionDetails);
-            prepareWorkflow(model, addConnection, new WorkflowContainer());
+            WorkflowContainer workflowContainer= new WorkflowContainer();
+            workflowContainer.setAdditionalRule(addConnection.getApplicationType().getCode());
+            prepareWorkflow(model, addConnection,workflowContainer);
             model.addAttribute("approvalPosOnValidate", request.getParameter("approvalPosition"));
             model.addAttribute("additionalRule", addConnection.getApplicationType().getCode());
             model.addAttribute("stateType", addConnection.getClass().getSimpleName());
@@ -199,7 +203,9 @@ public class AdditionalConnectionController extends GenericConnectionController 
                 final WaterConnectionDetails parentConnectionDetails = waterConnectionDetailsService
                         .getActiveConnectionDetailsByConnection(addConnection.getConnection());
                 loadBasicDetails(addConnection, model, parentConnectionDetails);
-                prepareWorkflow(model, addConnection, new WorkflowContainer());
+                WorkflowContainer workflowContainer= new WorkflowContainer();
+                workflowContainer.setAdditionalRule(addConnection.getApplicationType().getCode());
+                prepareWorkflow(model, addConnection, workflowContainer);
                 model.addAttribute("additionalRule", addConnection.getApplicationType().getCode());
                 model.addAttribute("stateType", addConnection.getClass().getSimpleName());
                 model.addAttribute("currentUser", waterTaxUtils.getCurrentUserRole(securityUtils.getCurrentUser()));
@@ -211,7 +217,7 @@ public class AdditionalConnectionController extends GenericConnectionController 
         }
 
         waterConnectionDetailsService.createNewWaterConnection(addConnection, approvalPosition, approvalComent,
-                addConnection.getApplicationType().getCode(), workFlowAction);
+                addConnection.getApplicationType().getCode(), workFlowAction,sourceChannel);
         final Assignment currentUserAssignment = assignmentService.getPrimaryAssignmentForGivenRange(securityUtils
                 .getCurrentUser().getId(), new Date(), new Date());
         String nextDesign = "";

@@ -82,7 +82,7 @@
 								<label for="field-1" class="col-sm-2 control-label text-right"><s:text
 										name="fromamt" /> :</label>
 								<div class="col-sm-3 add-margin">
-									<s:textfield name="fromDemand" id="fromDemand" class="form-control" maxlength="10" onblur="validNumber(this);checkZero(this,'From Demand');" />
+									<s:textfield name="fromDemand" id="fromDemand" class="form-control" maxlength="10" onblur="validNumber(this);" />
 								</div>
 								
 								<label for="field-1" class="col-sm-2 control-label text-right"><s:text
@@ -100,6 +100,15 @@
 										headerValue="%{getText('default.select')}" name="limit"
 										id="limit" 
 										list="dropdownData.limitList" cssClass="form-control" value="%{limit}"/>
+								
+								</div>
+								<label for="field-1" class="col-sm-2 control-label text-right"><s:text
+										name="ownership.type" /> :</label>
+								<div class="col-sm-3 add-margin">
+									<s:select headerKey=""
+										headerValue="%{getText('default.select')}"
+										id="ownerShipType"  name="ownerShipType"
+										listKey="key" listValue="value" list="ownerShipMap" cssClass="form-control" value="%{ownerShipType}"/>
 								
 								</div>
 							</div>
@@ -131,8 +140,12 @@
 								<th>Door No</th>
 								<th>Locality</th>
 								<th>Mobile Number</th>
+								<th>Arrears From Installment</th>
+								<th>Arrears To Installment</th>
 								<th>Arrears Amount</th>
+								<th>Arrears Penalty</th>
 								<th>Current Amount</th>
+								<th>Current Penalty</th>
 								<th>Total</th>
 							</tr>
 						</thead>

@@ -39,6 +39,9 @@
  ******************************************************************************/
 package org.egov.web.actions.contra;
 
+
+import org.egov.infstr.services.PersistenceService;
+import org.springframework.beans.factory.annotation.Qualifier;
 import java.math.BigDecimal;
 import java.sql.SQLException;
 import java.text.ParseException;
@@ -80,12 +83,12 @@ import org.egov.utils.FinancialConstants;
 import org.egov.web.actions.voucher.BaseVoucherAction;
 import org.hibernate.HibernateException;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
+
 
 import com.exilant.GLEngine.ChartOfAccounts;
 import com.exilant.GLEngine.Transaxtion;
 
-@Transactional(readOnly = true)
+
 @Results({
     @Result(name = Constants.VIEW, location = "contraBTC-" + Constants.VIEW + ".jsp"),
     @Result(name = ContraBTCAction.NEW, location = "contraBTC-" + ContraBTCAction.NEW + ".jsp"),
@@ -116,6 +119,11 @@ public class ContraBTCAction extends BaseVoucherAction {
     private ChequeService chequeService;
     private String showMode;
     private String saveType;
+    
+ @Autowired
+ @Qualifier("persistenceService")
+ private PersistenceService persistenceService;
+ @Autowired CreateVoucher createVoucher;
     @Autowired
 	private ChartOfAccounts chartOfAccounts;
 
@@ -143,7 +151,7 @@ public class ContraBTCAction extends BaseVoucherAction {
                 : null);
     }
 
-    @Transactional
+    
     @Action(value = "/contra/contraBTC-create")
     public String create() {
         if (validateInputData()) {
@@ -159,7 +167,7 @@ public class ContraBTCAction extends BaseVoucherAction {
                 instrumentList = instrumentService
                         .addToInstrument(createInstruments(contraBean));
                 voucherHeader = createVoucher(voucherHeader);
-                HibernateUtil.getCurrentSession().flush();
+                persistenceService.getSession().flush();
                 updateInstrumentVoucherReference(instrumentList);
                 saveContraJournalVoucher(instrumentList.get(0), voucherHeader);
                 addActionMessage(getText("transaction.success")
@@ -186,7 +194,7 @@ public class ContraBTCAction extends BaseVoucherAction {
         // return false;
     }
 
-    @Transactional
+    
     public String saveAndView() {
         // if(create()){
         message = getText("transaction.success")
@@ -194,7 +202,7 @@ public class ContraBTCAction extends BaseVoucherAction {
         return Constants.VIEW;
     }
 
-    @Transactional
+    
     public String saveAndClose() {
         // if(create()){
         setClose(true);
@@ -478,9 +486,8 @@ public class ContraBTCAction extends BaseVoucherAction {
     CVoucherHeader createVoucher(final HashMap<String, Object> headerDetails,
             final List<HashMap<String, Object>> subledgerDetails,
             final List<HashMap<String, Object>> accountdetails) {
-        final CreateVoucher cv = new CreateVoucher();
-        return cv
-                .createVoucher(headerDetails, accountdetails, subledgerDetails);
+         
+        return createVoucher.createVoucher(headerDetails, accountdetails, subledgerDetails);
     }
 
     private List<HashMap<String, Object>> populateAccountDetails() {
@@ -557,7 +564,7 @@ public class ContraBTCAction extends BaseVoucherAction {
         final List<HashMap<String, Object>> reversalList = new ArrayList<HashMap<String, Object>>();
         reversalList.add(reversalVoucherMap);
         try {
-            reversalVoucher = new CreateVoucher().reverseVoucher(reversalList);
+            reversalVoucher =  createVoucher.reverseVoucher(reversalList);
         } catch (final ValidationException e) {
             LOGGER.error(e.getMessage(), e);
             addActionError(getText(e.getErrors().get(0).getMessage()));
@@ -631,10 +638,10 @@ public class ContraBTCAction extends BaseVoucherAction {
                 final InstrumentHeader oldInstrumentHeader = instrumentVoucher
                         .getInstrumentHeaderId();
                 instrumentService.cancelInstrument(oldInstrumentHeader);
-                HibernateUtil.getCurrentSession().flush();
+                persistenceService.getSession().flush();
                 final List<InstrumentHeader> instrument = instrumentService
                         .addToInstrument(createInstruments(contraBean));
-                HibernateUtil.getCurrentSession().flush();
+                persistenceService.getSession().flush();
                 contraVoucher.setFromBankAccountId(getBank(Integer
                         .valueOf(contraBean.getAccountNumberId())));
                 contraVoucher.setInstrumentHeaderId(instrument.get(0));
@@ -653,10 +660,9 @@ public class ContraBTCAction extends BaseVoucherAction {
     }
 
     void createLedgerAndPost(final CVoucherHeader voucher) {
-        final CreateVoucher createVoucher = new CreateVoucher();
         try {
             createVoucher.deleteVoucherdetailAndGL(voucher);
-            HibernateUtil.getCurrentSession().flush();
+            persistenceService.getSession().flush();
             final List<HashMap<String, Object>> accountdetails = new ArrayList<HashMap<String, Object>>();
             final List<HashMap<String, Object>> subledgerDetails = new ArrayList<HashMap<String, Object>>();
             final Bankaccount bankAccount = getBank(Integer.valueOf(contraBean
@@ -666,10 +672,10 @@ public class ContraBTCAction extends BaseVoucherAction {
             accountdetails.add(populateDetailMap(bankAccount
                     .getChartofaccounts().getGlcode(), BigDecimal.ZERO,
                     contraBean.getAmount()));
-            final CreateVoucher cv = new CreateVoucher();
-            final List<Transaxtion> transactions = cv.createTransaction(null,
+             
+            final List<Transaxtion> transactions = createVoucher.createTransaction(null,
                     accountdetails, subledgerDetails, voucher);
-            HibernateUtil.getCurrentSession().flush();
+            persistenceService.getSession().flush();
             Transaxtion txnList[] = new Transaxtion[transactions.size()];
             txnList = transactions.toArray(txnList);
             final SimpleDateFormat formatter = new SimpleDateFormat("dd-MMM-yyyy");

@@ -39,31 +39,27 @@
  ******************************************************************************/
 package org.egov.ptis.client.service;
 
-import static org.egov.ptis.constants.PropertyTaxConstants.DEMANDRSN_CODE_CHQ_BOUNCE_PENALTY;
-import static org.egov.ptis.constants.PropertyTaxConstants.DEMANDRSN_CODE_GENERAL_TAX;
-import static org.egov.ptis.constants.PropertyTaxConstants.DEMANDRSN_CODE_PENALTY_FINES;
-import static org.egov.ptis.constants.PropertyTaxConstants.DEMANDRSN_STR_ADVANCE;
-import static org.egov.ptis.constants.PropertyTaxConstants.DEMANDRSN_STR_GENERAL_TAX;
-import static org.egov.ptis.constants.PropertyTaxConstants.GLCODEMAP_FOR_ARREARTAX;
-import static org.egov.ptis.constants.PropertyTaxConstants.GLCODEMAP_FOR_CURRENTTAX;
 import static org.egov.ptis.constants.PropertyTaxConstants.GLCODES_FOR_CURRENTTAX;
 import static org.egov.ptis.constants.PropertyTaxConstants.GLCODE_FOR_TAXREBATE;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import org.apache.log4j.Logger;
 import org.egov.collection.entity.ReceiptDetail;
+import org.egov.commons.dao.ChartOfAccountsHibernateDAO;
+import org.egov.commons.dao.FunctionHibernateDAO;
+import org.egov.demand.model.EgBillDetails;
 import org.egov.infra.validation.exception.ValidationError;
 import org.egov.infra.validation.exception.ValidationException;
-import org.egov.infstr.utils.MoneyUtils;
 import org.egov.ptis.constants.PropertyTaxConstants;
 
 public class CollectionApportioner {
 
+    private static final String REBATE_STR = "REBATE";
     public static final String STRING_FULLTAX = "FULLTAX";
     public static final String STRING_ADVANCE = "ADVANCE";
     private static final Logger LOGGER = Logger.getLogger(CollectionApportioner.class);
@@ -80,10 +76,18 @@ public class CollectionApportioner {
 
     public void apportion(BigDecimal amtPaid, List<ReceiptDetail> receiptDetails, Map<String, BigDecimal> instDmdMap) {
         LOGGER.info("receiptDetails before apportioning amount " + amtPaid + ": " + receiptDetails);
-
+        Boolean isFullPayment = Boolean.FALSE;
+        if (isEligibleForCurrentRebate) {
+            BigDecimal totalCrAmountToBePaid = BigDecimal.ZERO;
+            for (final ReceiptDetail receiptDetail : receiptDetails) {
+                totalCrAmountToBePaid = totalCrAmountToBePaid.add(receiptDetail.getCramountToBePaid());
+            }
+            if (amtPaid.compareTo(totalCrAmountToBePaid) == 0) {
+                isFullPayment = Boolean.TRUE;
+            }
+        }
         Amount balance = new Amount(amtPaid);
         BigDecimal crAmountToBePaid = null;
-
         for (ReceiptDetail rd : receiptDetails) {
 
             if (balance.isZero()) {
@@ -94,15 +98,22 @@ public class CollectionApportioner {
 
             crAmountToBePaid = rd.getCramountToBePaid();
 
-            if (balance.isLessThanOrEqualTo(crAmountToBePaid)) {
-                // partial or exact payment
-                rd.setCramount(balance.amount);
-                balance = Amount.ZERO;
-            } else { // excess payment
-                rd.setCramount(crAmountToBePaid);
-                balance = balance.minus(crAmountToBePaid);
+            if (rd.getDescription().contains(REBATE_STR)) {
+                if (isFullPayment) {
+                    balance = balance.minus(crAmountToBePaid);
+                } else {
+                    rd.setDramount(BigDecimal.ZERO);
+                }
+            } else {
+                if (balance.isLessThanOrEqualTo(crAmountToBePaid)) {
+                    // partial or exact payment
+                    rd.setCramount(balance.amount);
+                    balance = Amount.ZERO;
+                } else { // excess payment
+                    rd.setCramount(crAmountToBePaid);
+                    balance = balance.minus(crAmountToBePaid);
+                }
             }
-
         }
         if (balance.isGreaterThanZero()) {
             LOGGER.error("Apportioning failed: excess payment!");
@@ -112,6 +123,58 @@ public class CollectionApportioner {
         }
 
         LOGGER.info("receiptDetails after apportioning: " + receiptDetails);
+    }
+
+    public List<ReceiptDetail> reConstruct(final BigDecimal amountPaid, final List<EgBillDetails> billDetails, FunctionHibernateDAO functionDAO, ChartOfAccountsHibernateDAO chartOfAccountsDAO) {
+        final List<ReceiptDetail> receiptDetails = new ArrayList<ReceiptDetail>(0);
+        LOGGER.info("receiptDetails before reApportion amount " + amountPaid + ": " + receiptDetails);
+        LOGGER.info("billDetails before reApportion " + billDetails);
+        Amount balance = new Amount(amountPaid);
+
+        BigDecimal crAmountToBePaid = BigDecimal.ZERO;
+
+        for (final EgBillDetails billDetail : billDetails) {
+            final String glCode = billDetail.getGlcode();
+            final ReceiptDetail receiptDetail = new ReceiptDetail();
+            receiptDetail.setOrdernumber(Long.valueOf(billDetail.getOrderNo()));
+            receiptDetail.setDescription(billDetail.getDescription());
+            receiptDetail.setIsActualDemand(true);
+            receiptDetail.setFunction(functionDAO.getFunctionByCode(billDetail.getFunctionCode()));
+            receiptDetail.setAccounthead(chartOfAccountsDAO.getCChartOfAccountsByGlCode(glCode));
+            receiptDetail.setCramountToBePaid(balance.amount);
+            receiptDetail.setDramount(BigDecimal.ZERO);
+
+            if (balance.isZero()) {
+                // nothing left to apportion
+                receiptDetail.zeroDrAndCrAmounts();
+                receiptDetails.add(receiptDetail);
+                continue;
+            }
+            crAmountToBePaid = billDetail.getCrAmount();
+
+            if (balance.isLessThanOrEqualTo(crAmountToBePaid)) {
+                // partial or exact payment
+                receiptDetail.setCramount(balance.amount);
+                receiptDetail.setCramountToBePaid(balance.amount);
+                balance = Amount.ZERO;
+            } else { // excess payment
+                receiptDetail.setCramount(crAmountToBePaid);
+                receiptDetail.setCramountToBePaid(crAmountToBePaid);
+                balance = balance.minus(crAmountToBePaid);
+            }
+
+            receiptDetails.add(receiptDetail);
+        }
+
+        if (balance.isGreaterThanZero()) {
+            LOGGER.error("reApportion failed: excess payment!");
+            throw new ValidationException(Arrays.asList(
+                    new ValidationError("Paid Amount is greater than Total Amount to be paid",
+                            "Paid Amount is greater than Total Amount to be paid")));
+        }
+
+        LOGGER.info("receiptDetails after reApportion: " + receiptDetails);
+        return receiptDetails;
     }
 
     private boolean isArrear(String glCode) {

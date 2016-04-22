@@ -53,12 +53,12 @@
 
 <script src="<c:url value='/commonjs/ajaxCommonFunctions.js' context='/egi'/>"></script>
 
-		<!--[if lt IE 9]><script src="resources/js/ie8-responsive-file-warning.js"></script><![endif]-->
+		
 		
 		<!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
 		<!--[if lt IE 9]>
-			<script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
-			<script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+			<script src="/egi/resources/global/js/ie8/html5shiv.min.js"></script>
+			<script src="/egi/resources/global/js/ie8/respond.min.js"></script>
 		<![endif]-->
 		
 <div class="row">
@@ -132,11 +132,13 @@
 									</div>
 
 									<div class="form-group">
-										<label for="field-1" class="col-sm-3 control-label"><spring:message code="lbl.mobile"/><span class="mandatory"></span></label>
-										
+										<label class="col-sm-3 control-label"><spring:message code="lbl.mobile"/><span class="mandatory"></span></label>
 										<div class="col-sm-2 add-margin">
-											<form:input type="text" path="mobileNumber" id="mobileNumber" data-inputmask="'mask': '9999999999'" 
+											<div class="input-group">
+												<span class="input-group-addon">+91</span>
+												  	<form:input type="text" path="mobileNumber" id="mobileNumber" data-inputmask="'mask': '9999999999'" 
 											required="required" cssClass="form-control" maxlength="10" placeholder="Mobile Number"/>
+											</div>
 											<form:errors path="mobileNumber" cssClass="add-margin error-msg"/>
 										</div>
 										

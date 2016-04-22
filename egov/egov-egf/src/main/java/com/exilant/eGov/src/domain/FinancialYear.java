@@ -46,9 +46,12 @@
 
 package com.exilant.eGov.src.domain;
 
+import org.egov.infstr.services.PersistenceService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import java.sql.SQLException;
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.Locale;
 
 import org.apache.log4j.Logger;
@@ -57,12 +60,15 @@ import org.egov.infstr.utils.HibernateUtil;
 import org.hibernate.Query;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.exilant.eGov.src.common.EGovernCommon;
 import com.exilant.exility.common.TaskFailedException;
 import com.exilant.exility.updateservice.PrimaryKeyGenerator;
 
 @Transactional(readOnly = true)
 public class FinancialYear {
+ @Autowired
+ @Qualifier("persistenceService")
+ private PersistenceService persistenceService;
+
     private String id = null;
     private String financialYear = null;
     private String startingDate = "1-Jan-1900";
@@ -88,14 +94,10 @@ public class FinancialYear {
     @Transactional
     public void insert() throws SQLException,
     TaskFailedException {
-        final EGovernCommon commommethods = new EGovernCommon();
-        created = commommethods.getCurrentDate();
         try {
-            final SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
             final SimpleDateFormat formatter = new SimpleDateFormat("dd-MMM-yyyy");
-            created = formatter.format(sdf.parse(created));
-            EgovMasterDataCaching.getInstance().removeFromCache(
-                    "egi-activeFinYr");
+            created = formatter.format(new Date());
+            EgovMasterDataCaching.removeFromCache("egi-activeFinYr");
         } catch (final Exception e) {
             LOGGER
             .error("Exp in insert to financialyear: " + e.getMessage(),
@@ -110,7 +112,7 @@ public class FinancialYear {
                 + "isactive, created, lastmodified, MODIFIEDBY, isActiveForPosting, isClosed, TransferClosingBalance) "
                 + "VALUES ( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
-        final Query pst = HibernateUtil.getCurrentSession().createSQLQuery(insertQuery);
+        final Query pst = persistenceService.getSession().createSQLQuery(insertQuery);
         pst.setString(0, id);
         pst.setString(1, financialYear);
         pst.setString(2, startingDate);
@@ -220,12 +222,10 @@ public class FinancialYear {
 
     public void newUpdate() throws TaskFailedException,
     SQLException {
-        final EGovernCommon commommethods = new EGovernCommon();
-        created = commommethods.getCurrentDate();
         Query pstmt = null;
         try {
-            created = formatter.format(sdf.parse(created));
-        } catch (final ParseException parseExp) {
+            created = formatter.format(new Date());
+        } catch (final Exception parseExp) {
             if (LOGGER.isDebugEnabled())
                 LOGGER.debug(parseExp.getMessage(), parseExp);
         }
@@ -258,7 +258,7 @@ public class FinancialYear {
         query.append(" where id=?");
         try {
             int i = 1;
-            pstmt = HibernateUtil.getCurrentSession().createSQLQuery(query.toString());
+            pstmt = persistenceService.getSession().createSQLQuery(query.toString());
             if (financialYear != null)
                 pstmt.setString(i++, financialYear);
             if (startingDate != null)

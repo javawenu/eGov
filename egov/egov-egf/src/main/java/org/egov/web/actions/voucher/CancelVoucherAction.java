@@ -39,7 +39,12 @@
  ******************************************************************************/
 package org.egov.web.actions.voucher;
 
+import org.egov.infstr.services.PersistenceService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -89,10 +94,11 @@ import org.hibernate.Session;
     @Result(name = CancelVoucherAction.SEARCH, location = "cancelVoucher-search.jsp")
 })
 public class CancelVoucherAction extends BaseFormAction {
+ @Autowired
+ @Qualifier("persistenceService")
+ private PersistenceService persistenceService;
 
-    /**
-     *
-     */
+
     private static final long serialVersionUID = -8065315728701853083L;
     private static final Logger LOGGER = Logger.getLogger(CancelVoucherAction.class);
     public static final Locale LOCALE = new Locale("en", "IN");
@@ -161,7 +167,7 @@ public class CancelVoucherAction extends BaseFormAction {
     }
 
     private boolean isSuperUser() {
-        final Query queryFnd = HibernateUtil.getCurrentSession().createSQLQuery(
+        final Query queryFnd = persistenceService.getSession().createSQLQuery(
                 " SELECT usrr.USERID FROM EG_USERROLE usrr,  EG_ROLE r WHERE " +
                         " usrr.ROLEID=r.ID and " +
                         " usrr.userid     =" + loggedInUser + " AND  lower(r.NAME)='" + FinancialConstants.SUPERUSER + "'");
@@ -202,7 +208,7 @@ public class CancelVoucherAction extends BaseFormAction {
                     + FinancialConstants.CREATEDVOUCHERSTATUS + ")  and (vh.isConfirmed != 1 or vh.isConfirmed is null)";
             // Filters vouchers for which payments are generated and are in cancelled state
             allPayment = "select distinct(vh) from  Miscbilldetail misc left join misc.billVoucherHeader vh where misc.billVoucherHeader is not null"
-                    + " and vh.isConfirmed != 1 and vh.status in (" + FinancialConstants.CREATEDVOUCHERSTATUS + ")";
+                    + " and (vh.isConfirmed != 1  or  vh.isConfirmed  is null )and vh.status in (" + FinancialConstants.CREATEDVOUCHERSTATUS + ")";
 
             voucherList.addAll(persistenceService.findAllBy(voucheerWithNoPayment + filterQry));
             voucherList.addAll(persistenceService.findAllBy(allPayment + filterQry));
@@ -214,7 +220,7 @@ public class CancelVoucherAction extends BaseFormAction {
                     + FinancialConstants.CREATEDVOUCHERSTATUS
                     + ","
                     + FinancialConstants.PREAPPROVEDVOUCHERSTATUS
-                    + ") and vh.isConfirmed != 1 ";
+                    + ") and (vh.isConfirmed != 1 or  vh.isConfirmed is null) ";
             final List<Long> vouchersHavingActivePayments = persistenceService.findAllBy(editModeQuery3 + filterQry);
 
             // If remittance payment is there and are in cancelled state
@@ -264,8 +270,7 @@ public class CancelVoucherAction extends BaseFormAction {
             voucherList.addAll(persistenceService.findAllBy(noChequePaymentQry));
 
             // Query for cancelling BPVs for which cheque is assigned and cancelled
-            final Query query1 = HibernateUtil
-                    .getCurrentSession()
+            final Query query1 = persistenceService.getSession()
                     .createSQLQuery(
                             "SELECT distinct vh.id FROM egw_status status"
                                     + misTab
@@ -281,16 +286,18 @@ public class CancelVoucherAction extends BaseFormAction {
                                     + FinancialConstants.PREAPPROVEDVOUCHERSTATUS + ","
                                     + FinancialConstants.CANCELLEDVOUCHERSTATUS +
                                     ") " + VoucherMisJoin + filterQuerySql);
-            final Iterator<BigDecimal> payList = query1.list().iterator();
-            //persistenceService.setType(CVoucherHeader.class);
-            while (payList.hasNext())
-                voucherList.add((CVoucherHeader) persistenceService.findById(payList.next().longValue(), false));
+            List<BigInteger> list = query1.list();
 
+			for(BigInteger b:list)
+			{      		   
+				voucherList.add((CVoucherHeader) persistenceService.find("from CVoucherHeader  where id=?",b.longValue()));
+			}
         }
         else if (voucherHeader.getType().equalsIgnoreCase(FinancialConstants.STANDARD_VOUCHER_TYPE_CONTRA))
         {
             contraVoucherQry = "from CVoucherHeader vh where vh.status =" + FinancialConstants.CREATEDVOUCHERSTATUS
-                    + " and vh.isConfirmed != 1  ";
+                    + " and ( vh.isConfirmed != 1 or vh.isConfirmed is null) ";
+            persistenceService.findAllBy(contraVoucherQry + filterQry);
             voucherList.addAll(persistenceService.findAllBy(contraVoucherQry + filterQry));
         }
         if (LOGGER.isDebugEnabled())
@@ -319,15 +326,12 @@ public class CancelVoucherAction extends BaseFormAction {
             LOGGER.debug("Inside CancelVoucher| cancelVoucherSubmit | Selected No of Vouchers for cancellation  ="
                     + selectedVhs.length);
         final String cancelVhQuery = "Update CVoucherHeader vh set vh.status=" + FinancialConstants.CANCELLEDVOUCHERSTATUS
-                + ",vh.lastModifiedBy.id=:modifiedby " +
-                "			, vh.lastModifiedDate=:modifiedDate   where vh.id=:vhId";
+                + ",vh.lastModifiedBy.id=:modifiedby, vh.lastModifiedDate=:modifiedDate   where vh.id=:vhId";
         final String cancelVhByCGNQuery = "Update CVoucherHeader vh set vh.status=" + FinancialConstants.CANCELLEDVOUCHERSTATUS
-                + ",vh.lastModifiedBy.id=:modifiedby " +
-                "			, vh.lastModifiedDate=:modifiedDate where vh.vouchernumber=:vhNum";
+                + ",vh.lastModifiedBy.id=:modifiedby , vh.lastModifiedDate=:modifiedDate where vh.refvhId=:vhId";
         final String cancelVhByRefCGNQuery = "Update CVoucherHeader vh set vh.status=" + FinancialConstants.CANCELLEDVOUCHERSTATUS
-                + ",vh.lastModifiedBy.id=:modifiedby " +
-                "			, vh.lastModifiedDate=:modifiedDate where vh.vouchernumber=:vhNum";
-        final Session session = HibernateUtil.getCurrentSession();
+                + ",vh.lastModifiedBy.id=:modifiedby , vh.lastModifiedDate=:modifiedDate where vh.voucherNumber=:vhNum";
+        final Session session = persistenceService.getSession();
         for (int i = 0; i < selectedVhs.length; i++) {
             voucherObj = (CVoucherHeader) persistenceService.find("from CVoucherHeader vh where vh.id=?", selectedVhs[i]);
             validateBeforeCancel(voucherObj);
@@ -368,10 +372,10 @@ public class CancelVoucherAction extends BaseFormAction {
                 query.setDate("modifiedDate", modifiedDate);
                 query.executeUpdate();
                 if (FinancialConstants.CONTRAVOUCHER_NAME_INTERFUND.equalsIgnoreCase(voucherObj.getName())) {
-                    String vhNum = "";
-                        vhNum = voucherObj.getVoucherNumber();
+                    Long vhId;
+                    vhId = voucherObj.getId();
                         final Query queryFnd = session.createQuery(cancelVhByCGNQuery);
-                        queryFnd.setString("vhNum", vhNum);
+                        queryFnd.setLong("vhId", vhId);
                         queryFnd.setLong("modifiedby", loggedInUser);
                         queryFnd.setDate("modifiedDate", modifiedDate);
                         queryFnd.executeUpdate();
@@ -450,7 +454,7 @@ public class CancelVoucherAction extends BaseFormAction {
                     moduleType = FinancialConstants.PENSIONBILL;
                 }
 
-            final Query billQry = HibernateUtil.getCurrentSession().createSQLQuery(cancelQuery.toString());
+            final Query billQry = persistenceService.getSession().createSQLQuery(cancelQuery.toString());
             billQry.setString("module", moduleType);
             billQry.setString("description", description);
             billQry.setString("billstatus", billstatus);
@@ -466,12 +470,12 @@ public class CancelVoucherAction extends BaseFormAction {
         if (headerFields.contains("department"))
             addDropdownData("departmentList", persistenceService.findAllBy("from Department order by name"));
         if (headerFields.contains("functionary"))
-            addDropdownData("functionaryList", persistenceService.findAllBy(" from Functionary where isactive=1 order by name"));
+            addDropdownData("functionaryList", persistenceService.findAllBy(" from Functionary where isactive=true order by name"));
         if (headerFields.contains("fund"))
-            addDropdownData("fundList", persistenceService.findAllBy(" from Fund where isactive=1 and isnotleaf=0 order by name"));
+            addDropdownData("fundList", persistenceService.findAllBy(" from Fund where isactive=true and isnotleaf=false order by name"));
         if (headerFields.contains("fundsource"))
             addDropdownData("fundsourceList",
-                    persistenceService.findAllBy(" from Fundsource where isactive=1 and isnotleaf=0 order by name"));
+                    persistenceService.findAllBy(" from Fundsource where isactive=true and isnotleaf=false order by name"));
         if (headerFields.contains("field"))
             addDropdownData("fieldList",
                     persistenceService.findAllBy(" from Boundary b where lower(b.boundaryType.name)='ward' "));

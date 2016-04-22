@@ -58,7 +58,7 @@ import org.apache.struts2.convention.annotation.ParentPackage;
 import org.apache.struts2.convention.annotation.Result;
 import org.egov.commons.EgwStatus;
 import org.egov.commons.EgwTypeOfWork;
-import org.egov.commons.service.CommonsService;
+import org.egov.commons.dao.EgwStatusHibernateDAO;
 import org.egov.eis.service.AssignmentService;
 import org.egov.infra.admin.master.entity.Department;
 import org.egov.infra.validation.exception.ValidationError;
@@ -105,7 +105,8 @@ public class SearchRevisionEstimateAction extends SearchFormAction {
     private EmployeeServiceOld employeeServiceOld;
     @Autowired
     private AssignmentService assignmentService;
-    private PersonalInformationService personalInformationService;
+    @Autowired
+    private EgwStatusHibernateDAO egwStatusHibernateDAO;
     public static final String SEARCH = "search";
     public static final Locale LOCALE = new Locale("en", "IN");
     public static final SimpleDateFormat DDMMYYYYFORMATS = new SimpleDateFormat("dd/MM/yyyy", LOCALE);
@@ -122,8 +123,6 @@ public class SearchRevisionEstimateAction extends SearchFormAction {
     private PersistenceService<RevisionWorkOrder, Long> revisionWorkOrderService;
     private String messageKey;
     private String revisionEstimateNumber;
-    @Autowired
-    private CommonsService commonsService;
     private String cancelRemarks;
     private String cancellationReason;
     public static final String UNCHECKED = "unchecked";
@@ -285,10 +284,10 @@ public class SearchRevisionEstimateAction extends SearchFormAction {
 
         validateARFForRE(re);
 
-        revWorkOrder.setEgwStatus(commonsService.getStatusByModuleAndCode("WorkOrder", "CANCELLED"));
+        revWorkOrder.setEgwStatus(egwStatusHibernateDAO.getStatusByModuleAndCode("WorkOrder", "CANCELLED"));
         final PersonalInformation prsnlInfo = employeeServiceOld.getEmpForUserId(worksService.getCurrentLoggedInUserId());
         String empName = "";
-        re.setEgwStatus(commonsService.getStatusByModuleAndCode("AbstractEstimate", "CANCELLED"));
+        re.setEgwStatus(egwStatusHibernateDAO.getStatusByModuleAndCode("AbstractEstimate", "CANCELLED"));
         if (prsnlInfo.getEmployeeFirstName() != null)
             empName = prsnlInfo.getEmployeeFirstName();
         if (prsnlInfo.getEmployeeLastName() != null)
@@ -511,7 +510,6 @@ public class SearchRevisionEstimateAction extends SearchFormAction {
     }
 
     public void setPersonalInformationService(final PersonalInformationService personalInformationService) {
-        this.personalInformationService = personalInformationService;
     }
 
     public void setWorksService(final WorksService worksService) {
@@ -605,10 +603,6 @@ public class SearchRevisionEstimateAction extends SearchFormAction {
 
     public void setRevisionEstimateNumber(final String revisionEstimateNumber) {
         this.revisionEstimateNumber = revisionEstimateNumber;
-    }
-
-    public void setCommonsService(final CommonsService commonsService) {
-        this.commonsService = commonsService;
     }
 
     public String getCancelRemarks() {

@@ -44,6 +44,9 @@
 
 package com.exilant.eGov.src.transactions;
 
+
+import org.egov.infstr.services.PersistenceService;
+import org.springframework.beans.factory.annotation.Qualifier;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -56,8 +59,8 @@ import org.apache.log4j.Logger;
 import org.egov.commons.CFinancialYear;
 import org.egov.commons.dao.FinancialYearHibernateDAO;
 import org.egov.infstr.utils.HibernateUtil;
+import org.springframework.beans.factory.annotation.Autowired;
 
-import com.exilant.eGov.src.common.EGovernCommon;
 import com.exilant.eGov.src.domain.ClosedPeriods;
 import com.exilant.eGov.src.domain.FinancialYear;
 import com.exilant.exility.common.AbstractTask;
@@ -107,7 +110,15 @@ public class SetUp extends AbstractTask {
     private ResultSet resultsetdtl;
     private static final Logger LOGGER = Logger.getLogger(SetUp.class);
     private String effectiveDate;
-
+   
+ @Autowired
+ @Qualifier("persistenceService")
+ private PersistenceService persistenceService;
+ @Autowired
+    private  FinancialYearHibernateDAO financialYearDAO;
+    private @Autowired FinancialYear financialYear;
+    private @Autowired ClosedPeriods closedPeriods;
+    
     @Override
     public void execute(final String taskName,
             final String gridName,
@@ -118,14 +129,10 @@ public class SetUp extends AbstractTask {
             final String prefix) throws TaskFailedException {
         connection = con;
         boolean transferred;
-        final EGovernCommon cm = new EGovernCommon();
-        effectiveDate = cm.getCurrentDateTime();
         try {
-            final SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
-            final SimpleDateFormat formatter = new SimpleDateFormat("dd-MMM-yyyy HH:mm:ss");
-            Date dt = new Date();
-            dt = sdf.parse(effectiveDate);
-            effectiveDate = formatter.format(dt);
+           final SimpleDateFormat formatter = new SimpleDateFormat("dd-MMM-yyyy HH:mm:ss");
+             effectiveDate = formatter.format(new Date());
+            
         } catch (final Exception e) {
             if (LOGGER.isDebugEnabled())
                 LOGGER.debug("Exception in date formatting " + e.getMessage(), e);
@@ -236,10 +243,9 @@ public class SetUp extends AbstractTask {
             resultset.close();
             pst.close();
 
-            final FinancialYear fy = new FinancialYear();
-            fy.setId(fyId);
-            fy.setIsActiveForPosting("1");
-            fy.update();
+            financialYear.setId(fyId);
+            financialYear.setIsActiveForPosting("1");
+            financialYear.update();
         } catch (final SQLException ex) {
             if (LOGGER.isDebugEnabled())
                 LOGGER.debug("Error (SetUp->openFY): " + ex.toString(), ex);
@@ -260,14 +266,13 @@ public class SetUp extends AbstractTask {
          * if(isPreToFYOpen(fyId)){ dc.addMessage("exilError","Previos Financial Year is Open, it can not be closed"); throw new
          * TaskFailedException(); }
          */
-        final FinancialYear fy = new FinancialYear();
-        fy.setId(fyId);
-        fy.setIsActiveForPosting("0");
-        fy.setIsClosed("1");
+        financialYear.setId(fyId);
+        financialYear.setIsActiveForPosting("0");
+        financialYear.setIsClosed("1");
 
-        fy.setTransferClosingBalance("1");
+        financialYear.setTransferClosingBalance("1");
         try {
-            fy.update();
+            financialYear.update();
         } catch (final SQLException ex) {
             LOGGER.error(ex.getMessage(), ex);
             dc.addMessage("exilError", "SetUp->closeFY failed");
@@ -378,8 +383,8 @@ public class SetUp extends AbstractTask {
 
                 if (counter == 50) {
                     pstBatch.executeBatch();
-                    HibernateUtil.getCurrentSession().flush();
-                    HibernateUtil.getCurrentSession().clear();
+                    persistenceService.getSession().flush();
+                    persistenceService.getSession().clear();
                     pstBatch.clearBatch();
                     counter = 0;
                 }
@@ -387,8 +392,8 @@ public class SetUp extends AbstractTask {
             }
             if (counter < 50) {
                 pstBatch.executeBatch();
-                HibernateUtil.getCurrentSession().flush();
-                HibernateUtil.getCurrentSession().clear();
+                persistenceService.getSession().flush();
+                persistenceService.getSession().clear();
                 pstBatch.clearBatch();
             }
 
@@ -479,16 +484,16 @@ public class SetUp extends AbstractTask {
 
                     if (counterSL == 50) {
                         pstBatch.executeBatch();
-                        HibernateUtil.getCurrentSession().flush();
-                        HibernateUtil.getCurrentSession().clear();
+                        persistenceService.getSession().flush();
+                        persistenceService.getSession().clear();
                         pstBatch.clearBatch();
                         counterSL = 0;
                     }
                 }
                 if (counterSL < 50) {
                     pstBatch.executeBatch();
-                    HibernateUtil.getCurrentSession().flush();
-                    HibernateUtil.getCurrentSession().clear();
+                    persistenceService.getSession().flush();
+                    persistenceService.getSession().clear();
                     pstBatch.clearBatch();
                 }
                 pstBatch.close();
@@ -632,15 +637,15 @@ public class SetUp extends AbstractTask {
 
                 if (totalCounterCB % 50 == 0) {
                     pstBatch.executeBatch();
-                    HibernateUtil.getCurrentSession().flush();
-                    HibernateUtil.getCurrentSession().clear();
+                    persistenceService.getSession().flush();
+                    persistenceService.getSession().clear();
                     pstBatch.clearBatch();
                 }
             }
             if (totalCounterCB % 50 != 0) {
                 pstBatch.executeBatch();
-                HibernateUtil.getCurrentSession().flush();
-                HibernateUtil.getCurrentSession().clear();
+                persistenceService.getSession().flush();
+                persistenceService.getSession().clear();
                 pstBatch.clearBatch();
             }
             resultset.close();
@@ -724,16 +729,16 @@ public class SetUp extends AbstractTask {
 
                 if (counterOPBOnly == 50) {
                     pstBatch.executeBatch();
-                    HibernateUtil.getCurrentSession().flush();
-                    HibernateUtil.getCurrentSession().clear();
+                    persistenceService.getSession().flush();
+                    persistenceService.getSession().clear();
                     pstBatch.clearBatch();
                     counterOPBOnly = 0;
                 }
             }
             if (counterOPBOnly < 50) {
                 pstBatch.executeBatch();
-                HibernateUtil.getCurrentSession().flush();
-                HibernateUtil.getCurrentSession().clear();
+                persistenceService.getSession().flush();
+                persistenceService.getSession().clear();
                 pstBatch.clearBatch();
             }
 
@@ -810,11 +815,10 @@ public class SetUp extends AbstractTask {
         boolean isOpen = false;
         try {
 
-            final FinancialYearHibernateDAO findao = new FinancialYearHibernateDAO();
-            final CFinancialYear financialYearById = findao.getFinancialYearById(Long.parseLong(fyId));
-            final CFinancialYear previousFinancialYearByDate = findao.getPreviousFinancialYearByDate(financialYearById
+            final CFinancialYear financialYearById = financialYearDAO.getFinancialYearById(Long.parseLong(fyId));
+            final CFinancialYear previousFinancialYearByDate = financialYearDAO.getPreviousFinancialYearByDate(financialYearById
                     .getStartingDate());
-            if (previousFinancialYearByDate.getIsClosed() != 1)
+            if (previousFinancialYearByDate.getIsClosed() != true)
                 isOpen = true;
         } catch (final Exception ex) {
             isOpen = false;
@@ -952,16 +956,15 @@ public class SetUp extends AbstractTask {
             final String hardClose,
             final int id) throws TaskFailedException {
         boolean success = false;
-        final ClosedPeriods cp = new ClosedPeriods();
-        cp.setStartingDate(sDate);
-        cp.setEndingDate(eDate);
-        cp.setIsClosed(hardClose);
+        closedPeriods.setStartingDate(sDate);
+        closedPeriods.setEndingDate(eDate);
+        closedPeriods.setIsClosed(hardClose);
         try {
             if (id == 0)
-                cp.insert();
+                closedPeriods.insert();
             else {
-                cp.setId(id + "");
-                cp.update();
+                closedPeriods.setId(id + "");
+                closedPeriods.update();
             }
             success = true;
         } catch (final SQLException ex) {
@@ -1103,7 +1106,7 @@ public class SetUp extends AbstractTask {
             final String query = "SELECT id FROM financialYear " +
                     "WHERE startingDate <= ? " +
                     "AND endingDate >= ? " +
-                    "AND isActiveForPosting=1";
+                    "AND isActiveForPosting=true";
             pst = connection.prepareStatement(query);
             pst.setString(0, sDate);
             pst.setString(1, eDate);
@@ -1281,7 +1284,7 @@ public class SetUp extends AbstractTask {
                     + fundCondition
                     + ") or  f.id in(select unique fundid from transactionsummary "
                     + fundCondition1
-                    + ")) and f.isactive=1 and f.isnotleaf!=1 "
+                    + ")) and f.isactive=true and f.isnotleaf!=true "
                     + " order by f.id ";
             pst = connection.prepareStatement(query, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
             int j = 1;

@@ -1,42 +1,42 @@
-<!--  #-------------------------------------------------------------------------------
-# eGov suite of products aim to improve the internal efficiency,transparency, 
-#      accountability and the service delivery of the government  organizations.
-#   
-#       Copyright (C) <2015>  eGovernments Foundation
-#   
-#       The updated version of eGov suite of products as by eGovernments Foundation 
-#       is available at http://www.egovernments.org
-#   
-#       This program is free software: you can redistribute it and/or modify
-#       it under the terms of the GNU General Public License as published by
-#       the Free Software Foundation, either version 3 of the License, or
-#       any later version.
-#   
-#       This program is distributed in the hope that it will be useful,
-#       but WITHOUT ANY WARRANTY; without even the implied warranty of
-#       MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#       GNU General Public License for more details.
-#   
-#       You should have received a copy of the GNU General Public License
-#       along with this program. If not, see http://www.gnu.org/licenses/ or 
-#       http://www.gnu.org/licenses/gpl.html .
-#   
-#       In addition to the terms of the GPL license to be adhered to in using this
-#       program, the following additional terms are to be complied with:
-#   
-#   	1) All versions of this program, verbatim or modified must carry this 
-#   	   Legal Notice.
-#   
-#   	2) Any misrepresentation of the origin of the material is prohibited. It 
-#   	   is required that all modified versions of this material be marked in 
-#   	   reasonable ways as different from the original version.
-#   
-#   	3) This license does not grant any rights to any user of the program 
-#   	   with regards to rights under trademark law for use of the trade names 
-#   	   or trademarks of eGovernments Foundation.
-#   
-#     In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
-#-------------------------------------------------------------------------------  -->
+<!--
+  ~ eGov suite of products aim to improve the internal efficiency,transparency,
+  ~    accountability and the service delivery of the government  organizations.
+  ~
+  ~     Copyright (C) <2015>  eGovernments Foundation
+  ~
+  ~     The updated version of eGov suite of products as by eGovernments Foundation
+  ~     is available at http://www.egovernments.org
+  ~
+  ~     This program is free software: you can redistribute it and/or modify
+  ~     it under the terms of the GNU General Public License as published by
+  ~     the Free Software Foundation, either version 3 of the License, or
+  ~     any later version.
+  ~
+  ~     This program is distributed in the hope that it will be useful,
+  ~     but WITHOUT ANY WARRANTY; without even the implied warranty of
+  ~     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  ~     GNU General Public License for more details.
+  ~
+  ~     You should have received a copy of the GNU General Public License
+  ~     along with this program. If not, see http://www.gnu.org/licenses/ or
+  ~     http://www.gnu.org/licenses/gpl.html .
+  ~
+  ~     In addition to the terms of the GPL license to be adhered to in using this
+  ~     program, the following additional terms are to be complied with:
+  ~
+  ~         1) All versions of this program, verbatim or modified must carry this
+  ~            Legal Notice.
+  ~
+  ~         2) Any misrepresentation of the origin of the material is prohibited. It
+  ~            is required that all modified versions of this material be marked in
+  ~            reasonable ways as different from the original version.
+  ~
+  ~         3) This license does not grant any rights to any user of the program
+  ~            with regards to rights under trademark law for use of the trade names
+  ~            or trademarks of eGovernments Foundation.
+  ~
+  ~   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
+  -->
 <%@ taglib prefix="s" uri="/WEB-INF/tags/struts-tags.tld"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
 
@@ -66,8 +66,6 @@
 				</s:if>
 				<s:else>
 			var voucherDetailColumns = [   
- 				{key:"functionid",hidden:true, formatter:createTextFieldFormatterJV(VOUCHERDETAILLIST,".functionIdDetail","hidden")},
- 				{key:"function",label:'Function Name', formatter:createTextFieldFormatterForFunctionJV(VOUCHERDETAILLIST,".functionDetail","text")},
  				{key:"glcodeid",hidden:true, formatter:createTextFieldFormatterJV(VOUCHERDETAILLIST,".glcodeIdDetail","hidden")},
  				{key:"glcode",label:'Account Code <span class="mandatory1">*</span>', formatter:createTextFieldFormatterJV(VOUCHERDETAILLIST,".glcodeDetail","text")},
  				{key:"accounthead", label:'Account Head',formatter:createLongTextFieldFormatterJV(VOUCHERDETAILLIST,".accounthead")},				
@@ -106,6 +104,7 @@
 			        
 		});
 		<s:iterator value="billDetailslist" status="stat">
+			<s:if test='%{isRestrictedtoOneFunctionCenter == true}'>
 				billDetailsTable.addRow({SlNo:billDetailsTable.getRecordSet().getLength()+1,
 					"functionid":'<s:property value="functionIdDetail"/>',
 					"function":'<s:property value="functionDetail"/>',
@@ -115,9 +114,21 @@
 					"debitamount":'<s:property value="%{debitAmountDetail}"/>',
 					"creditamount":'<s:property value="%{creditAmountDetail}"/>'
 				});
+			</s:if>
+			<s:else>
+				billDetailsTable.addRow({SlNo:billDetailsTable.getRecordSet().getLength()+1,
+					"glcodeid":'<s:property value="glcodeIdDetail"/>',
+					"glcode":'<s:property value="glcodeDetail"/>',
+					"accounthead":'<s:property value="accounthead"/>',
+					"debitamount":'<s:property value="%{debitAmountDetail}"/>',
+					"creditamount":'<s:property value="%{creditAmountDetail}"/>'
+				});
+			</s:else>
 				var index = '<s:property value="#stat.index"/>';
+				<s:if test='%{isRestrictedtoOneFunctionCenter == true}'>
 				updateGridPJV('functionIdDetail',index,'<s:property value="functionIdDetail"/>');
 				updateGridPJV('functionDetail',index,'<s:property value="functionDetail"/>');
+				</s:if>
 				updateGridPJV('glcodeIdDetail',index,'<s:property value="glcodeIdDetail"/>');
 				updateGridPJV('glcodeDetail',index,'<s:property value="glcodeDetail"/>');
 				updateGridPJV('accounthead',index,'<s:property value="accounthead"/>');
@@ -132,7 +143,13 @@
 		var tfoot = billDetailsTable.getTbodyEl().parentNode.createTFoot();
 		var tr = tfoot.insertRow(-1);
 		var th = tr.appendChild(document.createElement('th'));
+		<s:if test='%{isRestrictedtoOneFunctionCenter == true}'>
 		th.colSpan = 5;
+		</s:if>
+		<s:else>
+		th.colSpan = 4;
+		</s:else>
+		
 		th.innerHTML = 'Total&nbsp;&nbsp;&nbsp;';
 		th.align='right';
 		th.style.borderTop = "1px solid #84B1AD";
@@ -180,7 +197,6 @@
 		</s:if>
 		<s:else>    
 		var subledgerColumns = [      
-		{key:"functionDetail",label:'Function Name', formatter:createSLDropdownFormatterFuncJV(SUBLEDGERLIST,".functionDetail"),dropdownOptions:funcOptions},
 		{key:"glcode",hidden:true, formatter:createSLTextFieldFormatterJV(SUBLEDGERLIST,".subledgerCode","hidden")},
 		{key:"glcode.id",label:'Account Code <span class="mandatory1">*</span>', formatter:createDropdownFormatterJV(SUBLEDGERLIST,"loaddropdown(this)"),  dropdownOptions:glcodeOptions},
 		{key:"detailTypeName",hidden:true, formatter:createSLTextFieldFormatterJV(SUBLEDGERLIST,".detailTypeName","hidden")},
@@ -220,6 +236,7 @@
 			}        
 		});
 		<s:iterator value="subLedgerlist" status="stat">
+			<s:if test='%{isRestrictedtoOneFunctionCenter == true}'>  
 				subLedgersTable.addRow({SlNo:subLedgersTable.getRecordSet().getLength()+1,
 					"functionDetail":'<s:property value="functionDetail"/>',
 					"glcode":'<s:property value="subledgerCode"/>',
@@ -232,8 +249,24 @@
 					"debitAmount":'<s:property value="%{debitAmount}"/>',
 					"creditAmount":'<s:property value="%{creditAmount}"/>'
 				});
+			</s:if>
+			<s:else>    
+				subLedgersTable.addRow({SlNo:subLedgersTable.getRecordSet().getLength()+1,
+					"glcode":'<s:property value="subledgerCode"/>',
+					"glcode.id":'<s:property value="glcode.id"/>',
+					"detailType.id":'<s:property value="detailType.id"/>',
+					"detailTypeName":'<s:property value="detailTypeName" />',
+					"detailCode":'<s:property value="detailCode"/>',
+					"detailKeyId":'<s:property value="detailKeyId"/>',
+					"detailKey":'<s:property value="detailKeyEscSpecChar" />',
+					"debitAmount":'<s:property value="%{debitAmount}"/>',
+					"creditAmount":'<s:property value="%{creditAmount}"/>'
+				});
+			</s:else>    
 				var index = '<s:property value="#stat.index"/>';
+				<s:if test='%{isRestrictedtoOneFunctionCenter == true}'>  
 				updateGridSLDropdownPJV('functionDetail',index,'<s:property value="functionDetail"/>');
+				</s:if>
 				updateSLGridPJV('subledgerCode',index,'<s:property value="subledgerCode"/>');
 				updateSLGridPJV('detailTypeName',index,'<s:property value="detailTypeName"/>');
 				updateSLGridPJV('detailCode',index,'<s:property value="detailCode"/>');
@@ -353,7 +386,9 @@ success: function(o) {
 			if('<s:property value="detailType.id"/>' !="" || '<s:property value="detailType.id"/>' !=0){
 				var index = '<s:property value="#stat.index"/>';
 				updateSLDetailDropdown('detailType.id',index,'<s:property value="detailType.id"/>');
+				<s:if test='%{isRestrictedtoOneFunctionCenter == true}'>  
 				updateGridSLDropdownPJV('functionDetail',index,'<s:property value="functionDetail"/>');
+				</s:if>
 			}
 				
 			</s:iterator>

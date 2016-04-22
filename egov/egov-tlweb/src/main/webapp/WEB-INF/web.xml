@@ -192,7 +192,7 @@
 	</filter-mapping>
 	<filter-mapping>
 		<filter-name>struts2Prepare</filter-name>
-		<url-pattern>/*</url-pattern>
+		<url-pattern>*.action</url-pattern>
 	</filter-mapping>
 	<filter-mapping>
 		<filter-name>sitemesh</filter-name>
@@ -203,7 +203,7 @@
 	</filter-mapping>
 	<filter-mapping>
 		<filter-name>struts2Execute</filter-name>
-		<url-pattern>/*</url-pattern>
+		<url-pattern>*.action</url-pattern>
 	</filter-mapping>
 	
 	<!-- Listeners Starts -->
@@ -285,15 +285,6 @@
  		<location>/error/404</location>
  	</error-page>
 
-	<session-config>
-		<cookie-config>
-			<path>/</path>
-			<http-only>true</http-only>
-			<secure>false</secure>
-		</cookie-config>
-		<tracking-mode>COOKIE</tracking-mode>
-	</session-config>
-	
 	<servlet>
 		<servlet-name>reportViewer</servlet-name>
 		<servlet-class>org.egov.infra.reporting.viewer.ReportViewer</servlet-class>

@@ -51,6 +51,9 @@ package com.exilant.eGov.src.master;
  * TODO To change the template for this generated type comment go to
  * Window - Preferences - Java - Code Style - Code Templates
  */
+
+import org.egov.infstr.services.PersistenceService;
+import org.springframework.beans.factory.annotation.Qualifier;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.List;
@@ -59,6 +62,7 @@ import java.util.StringTokenizer;
 import org.apache.log4j.Logger;
 import org.egov.infstr.utils.HibernateUtil;
 import org.hibernate.Query;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.exilant.eGov.src.domain.ChartOfAccts;
@@ -76,6 +80,10 @@ public class ScheduleMaster extends AbstractTask {
     private static final String REPTYPE = "repType";
     private static final String REPSUBTYPE = "repSubType";
 
+ @Autowired
+ @Qualifier("persistenceService")
+ private PersistenceService persistenceService;
+ @Autowired ScheduleMapping scheduleMapping;
     /*
      * Abstract method of AbstractTask Class
      */
@@ -100,7 +108,7 @@ public class ScheduleMaster extends AbstractTask {
         final String schNo = dc.getValue(SCHNUMBER);
         try {
             final String query = "select id from schedulemapping where schedule = ?";
-            pstmt = HibernateUtil.getCurrentSession().createSQLQuery(query);
+            pstmt = persistenceService.getSession().createSQLQuery(query);
             pstmt.setString(0, schNo);
             if (LOGGER.isInfoEnabled())
                 LOGGER.info(query);
@@ -131,25 +139,24 @@ public class ScheduleMaster extends AbstractTask {
         int schId = 0;
         if (LOGGER.isInfoEnabled())
             LOGGER.info("inside postInSchedulemapping");
-        final ScheduleMapping sch = new ScheduleMapping();
-        sch.setSchedule(dc.getValue(SCHNUMBER));
-        sch.setScheduleName(dc.getValue("schName"));
-        sch.setReportType(dc.getValue(REPTYPE));
-        sch.setCreatedBy(dc.getValue("egUser_id"));
+        scheduleMapping.setSchedule(dc.getValue(SCHNUMBER));
+        scheduleMapping.setScheduleName(dc.getValue("schName"));
+        scheduleMapping.setReportType(dc.getValue(REPTYPE));
+        scheduleMapping.setCreatedBy(dc.getValue("egUser_id"));
         if ("RP".equalsIgnoreCase(dc.getValue(REPTYPE))) {
-            sch.setRepSubType(dc.getValue(REPSUBTYPE));
+            scheduleMapping.setRepSubType(dc.getValue(REPSUBTYPE));
             if ("POP".equalsIgnoreCase(dc.getValue(REPSUBTYPE)))
-                sch.setIsRemission(dc.getValue("isRemission"));
+                scheduleMapping.setIsRemission(dc.getValue("isRemission"));
         }
 
         try {
-            sch.insert();
+            scheduleMapping.insert();
         } catch (final SQLException s) {
             LOGGER.error("exilError" + s.getMessage(), s);
             dc.addMessage("exilError", " : Error in Schedule Creation");
             throw new TaskFailedException();
         }
-        schId = sch.getId();
+        schId = scheduleMapping.getId();
         return schId;
     }
 
@@ -231,19 +238,18 @@ public class ScheduleMaster extends AbstractTask {
     public void updateSchedulemapping(final int schMapId) throws TaskFailedException {
         if (LOGGER.isInfoEnabled())
             LOGGER.info("schMapId:" + schMapId);
-        final ScheduleMapping sch = new ScheduleMapping();
-        sch.setSchedule(dc.getValue(SCHNUMBER));
-        sch.setScheduleName(dc.getValue("schName"));
-        sch.setReportType(dc.getValue(REPTYPE));
-        sch.setLastModifiedBy(dc.getValue("egUser_id"));
+        scheduleMapping.setSchedule(dc.getValue(SCHNUMBER));
+        scheduleMapping.setScheduleName(dc.getValue("schName"));
+        scheduleMapping.setReportType(dc.getValue(REPTYPE));
+        scheduleMapping.setLastModifiedBy(dc.getValue("egUser_id"));
         if ("RP".equalsIgnoreCase(dc.getValue(REPTYPE))) {
-            sch.setRepSubType(dc.getValue(REPSUBTYPE));
+            scheduleMapping.setRepSubType(dc.getValue(REPSUBTYPE));
             if ("POP".equalsIgnoreCase(dc.getValue(REPSUBTYPE)))
-                sch.setIsRemission(dc.getValue("isRemission"));
+                scheduleMapping.setIsRemission(dc.getValue("isRemission"));
         }
-        sch.setId(schMapId + "");
+        scheduleMapping.setId(schMapId + "");
         try {
-            sch.update();
+            scheduleMapping.update();
         } catch (final SQLException s) {
             LOGGER.error("Error in Schedule Updation" + s.getMessage(), s);
             dc.addMessage("exilError", " : Error in Schedule Updation");
@@ -260,7 +266,7 @@ public class ScheduleMaster extends AbstractTask {
                     final String query = "update chartofaccounts set Receiptscheduleid = ?,Receiptoperation = ? where Receiptscheduleid= ?";
                     // query=query+" Receiptscheduleid=null,Receiptoperation=null where Receiptscheduleid="+schMapId;
                     // query = sbuffer.toString();
-                    pstmt = HibernateUtil.getCurrentSession().createSQLQuery(query);
+                    pstmt = persistenceService.getSession().createSQLQuery(query);
                     pstmt.setString(0, null);
                     pstmt.setString(1, null);
                     pstmt.setInteger(2, schMapId);
@@ -271,7 +277,7 @@ public class ScheduleMaster extends AbstractTask {
                 else if ("POP".equalsIgnoreCase(dc.getValue(REPSUBTYPE)) || "PNOP".equalsIgnoreCase(dc.getValue(REPSUBTYPE))) {
                     final String query = "update chartofaccounts set Paymentscheduleid = ?,Paymentoperation = ? where Paymentscheduleid = ?";
                     // query=query+" Paymentscheduleid=null,Paymentoperation=null where Paymentscheduleid="+schMapId;
-                    pstmt = HibernateUtil.getCurrentSession().createSQLQuery(query);
+                    pstmt = persistenceService.getSession().createSQLQuery(query);
                     pstmt.setString(0, null);
                     pstmt.setString(1, null);
                     pstmt.setInteger(2, schMapId);
@@ -282,7 +288,7 @@ public class ScheduleMaster extends AbstractTask {
             }
             else {
                 final String query = "update chartofaccounts set  ScheduleId= ?,Operation= ? where ScheduleId= ?";
-                pstmt = HibernateUtil.getCurrentSession().createSQLQuery(query);
+                pstmt = persistenceService.getSession().createSQLQuery(query);
                 pstmt.setString(0, null);
                 pstmt.setString(1, null);
                 pstmt.setInteger(2, schMapId);

@@ -71,9 +71,8 @@ import org.egov.pims.model.PersonalInformation;
 import org.egov.services.voucher.VoucherService;
 import org.egov.utils.BudgetDetailConfig;
 import org.egov.utils.Constants;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.beans.factory.annotation.Autowired;
 
-@Transactional(readOnly = true)
 public class BudgetSearchAndModify extends BudgetSearchAction {
     private static final String ACTIONNAME = "actionName";
     boolean enableApprovedAmount = false;
@@ -86,7 +85,9 @@ public class BudgetSearchAndModify extends BudgetSearchAction {
     private boolean showDetails = false;
     private boolean isDetailByFunction;
     private ScriptService scriptService;
-
+    @Autowired
+    private EgovMasterDataCaching masterDataCache;
+    
     public ScriptService getScriptService() {
         return scriptService;
     }
@@ -95,7 +96,6 @@ public class BudgetSearchAndModify extends BudgetSearchAction {
         this.scriptService = scriptService;
     }
 
-    @Transactional
     public String modifyList() {
         if (LOGGER.isInfoEnabled())
             LOGGER.info("Starting modifyList...");
@@ -126,7 +126,7 @@ public class BudgetSearchAndModify extends BudgetSearchAction {
 
     /*
      * this api is used fro budget detail workflow list
-     */@Transactional
+     */
      public String modifyDetailList() {
          if (LOGGER.isInfoEnabled())
              LOGGER.info("starting modifyDetailList...");
@@ -208,13 +208,11 @@ public class BudgetSearchAndModify extends BudgetSearchAction {
              dropdownData.put("budgetList", budgetDetailService.findBudgetsForFY(getFinancialYear()));
          else
              dropdownData.put("budgetList", budgetDetailService.findBudgetsForFYWithNewState(getFinancialYear()));
-         final EgovMasterDataCaching masterCache = EgovMasterDataCaching.getInstance();
-         addDropdownData("departmentList", masterCache.get("egi-department"));
+         addDropdownData("departmentList", masterDataCache.get("egi-department"));
          addDropdownData("designationList", Collections.EMPTY_LIST);
          addDropdownData("userList", Collections.EMPTY_LIST);
      }
 
-     @Transactional
      public String update() {
          Budget budget = null;
          Budget b = null;
@@ -271,12 +269,12 @@ public class BudgetSearchAndModify extends BudgetSearchAction {
          setEnablingAmounts();
          if (consolidatedScreen)
              if (enableApprovedAmount
-                     && (detail.getApprovedAmount() == null || BigDecimal.ZERO.equals(detail.getApprovedAmount()))) {
+                     && (detail.getApprovedAmount() == null || (BigDecimal.ZERO.compareTo(detail.getApprovedAmount()))==0)) {
                  loadApproverUser(savedbudgetDetailList);
                  throw new ValidationException(Arrays.asList(new ValidationError("approved.amount.mandatory",
                          "approved.amount.mandatory")));
              }
-         if (enableOriginalAmount && (detail.getOriginalAmount() == null || BigDecimal.ZERO.equals(detail.getOriginalAmount()))) {
+         if (enableOriginalAmount && (detail.getOriginalAmount() == null || (BigDecimal.ZERO.compareTo(detail.getOriginalAmount()))==0)) {
              loadApproverUser(savedbudgetDetailList);
              throw new ValidationException(Arrays.asList(new ValidationError("original.amount.mandatory",
                      "original.amount.mandatory")));
@@ -498,7 +496,7 @@ public class BudgetSearchAndModify extends BudgetSearchAction {
              final Date startingDate = financialYear2.getStartingDate();
              final Date lastyear = subtractYear(startingDate);
              final CFinancialYear lastFinYear = (CFinancialYear) persistenceService.find(
-                     "from CFinancialYear where startingDate=? and isActive=1", lastyear);
+                     "from CFinancialYear where startingDate=? and isActive=true", lastyear);
              if (lastFinYear != null)
                  finyearId = lastFinYear.getId();
 
@@ -687,11 +685,10 @@ public class BudgetSearchAndModify extends BudgetSearchAction {
      @SkipValidation
      private void loadApproverUser(final List<BudgetDetail> budgetDetailList)
      {
-         final EgovMasterDataCaching masterCache = EgovMasterDataCaching.getInstance();
          final Map<String, Object> map = voucherService.getDesgBYPassingWfItem("BudgetDetail.nextDesg", null, budgetDetailList
                 .get(0)
                  .getExecutingDepartment().getId().intValue());
-         addDropdownData("departmentList", masterCache.get("egi-department"));
+         addDropdownData("departmentList", masterDataCache.get("egi-department"));
 
          final List<Map<String, Object>> desgList = (List<Map<String, Object>>) map.get("designationList");
          String strDesgId = "", dName = "";
@@ -800,5 +797,14 @@ public class BudgetSearchAndModify extends BudgetSearchAction {
      public void setConsolidatedScreen(final boolean consolidatedScreen) {
          this.consolidatedScreen = consolidatedScreen;
      }
+
+	public EgovMasterDataCaching getMasterDataCache() {
+		return masterDataCache;
+	}
+
+	public void setMasterDataCache(EgovMasterDataCaching masterDataCache) {
+		this.masterDataCache = masterDataCache;
+	}
+     
 
 }

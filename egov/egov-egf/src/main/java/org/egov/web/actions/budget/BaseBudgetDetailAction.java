@@ -39,6 +39,9 @@
  ******************************************************************************/
 package org.egov.web.actions.budget;
 
+
+import org.egov.infstr.services.PersistenceService;
+import org.springframework.beans.factory.annotation.Qualifier;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -81,12 +84,10 @@ import org.egov.services.budget.BudgetService;
 import org.egov.utils.BudgetDetailConfig;
 import org.egov.utils.BudgetDetailHelper;
 import org.egov.utils.Constants;
-import org.springframework.transaction.annotation.Transactional;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import com.opensymphony.xwork2.ActionContext;
 import com.opensymphony.xwork2.util.ValueStack;
 
-@Transactional(readOnly = true)
 public abstract class BaseBudgetDetailAction extends BaseFormAction {
     private static final long serialVersionUID = 1L;
     protected BudgetDetail budgetDetail = new BudgetDetail();
@@ -114,6 +115,13 @@ public abstract class BaseBudgetDetailAction extends BaseFormAction {
     BudgetDetailHelper budgetDetailHelper;
     protected boolean addNewDetails = false;
 
+   
+ @Autowired
+ @Qualifier("persistenceService")
+ private PersistenceService persistenceService;
+ @Autowired
+    private EgovMasterDataCaching masterDataCache;
+    
     public boolean isAddNewDetails() {
         return addNewDetails;
     }
@@ -214,7 +222,7 @@ public abstract class BaseBudgetDetailAction extends BaseFormAction {
         return NEW;
     }
 
-    @Transactional
+    
     public String create() {
         validateMandatoryFields();
         budgetDetailHelper.removeEmptyBudgetDetails(budgetDetailList);
@@ -225,7 +233,7 @@ public abstract class BaseBudgetDetailAction extends BaseFormAction {
         return NEW;
     }
 
-    @Transactional
+    
     @ValidationErrorPage(value = "new-re")
     public String createRe() {
         showRe = true;
@@ -253,7 +261,7 @@ public abstract class BaseBudgetDetailAction extends BaseFormAction {
         return "new-re";
     }
 
-    @Transactional
+    
     @ValidationErrorPage(value = "newDetail-re")
     public String createBudgetDetail() {
 
@@ -291,7 +299,7 @@ public abstract class BaseBudgetDetailAction extends BaseFormAction {
         return "newDetail-re";
     }
 
-    @Transactional
+    
     @ValidationErrorPage(value = "new-re")
     public String createReAndForward() {
         showRe = true;
@@ -326,7 +334,7 @@ public abstract class BaseBudgetDetailAction extends BaseFormAction {
     /**
      * @param budget deletes the existing selected budgets from db
      */
-    @Transactional
+    
     private void deleteExisting() {
 
         if (LOGGER.isInfoEnabled())
@@ -338,10 +346,10 @@ public abstract class BaseBudgetDetailAction extends BaseFormAction {
         if (searchbudgetGroupid != null && searchbudgetGroupid != 0)
             addlCondtion.append("and budgetGroup.id=" + searchbudgetGroupid);
         new ArrayList<BudgetDetail>();
-        final int executeUpdate = HibernateUtil.getCurrentSession()
+        final int executeUpdate = persistenceService.getSession()
                 .createSQLQuery("delete from egf_budgetdetail where budget=" + budgetDetail.getBudget().getId() + addlCondtion)
                 .executeUpdate();
-        final int executeUpdate2 = HibernateUtil.getCurrentSession()
+        final int executeUpdate2 = persistenceService.getSession()
                 .createSQLQuery("delete from egf_budgetdetail where budget=" + referenceBudgetFor.getId() + addlCondtion)
                 .executeUpdate();
 
@@ -350,7 +358,7 @@ public abstract class BaseBudgetDetailAction extends BaseFormAction {
          * beDetail:result) { if(compareREandBEDetails(reDetail,beDetail)) { if(LOGGER.isInfoEnabled())
          * LOGGER.info("deleting "+beDetail.getId() +"where budgetHeade is " +beDetail.getBudgetGroup().getName()
          * +" and function  is "+beDetail.getFunction().getName());
-         * HibernateUtil.getCurrentSession().createSQLQuery("delete from egf_budgetdetail where id="
+         * persistenceService.getSession().createSQLQuery("delete from egf_budgetdetail where id="
          * +beDetail.getId()).executeUpdate(); } } if(LOGGER.isInfoEnabled()) LOGGER.info("deleting "+reDetail.getId()
          * +"where budgetHeade is " +reDetail.getBudgetGroup().getName() +" and function  is "+reDetail.getFunction().getName());
          * HibernateUtil
@@ -359,7 +367,7 @@ public abstract class BaseBudgetDetailAction extends BaseFormAction {
          */
         if (LOGGER.isInfoEnabled())
             LOGGER.info("Deleting complete. deleted " + executeUpdate + " RE  and " + executeUpdate2 + " BE items ");
-        HibernateUtil.getCurrentSession().flush();
+        persistenceService.getSession().flush();
     }
 
     private void validateIsPrimary() {
@@ -484,7 +492,7 @@ public abstract class BaseBudgetDetailAction extends BaseFormAction {
             index++;
 
             if (++i % 5 == 0)
-                HibernateUtil.getCurrentSession().flush();
+                persistenceService.getSession().flush();
             LOGGER.error("saved" + i + "Item");
 
         }
@@ -521,7 +529,7 @@ public abstract class BaseBudgetDetailAction extends BaseFormAction {
             index++;
 
             if (++i % 5 == 0)
-                HibernateUtil.getCurrentSession().flush();
+                persistenceService.getSession().flush();
             LOGGER.error("saved" + i + "Item");
 
         }
@@ -572,28 +580,27 @@ public abstract class BaseBudgetDetailAction extends BaseFormAction {
     }
 
     private void setupDropdownsInHeader() {
-        final EgovMasterDataCaching masterCache = EgovMasterDataCaching.getInstance();
         setupDropdownDataExcluding(Constants.SUB_SCHEME);
         setBudgetDropDown();
-        dropdownData.put("budgetGroupList", masterCache.get("egf-budgetGroup"));
+        dropdownData.put("budgetGroupList", masterDataCache.get("egf-budgetGroup"));
         if (shouldShowField(Constants.SUB_SCHEME))
             dropdownData.put("subSchemeList", Collections.EMPTY_LIST);
         if (shouldShowField(Constants.FUNCTIONARY))
-            dropdownData.put("functionaryList", masterCache.get("egi-functionary"));
+            dropdownData.put("functionaryList", masterDataCache.get("egi-functionary"));
         if (shouldShowField(Constants.FUNCTION))
-            dropdownData.put("functionList", masterCache.get("egi-function"));
+            dropdownData.put("functionList", masterDataCache.get("egi-function"));
         if (shouldShowField(Constants.SCHEME))
-            dropdownData.put("schemeList", persistenceService.findAllBy("from Scheme where isActive=1 order by name"));
+            dropdownData.put("schemeList", persistenceService.findAllBy("from Scheme where isActive=true order by name"));
         if (shouldShowField(Constants.EXECUTING_DEPARTMENT))
-            dropdownData.put("executingDepartmentList", masterCache.get("egi-department"));
+            dropdownData.put("executingDepartmentList", masterDataCache.get("egi-department"));
         if (shouldShowField(Constants.FUND))
             dropdownData
-            .put("fundList", persistenceService.findAllBy("from Fund where isNotLeaf=0 and isActive=1 order by name"));
+            .put("fundList", persistenceService.findAllBy("from Fund where isNotLeaf=0 and isActive=true order by name"));
         if (shouldShowField(Constants.BOUNDARY))
             dropdownData.put("boundaryList", persistenceService.findAllBy("from Boundary order by name"));
-        addDropdownData("financialYearList", getPersistenceService().findAllBy("from CFinancialYear where isActive=1 order by " +
+        addDropdownData("financialYearList", getPersistenceService().findAllBy("from CFinancialYear where isActive=true order by " +
                 "finYearRange desc "));
-        dropdownData.put("departmentList", masterCache.get("egi-department"));
+        dropdownData.put("departmentList", masterDataCache.get("egi-department"));
         dropdownData.put("designationList", Collections.EMPTY_LIST);
         dropdownData.put("userList", Collections.EMPTY_LIST);
     }
@@ -943,7 +950,7 @@ public abstract class BaseBudgetDetailAction extends BaseFormAction {
     }
 
     public String ajaxLoadSubSchemes() {
-        subSchemes = getPersistenceService().findAllBy("from SubScheme where scheme.id=? and isActive=1 order by name", schemeId);
+        subSchemes = getPersistenceService().findAllBy("from SubScheme where scheme.id=? and isActive=true order by name", schemeId);
         return Constants.SUBSCHEMES;
     }
 

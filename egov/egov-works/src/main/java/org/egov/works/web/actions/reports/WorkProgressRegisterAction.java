@@ -65,7 +65,10 @@ import org.egov.commons.EgwTypeOfWork;
 import org.egov.commons.Fund;
 import org.egov.commons.Scheme;
 import org.egov.commons.SubScheme;
-import org.egov.commons.service.CommonsService;
+import org.egov.commons.dao.EgwStatusHibernateDAO;
+import org.egov.commons.dao.FinancialYearHibernateDAO;
+import org.egov.commons.dao.FunctionHibernateDAO;
+import org.egov.commons.dao.FundHibernateDAO;
 import org.egov.egf.commons.EgovCommon;
 import org.egov.infra.admin.master.entity.Boundary;
 import org.egov.infra.admin.master.entity.Department;
@@ -97,7 +100,7 @@ import org.egov.works.models.milestone.PaymentDetail;
 import org.egov.works.models.milestone.TrackMilestone;
 import org.egov.works.models.milestone.TrackMilestoneActivity;
 import org.egov.works.models.milestone.WorkProgressRegister;
-import org.egov.works.models.tender.SetStatus;
+import org.egov.works.models.tender.OfflineStatus;
 import org.egov.works.models.tender.TenderResponse;
 import org.egov.works.models.tender.WorksPackage;
 import org.egov.works.models.workorder.WorkOrder;
@@ -122,7 +125,7 @@ public class WorkProgressRegisterAction extends SearchFormAction {
     private static final String ASSIGNED_USER_LIST1 = "assignedUserList1";
     private static final String ASSIGNED_USER_LIST2 = "assignedUserList2";
     @Autowired
-    private CommonsService commonsService;
+    private EgwStatusHibernateDAO egwStatusHibernateDAO;
     @Autowired
     private DepartmentService departmentService;
     @Autowired
@@ -136,6 +139,10 @@ public class WorkProgressRegisterAction extends SearchFormAction {
     private Long category;
     private String workOrderStatus;
     private String milestoneStatus;
+    @Autowired
+    private FundHibernateDAO fundDao;
+    @Autowired
+    private FunctionHibernateDAO functionHibDao;
     private Long expenditureType;
     private Integer fund;
     private Long function;
@@ -158,11 +165,12 @@ public class WorkProgressRegisterAction extends SearchFormAction {
     private String sourcePage = "";
     private Integer scheme;
     private Integer subScheme;
-    private PersistenceService<SetStatus, Long> worksStatusService;
+    private PersistenceService<OfflineStatus, Long> worksStatusService;
     private static final String STATUS_OBJECTID = "getStatusDateByObjectId_Type_Desc";
     private static final String WO_OBJECT_TYPE = "WorkOrder";
     private static final String WORK_COMMENCED = "Work commenced";
-
+    @Autowired
+    private FinancialYearHibernateDAO finHibernateDao;
     private List<WorkProgressRegister> workProgressList = new ArrayList<WorkProgressRegister>();
     private Integer estId;
     private String contractorName = "";
@@ -199,16 +207,16 @@ public class WorkProgressRegisterAction extends SearchFormAction {
                 WorksConstants.APPROVED, WorksConstants.WO_STATUS_WOACKNOWLEDGED,
                 WorksConstants.WO_STATUS_WOSITEHANDEDOVER, WorksConstants.WO_STATUS_WOCOMMENCED);
         addDropdownData("workOrderStatuses", workOrdStatusList);
-        addDropdownData("fundList", commonsService.getAllFunds());
+        addDropdownData("fundList", fundDao.findAll());
         addDropdownData("budgetGroupList", getPersistenceService().findAllBy("from BudgetGroup order by name"));
-        addDropdownData("functionList", commonsService.getAllFunction());
+        addDropdownData("functionList", functionHibDao.findAll());
         addDropdownData(
                 "preparedByList",
                 getPersistenceService()
                         .findAllBy(
                                 "select distinct wo.workOrderPreparedBy from WorkOrder wo where wo.workOrderPreparedBy.employeeName is not null"));
         addDropdownData("schemeList",
-                getPersistenceService().findAllBy("from org.egov.commons.Scheme sc where sc.isactive=1"));
+                getPersistenceService().findAllBy("from org.egov.commons.Scheme sc where sc.isactive=true"));
         final AjaxWorkProgressAction ajaxWorkProgressAction = new AjaxWorkProgressAction();
         populateSubSchemeList(ajaxWorkProgressAction, getScheme() != null);
         prepareMilestoneStatuses();
@@ -233,14 +241,6 @@ public class WorkProgressRegisterAction extends SearchFormAction {
             addDropdownData("subSchemeList", Collections.emptyList());
     }
 
-    public CommonsService getCommonsService() {
-        return commonsService;
-    }
-
-    public void setCommonsService(final CommonsService commonsService) {
-        this.commonsService = commonsService;
-    }
-
     public List getMilestoneStatuses() {
         return new LinkedList<String>(milestoneStatuses.keySet());
     }
@@ -252,7 +252,7 @@ public class WorkProgressRegisterAction extends SearchFormAction {
     }
 
     public List<EgwStatus> getWorkOrderStatuses() {
-        return commonsService.getStatusByModule(WorkOrder.class.getSimpleName());
+        return egwStatusHibernateDAO.getStatusByModule(WorkOrder.class.getSimpleName());
     }
 
     @SkipValidation
@@ -331,7 +331,7 @@ public class WorkProgressRegisterAction extends SearchFormAction {
                         ++count;
                         if (estimateApp.getBudgetUsage() != null) {
                             if (estimateApp.getBudgetUsage().getConsumedAmount() != 0) {
-                                final String finyearRange = commonsService.getFinancialYearById(
+                                final String finyearRange = finHibernateDao.getFinancialYearById(
                                         estimateApp.getBudgetUsage().getFinancialYearId().longValue())
                                         .getFinYearRange();
                                 if (apprDetails != null)
@@ -352,7 +352,7 @@ public class WorkProgressRegisterAction extends SearchFormAction {
                                                     .getConsumedAmount()));
                             }
                         } else if (estimateApp.getDepositWorksUsage().getConsumedAmount().equals(BigDecimal.ZERO)) {
-                            final String finyearRange = commonsService.getFinancialYearById(
+                            final String finyearRange = finHibernateDao.getFinancialYearById(
                                     estimateApp.getDepositWorksUsage().getFinancialYear().getId().longValue())
                                     .getFinYearRange();
                             if (apprDetails != null)
@@ -396,9 +396,9 @@ public class WorkProgressRegisterAction extends SearchFormAction {
                 }
                 workProgress.setWorkOrderValue(new BigDecimal(workOrder.getWorkOrderAmount()));
                 if (workOrder != null) {
-                    final SetStatus objStatusForWorkComncd = worksStatusService.findByNamedQuery(STATUS_OBJECTID,
+                    final OfflineStatus objStatusForWorkComncd = worksStatusService.findByNamedQuery(STATUS_OBJECTID,
                             workOrder.getId(), WO_OBJECT_TYPE, WORK_COMMENCED);
-                    final SetStatus objStatusForSiteHandOver = worksStatusService.findByNamedQuery(STATUS_OBJECTID,
+                    final OfflineStatus objStatusForSiteHandOver = worksStatusService.findByNamedQuery(STATUS_OBJECTID,
                             workOrder.getId(), WO_OBJECT_TYPE, WorksConstants.WO_STATUS_WOSITEHANDEDOVER);
                     if (objStatusForWorkComncd != null)
                         workProgress.setWorkCommencementDate(DateUtils.getFormattedDate(
@@ -407,7 +407,7 @@ public class WorkProgressRegisterAction extends SearchFormAction {
                         workProgress.setSiteHandedOverDate(DateUtils.getFormattedDate(
                                 objStatusForSiteHandOver.getStatusDate(), dateFormat));
                 }
-                workProgress.setContractPeriod(workOrder.getContractPeriod());
+                workProgress.setContractPeriod(workOrder.getContractPeriod().toString());
                 workProgress.setWorkOrderDate(DateUtils.getFormattedDate(workOrder.getWorkOrderDate(), dateFormat));
                 if (trackMilestone != null && "APPROVED".equalsIgnoreCase(trackMilestone.getEgwStatus().getCode())) {
                     workProgress.setTrackMilestoneActivities(trackMilestone.getActivities());
@@ -477,7 +477,7 @@ public class WorkProgressRegisterAction extends SearchFormAction {
             objects = (Object[]) iterator.next();
             if (objects[0] != null) {
                 final WorksPackage worksPackage = (WorksPackage) objects[0];
-                for (final SetStatus status : worksPackage.getSetStatuses()) {
+                for (final OfflineStatus status : worksPackage.getOfflineStatuses()) {
                     if (TENDER_NOTICE_STATUS.equalsIgnoreCase(status.getEgwStatus().getCode()))
                         tenderDates.put("tenderDate", status.getCreatedDate());
                     if (TENDER_FINALIZATION_STATUS.equalsIgnoreCase(status.getEgwStatus().getCode()))
@@ -487,7 +487,7 @@ public class WorkProgressRegisterAction extends SearchFormAction {
             if (objects[1] != null) {
                 final TenderResponse tenderResponse = (TenderResponse) objects[1];
                 if (tenderResponse != null) {
-                    final SetStatus objStatusForSite = worksStatusService.findByNamedQuery(STATUS_OBJECTID,
+                    final OfflineStatus objStatusForSite = worksStatusService.findByNamedQuery(STATUS_OBJECTID,
                             tenderResponse.getTenderResponseContractors().get(0).getId(), "TenderResponseContractors",
                             TENDER_AGGREEMENT_ORDER);
                     if (objStatusForSite != null)
@@ -698,15 +698,15 @@ public class WorkProgressRegisterAction extends SearchFormAction {
                 if (workOrderStatus.equalsIgnoreCase("APPROVED")) {
                     query.append(" and woe.workOrder.egwStatus.code=?");
                     query.append(
-                            " and woe.workOrder.id not in (select objectId from org.egov.works.models.tender.SetStatus where objectType=?)");
+                            " and woe.workOrder.id not in (select objectId from org.egov.works.models.tender.OfflineStatus where objectType=?)");
                     paramList.add(workOrderStatus);
                     paramList.add(WorkOrder.class.getSimpleName());
                 } else {
                     query.delete(0, query.length() - 1);
                     query.append(
-                            "from org.egov.works.models.workorder.WorkOrderEstimate  as woe left outer join woe.milestone milestone left outer join milestone.trackMilestone trackMilestone,org.egov.works.models.tender.SetStatus st");
+                            "from org.egov.works.models.workorder.WorkOrderEstimate  as woe left outer join woe.milestone milestone left outer join milestone.trackMilestone trackMilestone,org.egov.works.models.tender.OfflineStatus st");
                     query.append(
-                            " where st.objectId=woe.workOrder.id and st.id=(select max(id) from org.egov.works.models.tender.SetStatus where objectId=woe.workOrder.id and objectType=?) and st.objectType=? and st.egwStatus.code=?");
+                            " where st.objectId=woe.workOrder.id and st.id=(select max(id) from org.egov.works.models.tender.OfflineStatus where objectId=woe.workOrder.id and objectType=?) and st.objectType=? and st.egwStatus.code=?");
                     query.append(" and woe.workOrder.parent is null and woe.workOrder.egwStatus.code='APPROVED' ");
                     query.append(" and milestone.egwStatus.code='APPROVED' and trackMilestone.egwStatus.code='APPROVED' ");
                     paramList.add(WorkOrder.class.getSimpleName());
@@ -796,7 +796,7 @@ public class WorkProgressRegisterAction extends SearchFormAction {
             }
 
             if (getScheme() != null && getScheme() != -1) {
-                final Scheme sch = (Scheme) getPersistenceService().find("from Scheme where isactive=1 and id=?",
+                final Scheme sch = (Scheme) getPersistenceService().find("from Scheme where isactive=true and id=?",
                         getScheme());
                 srchCrit.append(" under Scheme " + sch.getName());
                 query.append(" and woe.estimate.financialDetails[0].scheme.id=?");
@@ -966,11 +966,11 @@ public class WorkProgressRegisterAction extends SearchFormAction {
         this.subScheme = subScheme;
     }
 
-    public PersistenceService<SetStatus, Long> getWorksStatusService() {
+    public PersistenceService<OfflineStatus, Long> getWorksStatusService() {
         return worksStatusService;
     }
 
-    public void setWorksStatusService(final PersistenceService<SetStatus, Long> worksStatusService) {
+    public void setWorksStatusService(final PersistenceService<OfflineStatus, Long> worksStatusService) {
         this.worksStatusService = worksStatusService;
     }
 

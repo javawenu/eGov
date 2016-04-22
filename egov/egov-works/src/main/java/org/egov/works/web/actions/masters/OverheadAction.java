@@ -48,8 +48,8 @@ import org.apache.struts2.convention.annotation.Action;
 import org.apache.struts2.convention.annotation.ParentPackage;
 import org.apache.struts2.convention.annotation.Result;
 import org.egov.commons.CChartOfAccounts;
-import org.egov.commons.service.CommonsService;
-import org.egov.infra.exception.ApplicationException;
+import org.egov.commons.dao.ChartOfAccountsHibernateDAO;
+import org.egov.infra.exception.ApplicationRuntimeException;
 import org.egov.infra.web.struts.actions.BaseFormAction;
 import org.egov.infstr.services.PersistenceService;
 import org.egov.works.models.masters.ExpenditureType;
@@ -91,7 +91,7 @@ public class OverheadAction extends BaseFormAction {
     private List<ExpenditureType> expenditureTypeList = new ArrayList<ExpenditureType>();
 
     @Autowired
-    private CommonsService commonsService;
+    private ChartOfAccountsHibernateDAO chartOfAccountsHibernateDAO;
 
     /**
      * Default constructor
@@ -162,10 +162,10 @@ public class OverheadAction extends BaseFormAction {
             List<CChartOfAccounts> accounts = new ArrayList<CChartOfAccounts>();
             // TODO:
             if (worksService.getWorksConfigValue("OVERHEAD_PURPOSE") != null)
-                accounts = commonsService
+                accounts = chartOfAccountsHibernateDAO
                         .getAccountCodeByPurpose(Integer.valueOf(worksService.getWorksConfigValue("OVERHEAD_PURPOSE")));
             addDropdownData("accountList", accounts);
-        } catch (final ApplicationException e) {
+        } catch (final ApplicationRuntimeException e) {
             logger.error("Unable to load accountcode :" + e.getMessage());
             addFieldError("accountcode", "Unable to load accountcode");
         }
@@ -213,14 +213,6 @@ public class OverheadAction extends BaseFormAction {
 
     public void setId(final Long id) {
         this.id = id;
-    }
-
-    public CommonsService getCommonsService() {
-        return commonsService;
-    }
-
-    public void setCommonsService(final CommonsService commonsService) {
-        this.commonsService = commonsService;
     }
 
     public WorksService getWorksService() {

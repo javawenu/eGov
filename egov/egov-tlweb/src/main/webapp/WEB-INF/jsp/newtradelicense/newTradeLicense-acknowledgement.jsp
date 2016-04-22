@@ -40,6 +40,7 @@
 <%@ taglib prefix="s" uri="/WEB-INF/taglib/struts-tags.tld"%>
 <%@ taglib prefix="egov" tagdir="/WEB-INF/tags"%>
 <%@ taglib uri="http://java.sun.com/jstl/fmt" prefix="fmt"%>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <html>
 <head>
 <title>Acknowledgement Slip for Trade License</title>
@@ -54,8 +55,7 @@
 </script>
 </head>
 <body onload="refreshInbox()">
-	<center>
-	<div id="main">
+	<div id="main" class="printable">
 		<div class="row">
 			<div class="col-md-12">
 			<s:form name="certificateform" action="viewTradeLicense">
@@ -89,12 +89,12 @@
 							<div class="col-sm-3 col-xs-6 add-margin view-content">
 								<s:property value="tradeName.name" />
 							</div>
-							<div class="col-sm-3 col-xs-6 add-margin">
+							<%-- <div class="col-sm-3 col-xs-6 add-margin">
 								<s:text name="license.zone" />
 							</div>
 							<div class="col-sm-3 col-xs-6 add-margin view-content">
 								<s:property value="parentBoundary.parent.name" />
-							</div>
+							</div> --%>
 						</div>
 						<div class="row add-border">
 							<div class="col-sm-3 col-xs-6 add-margin">
@@ -133,7 +133,7 @@
 								<s:text name="license.startdate" />
 							</div>
 							<div class="col-sm-3 col-xs-6 add-margin view-content">
-								<s:date name="startDate" id="startdate" format="dd-MMM-yyyy" /><s:property value="%{startdate}" />
+								<s:date name="commencementDate" id="startdate" format="dd-MMM-yyyy" /><s:property value="%{startdate}" />
 							</div>
 						</div>
 						
@@ -145,11 +145,11 @@
 		</div>
 	</div>	
 		<div align="center" id="printDiv">
-			<input type="button" id="print" class="button" value="Print"
-				onclick="printDiv('main')" /> &nbsp;&nbsp; <input
+			<input type="button" id="print" class="button printbtn" value="Print"
+				/> &nbsp;&nbsp; <input
 				type="button" id="close" value="Close" class="button"
 				onclick="javascript:window.close();" />
 		</div>
-	</center>
+		<script src="<c:url value='/resources/global/js/jquery/plugins/jquery.printelement.min.js' context='/egi'/>"></script>
 </body>
 </html>

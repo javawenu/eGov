@@ -54,7 +54,7 @@ import javax.script.ScriptContext;
 
 import org.apache.commons.lang.StringUtils;
 import org.egov.commons.CFinancialYear;
-import org.egov.commons.service.CommonsService;
+import org.egov.commons.dao.FinancialYearHibernateDAO;
 import org.egov.infra.exception.ApplicationRuntimeException;
 import org.egov.infra.script.service.ScriptService;
 import org.egov.infra.validation.exception.ValidationError;
@@ -101,7 +101,7 @@ public class AjaxWorkOrderAction extends BaseFormAction {
     private String trackMlsCheck;
     private String yearEndApprCheck;
     @Autowired
-    private CommonsService commonsService;
+    private FinancialYearHibernateDAO finHibernateDao;
     private String estimateNo;
     private static final String VALID = "valid";
     private static final String INVALID = "invalid";
@@ -278,7 +278,7 @@ public class AjaxWorkOrderAction extends BaseFormAction {
             estimateNo = woeList.get(0).getEstimate().getEstimateNumber();
             CFinancialYear currFinancialYear;
             try {
-                currFinancialYear = commonsService.getFinancialYearByDate(new Date());
+                currFinancialYear = finHibernateDao.getFinancialYearByDate(new Date());
             } catch (final Exception e) {
                 throw new ValidationException(Arrays.asList(new ValidationError(
                         "yrEnd.appr.verification.for.bill.financialyear.invalid",
@@ -442,10 +442,6 @@ public class AjaxWorkOrderAction extends BaseFormAction {
 
     public void setYearEndApprCheck(final String yearEndApprCheck) {
         this.yearEndApprCheck = yearEndApprCheck;
-    }
-
-    public void setCommonsService(final CommonsService commonsService) {
-        this.commonsService = commonsService;
     }
 
     public String getEstimateNo() {

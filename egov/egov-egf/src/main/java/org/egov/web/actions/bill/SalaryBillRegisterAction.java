@@ -70,11 +70,9 @@ import org.egov.model.bills.EgSalaryCodes;
 import org.egov.model.voucher.PreApprovedVoucher;
 import org.egov.utils.Constants;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
 
 import com.exilant.eGov.src.transactions.CommonMethodsImpl;
 
-@Transactional(readOnly = true)
 @ParentPackage("egov")
 public class SalaryBillRegisterAction extends BaseFormAction {
     /**
@@ -103,7 +101,9 @@ public class SalaryBillRegisterAction extends BaseFormAction {
     private List<EgSalaryCodes> deductionsCodes = new ArrayList<EgSalaryCodes>();
     private @Autowired AppConfigValueService appConfigValuesService;
     private CChartOfAccounts defaultNetPayCode;
-
+    @Autowired
+    private EgovMasterDataCaching masterDataCache;
+    
     public SalaryBillRegisterAction() {
         addRelatedEntity("fieldList", Boundary.class);
         addRelatedEntity("functionaryList", Functionary.class);
@@ -119,12 +119,11 @@ public class SalaryBillRegisterAction extends BaseFormAction {
     @Override
     public void prepare() {
         super.prepare();
-        final EgovMasterDataCaching masterCache = EgovMasterDataCaching.getInstance();
-        addDropdownData("fieldList", masterCache.get("egi-ward"));
-        addDropdownData("departmentList", masterCache.get("egi-department"));
-        addDropdownData("functionaryList", masterCache.get("egi-functionary"));
+        addDropdownData("fieldList", masterDataCache.get("egi-ward"));
+        addDropdownData("departmentList", masterDataCache.get("egi-department"));
+        addDropdownData("functionaryList", masterDataCache.get("egi-functionary"));
         addDropdownData("financialYearList",
-                persistenceService.findAllBy("from CFinancialYear where isActive=1 order by finYearRange desc "));
+                persistenceService.findAllBy("from CFinancialYear where isActive=true order by finYearRange desc "));
         addDropdownData("detailTypeList", Collections.EMPTY_LIST);
         populateSalaryCode();
         populateEarningCodes();
@@ -171,7 +170,7 @@ public class SalaryBillRegisterAction extends BaseFormAction {
                 "salaryBillDefaultPurposeId");
         final String cBillDefaulPurposeId = defaultConfigValuesByModuleAndKey.get(0).getValue();
         final List<CChartOfAccounts> salaryPayableCoa = persistenceService.findAllBy("FROM CChartOfAccounts WHERE purposeid in ("
-                + cBillDefaulPurposeId + ") and isactiveforposting = 1 and classification=4");
+                + cBillDefaulPurposeId + ") and isactiveforposting = true and classification=4");
         for (final CChartOfAccounts chartOfAccounts : salaryPayableCoa) {
             final EgBilldetails billdetails = new EgBilldetails();
             billdetails.setGlcodeid(BigDecimal.valueOf(chartOfAccounts.getId()));
@@ -213,13 +212,13 @@ public class SalaryBillRegisterAction extends BaseFormAction {
     private void saveBilldetails() {
         for (final EgBilldetails row : earningsList) {
             row.setEgBillregister(getBillregister());
-            if (row.getFunctionid() != null && BigDecimal.ZERO.equals(row.getFunctionid()))
+            if (row.getFunctionid() != null && BigDecimal.ZERO.compareTo(row.getFunctionid())==0)
                 row.setFunctionid(null);
             billDetailsService.persist(row);
         }
         for (final EgBilldetails row : deductionsList) {
             row.setEgBillregister(getBillregister());
-            if (row.getFunctionid() != null && BigDecimal.ZERO.equals(row.getFunctionid()))
+            if (row.getFunctionid() != null && BigDecimal.ZERO.compareTo(row.getFunctionid())==0)
                 row.setFunctionid(null);
             billDetailsService.persist(row);
         }
@@ -266,7 +265,6 @@ public class SalaryBillRegisterAction extends BaseFormAction {
         billregistermis.setLastupdatedtime(new Date());
     }
 
-    @Transactional
     public String saveAndNew() {
         save();
         message = getText("salary.bill.saved.successfully") + " " + getBillregister().getBillnumber();
@@ -276,7 +274,6 @@ public class SalaryBillRegisterAction extends BaseFormAction {
         return NEW;
     }
 
-    @Transactional
     public String saveAndClose() {
         save();
         message = getText("salary.bill.saved.successfully") + " " + getBillregister().getBillnumber();

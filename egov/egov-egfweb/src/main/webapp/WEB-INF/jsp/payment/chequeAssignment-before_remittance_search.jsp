@@ -1,51 +1,53 @@
-<!--  #-------------------------------------------------------------------------------
-# eGov suite of products aim to improve the internal efficiency,transparency, 
-#      accountability and the service delivery of the government  organizations.
-#   
-#       Copyright (C) <2015>  eGovernments Foundation
-#   
-#       The updated version of eGov suite of products as by eGovernments Foundation 
-#       is available at http://www.egovernments.org
-#   
-#       This program is free software: you can redistribute it and/or modify
-#       it under the terms of the GNU General Public License as published by
-#       the Free Software Foundation, either version 3 of the License, or
-#       any later version.
-#   
-#       This program is distributed in the hope that it will be useful,
-#       but WITHOUT ANY WARRANTY; without even the implied warranty of
-#       MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#       GNU General Public License for more details.
-#   
-#       You should have received a copy of the GNU General Public License
-#       along with this program. If not, see http://www.gnu.org/licenses/ or 
-#       http://www.gnu.org/licenses/gpl.html .
-#   
-#       In addition to the terms of the GPL license to be adhered to in using this
-#       program, the following additional terms are to be complied with:
-#   
-#   	1) All versions of this program, verbatim or modified must carry this 
-#   	   Legal Notice.
-#   
-#   	2) Any misrepresentation of the origin of the material is prohibited. It 
-#   	   is required that all modified versions of this material be marked in 
-#   	   reasonable ways as different from the original version.
-#   
-#   	3) This license does not grant any rights to any user of the program 
-#   	   with regards to rights under trademark law for use of the trade names 
-#   	   or trademarks of eGovernments Foundation.
-#   
-#     In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
-#-------------------------------------------------------------------------------  -->
+<!--
+  ~ eGov suite of products aim to improve the internal efficiency,transparency,
+  ~    accountability and the service delivery of the government  organizations.
+  ~
+  ~     Copyright (C) <2015>  eGovernments Foundation
+  ~
+  ~     The updated version of eGov suite of products as by eGovernments Foundation
+  ~     is available at http://www.egovernments.org
+  ~
+  ~     This program is free software: you can redistribute it and/or modify
+  ~     it under the terms of the GNU General Public License as published by
+  ~     the Free Software Foundation, either version 3 of the License, or
+  ~     any later version.
+  ~
+  ~     This program is distributed in the hope that it will be useful,
+  ~     but WITHOUT ANY WARRANTY; without even the implied warranty of
+  ~     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  ~     GNU General Public License for more details.
+  ~
+  ~     You should have received a copy of the GNU General Public License
+  ~     along with this program. If not, see http://www.gnu.org/licenses/ or
+  ~     http://www.gnu.org/licenses/gpl.html .
+  ~
+  ~     In addition to the terms of the GPL license to be adhered to in using this
+  ~     program, the following additional terms are to be complied with:
+  ~
+  ~         1) All versions of this program, verbatim or modified must carry this
+  ~            Legal Notice.
+  ~
+  ~         2) Any misrepresentation of the origin of the material is prohibited. It
+  ~            is required that all modified versions of this material be marked in
+  ~            reasonable ways as different from the original version.
+  ~
+  ~         3) This license does not grant any rights to any user of the program
+  ~            with regards to rights under trademark law for use of the trade names
+  ~            or trademarks of eGovernments Foundation.
+  ~
+  ~   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
+  -->
 <%@ taglib prefix="s" uri="/WEB-INF/tags/struts-tags.tld"%>
 <%@ taglib prefix="egov" tagdir="/WEB-INF/tags"%>
 <html>
 <head>
-<link rel="stylesheet" type="text/css" href="/EGF/css/ccMenu.css" />
+<link rel="stylesheet" type="text/css"
+	href="/EGF/resources/css/ccMenu.css?rnd=${app_release_no}" />
 <title>Cheque Assignment Search</title>
 </head>
 <body>
-	<s:form action="chequeAssignment" theme="simple">
+	<s:form action="chequeAssignment" theme="simple"
+		name="chequeAssignment" id="chequeAssignment">
 		<jsp:include page="../budget/budgetHeader.jsp">
 			<jsp:param name="heading" value="Cheque Assignment Search" />
 		</jsp:include>
@@ -102,7 +104,7 @@
 					<td class="greybox"></td>
 					<egov:ajaxdropdown id="bank_branch" fields="['Text','Value']"
 						dropdownId="bank_branch"
-						url="voucher/common!ajaxLoadBanksWithApprovedRemittances.action" />
+						url="voucher/common-ajaxLoadBanksWithApprovedRemittances.action" />
 					<td class="greybox"><s:text name="chq.assignment.bank" /><span
 						class="mandatory"></span></td>
 					<td class="greybox"><s:select name="bank_branch"
@@ -111,7 +113,7 @@
 							value="%{bank_branch}" /></td>
 					<egov:ajaxdropdown id="bankaccount" fields="['Text','Value']"
 						dropdownId="bankaccount"
-						url="voucher/common!ajaxLoadBankAccountsWithApprovedRemittances.action" />
+						url="voucher/common-ajaxLoadBankAccountsWithApprovedRemittances.action" />
 					<td class="greybox"><s:text name="chq.assignment.bankaccount" /><span
 						class="mandatory"></span></td>
 					<td class="greybox" colspan="2"><s:select name="bankaccount"
@@ -130,7 +132,7 @@
 			</table>
 			<div class="buttonbottom">
 				<s:submit method="searchChequesOfRemittance" value="Search"
-					id="searchBtn" cssClass="buttonsubmit" />
+					id="searchBtn" cssClass="buttonsubmit" onclick="submitForm()" />
 				<input type="button" value="Close"
 					onclick="javascript:window.close()" class="button" />
 			</div>
@@ -138,39 +140,47 @@
 		<s:hidden name="bankbranch" id="bankbranch" />
 	</s:form>
 	<script>
-				var date='<s:date name="currentDate" format="dd/MM/yyyy"/>';
-				function loadBank(obj)
-				{
-				if(document.getElementById("recoveryId").value=="")
-				{
+		function submitForm() {
+
+			document.chequeAssignment.action = "/EGF/payment/chequeAssignment-searchChequesOfRemittance.action";
+			document.chequeAssignment.submit();
+		}
+		var date = '<s:date name="currentDate" format="dd/MM/yyyy"/>';
+		function loadBank(obj) {
+			if (document.getElementById("recoveryId").value == "") {
 				bootbox.alert("Please Select Recovery");
-				obj.value="-1";
+				obj.value = "-1";
 				return false;
-				}
-				var vTypeOfAccount = '<s:property value="%{typeOfAccount}"/>';
-				var revocery=document.getElementById("recoveryId").value;
-						if(obj.options[obj.selectedIndex].value!=-1)
-						populatebank_branch({fundId:obj.options[obj.selectedIndex].value+'&asOnDate='+date+'&recoveryId='+revocery});
-				}
-				function loadBankAccount(obj)
-				{
-					var vTypeOfAccount = '<s:property value="%{typeOfAccount}"/>';
-					var fund = document.getElementById('fundId');
-					if(obj.options[obj.selectedIndex].value!=-1)
-					{
-					var x=	obj.options[obj.selectedIndex].value.split("-");
-					document.getElementById("bankbranch").value=x[1];
-					var revocery=document.getElementById("recoveryId").value;
-					populatebankaccount({branchId:x[1]+'&asOnDate='+date,fundId:fund.options[fund.selectedIndex].value+'&recoveryId='+revocery});
-					}
-					
-				}
-			</script>
+			}
+			var vTypeOfAccount = '<s:property value="%{typeOfAccount}"/>';
+			var revocery = document.getElementById("recoveryId").value;
+			if (obj.options[obj.selectedIndex].value != -1)
+				populatebank_branch({
+					fundId : obj.options[obj.selectedIndex].value
+							+ '&asOnDate=' + date + '&recoveryId=' + revocery
+				});
+		}
+		function loadBankAccount(obj) {
+			var vTypeOfAccount = '<s:property value="%{typeOfAccount}"/>';
+			var fund = document.getElementById('fundId');
+			if (obj.options[obj.selectedIndex].value != -1) {
+				var x = obj.options[obj.selectedIndex].value.split("-");
+				document.getElementById("bankbranch").value = x[1];
+				var revocery = document.getElementById("recoveryId").value;
+				populatebankaccount({
+					branchId : x[1] + '&asOnDate=' + date,
+					fundId : fund.options[fund.selectedIndex].value
+							+ '&recoveryId=' + revocery
+				});
+			}
+
+		}
+	</script>
 	<s:if test="%{!validateUser('chequeassignment')}">
 		<script>
-					document.getElementById('searchBtn').disabled=true;
-					document.getElementById('errorSpan').innerHTML='<s:text name="chq.assignment.invalid.user"/>'
-				</script>
+			document.getElementById('searchBtn').disabled = true;
+			document.getElementById('errorSpan').innerHTML = '<s:text name="chq.assignment.invalid.user"/>'
+		</script>
 	</s:if>
 </body>
 </html>

@@ -48,7 +48,6 @@ import org.apache.log4j.Logger;
 import org.egov.commons.CFunction;
 import org.egov.commons.Scheme;
 import org.egov.commons.SubScheme;
-import org.egov.commons.service.CommonsService;
 import org.egov.dao.budget.BudgetGroupDAO;
 import org.egov.infra.validation.exception.ValidationError;
 import org.egov.infra.validation.exception.ValidationException;
@@ -87,7 +86,7 @@ public class AjaxFinancialDetailAction extends BaseFormAction {
     public String loadSchemes() {
         schemes = getPersistenceService()
                 .findAllBy(
-                        "from org.egov.commons.Scheme sc where sc.isactive=1 and sc.fund.id=? and ? between validfrom and validto",
+                        "from org.egov.commons.Scheme sc where sc.isactive=true and sc.fund.id=? and ? between validfrom and validto",
                         fundId, estimateDate);
         return SCHEMES;
     }
@@ -184,9 +183,6 @@ public class AjaxFinancialDetailAction extends BaseFormAction {
     @Override
     public Object getModel() {
         return null;
-    }
-
-    public void setCommonsService(final CommonsService commonsService) {
     }
 
     public String getLoadBudgetGroupsValidationError() {

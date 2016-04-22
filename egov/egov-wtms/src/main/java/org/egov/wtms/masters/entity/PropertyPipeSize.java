@@ -49,12 +49,12 @@ import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.validation.constraints.NotNull;
 
-import org.egov.infra.persistence.entity.AbstractPersistable;
+import org.egov.infra.persistence.entity.AbstractAuditable;
 
 @Entity
 @Table(name = "egwtr_property_pipe_size")
 @SequenceGenerator(name = PropertyPipeSize.SEQ_PROPERTY_PIPESIZE, sequenceName = PropertyPipeSize.SEQ_PROPERTY_PIPESIZE, allocationSize = 1)
-public class PropertyPipeSize extends AbstractPersistable<Long> {
+public class PropertyPipeSize extends AbstractAuditable {
 
     private static final long serialVersionUID = 8604331107634946265L;
     public static final String SEQ_PROPERTY_PIPESIZE = "SEQ_EGWTR_PROPERTY_PIPESIZE";
@@ -66,12 +66,14 @@ public class PropertyPipeSize extends AbstractPersistable<Long> {
     @NotNull
     @ManyToOne
     @JoinColumn(name = "pipesize")
-    private PipeSize pipesize;
+    private PipeSize pipeSize;
 
     @NotNull
     @ManyToOne
     @JoinColumn(name = "propertytype")
     private PropertyType propertyType;
+
+    private Boolean active;
 
     public PropertyType getPropertyType() {
         return propertyType;
@@ -91,12 +93,20 @@ public class PropertyPipeSize extends AbstractPersistable<Long> {
         this.id = id;
     }
 
-    public PipeSize getPipesize() {
-        return pipesize;
+    public PipeSize getPipeSize() {
+        return pipeSize;
     }
 
-    public void setPipesize(final PipeSize pipesize) {
-        this.pipesize = pipesize;
+    public void setPipeSize(final PipeSize pipeSize) {
+        this.pipeSize = pipeSize;
+    }
+
+    public Boolean getActive() {
+        return active;
+    }
+
+    public void setActive(final Boolean active) {
+        this.active = active;
     }
 
 }

@@ -48,12 +48,11 @@ import java.util.Map;
 import org.apache.log4j.Logger;
 import org.apache.struts2.convention.annotation.ParentPackage;
 import org.apache.struts2.convention.annotation.Result;
-import org.egov.commons.service.CommonsService;
 import org.egov.infra.admin.master.entity.Boundary;
 import org.egov.infra.exception.ApplicationException;
 import org.egov.infra.web.struts.actions.BaseFormAction;
 import org.egov.pims.service.EmployeeServiceOld;
-import org.egov.works.models.contractorBill.ContractorBillRegister;
+import org.egov.works.contractorbill.entity.ContractorBillRegister;
 import org.egov.works.models.estimate.AbstractEstimate;
 import org.egov.works.models.measurementbook.MBForCancelledBill;
 import org.egov.works.models.measurementbook.MBHeader;
@@ -68,14 +67,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 public class ContractorBillPDFAction extends BaseFormAction {
 
     private static final long serialVersionUID = -4416572537527288800L;
-    private static final Logger logger = Logger.getLogger(ContractorBillAction.class);
+    private static final Logger logger = Logger.getLogger(ContractorBillPDFAction.class);
     private Long egbillRegisterId;
     private InputStream egBillRegisterPDF;
     @Autowired
     private EmployeeServiceOld employeeService;
     private ContractorBillService contractorBillService;
-    @Autowired
-    private CommonsService commonsService;
     private WorksService worksService;
     private Boundary boundary = null;
     private ContractorAdvanceService contractorAdvanceService;
@@ -103,7 +100,6 @@ public class ContractorBillPDFAction extends BaseFormAction {
             pdfGenerator.setPersistenceService(getPersistenceService());
             pdfGenerator.setEmployeeService(employeeService);
             pdfGenerator.setWorksService(worksService);
-            pdfGenerator.setCommonsService(commonsService);
             pdfGenerator.setContractorAdvanceService(contractorAdvanceService);
             try {
                 pdfGenerator.generatePDF();
@@ -217,10 +213,6 @@ public class ContractorBillPDFAction extends BaseFormAction {
 
     public void setWorksService(final WorksService worksService) {
         this.worksService = worksService;
-    }
-
-    public void setCommonsService(final CommonsService commonsService) {
-        this.commonsService = commonsService;
     }
 
     @Override

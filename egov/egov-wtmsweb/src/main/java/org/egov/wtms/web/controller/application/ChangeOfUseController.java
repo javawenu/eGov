@@ -111,7 +111,9 @@ public class ChangeOfUseController extends GenericConnectionController {
             // TODO - error handling
         } else
             loadBasicData(model, parentConnectionDetails, changeOfUse, connectionUnderChange);
-        prepareWorkflow(model, changeOfUse, new WorkflowContainer());
+        WorkflowContainer workflowContainer= new WorkflowContainer();
+        workflowContainer.setAdditionalRule(changeOfUse.getApplicationType().getCode());
+        prepareWorkflow(model, changeOfUse, workflowContainer);
         return "changeOfUse-form";
     }
 
@@ -129,6 +131,7 @@ public class ChangeOfUseController extends GenericConnectionController {
         final WaterConnectionDetails parent = waterConnectionDetailsService.getParentConnectionDetails(
                 connectionUnderChange.getConnection().getPropertyIdentifier(), ConnectionStatus.ACTIVE);
         final String message = changeOfUseService.validateChangeOfUseConnection(parent);
+        String sourceChannel = request.getParameter("Source");
         String consumerCode = "";
         if (!message.isEmpty() && !"".equals(message)) {
             if (changeOfUse.getConnection().getParentConnection() != null)
@@ -156,7 +159,9 @@ public class ChangeOfUseController extends GenericConnectionController {
             final WaterConnectionDetails parentConnectionDetails = waterConnectionDetailsService
                     .getActiveConnectionDetailsByConnection(changeOfUse.getConnection());
             loadBasicData(model, parentConnectionDetails, changeOfUse, changeOfUse);
-            prepareWorkflow(model, changeOfUse, new WorkflowContainer());
+            WorkflowContainer workflowContainer= new WorkflowContainer();
+            workflowContainer.setAdditionalRule(changeOfUse.getApplicationType().getCode());
+            prepareWorkflow(model, changeOfUse, workflowContainer);
             model.addAttribute("approvalPosOnValidate", request.getParameter("approvalPosition"));
             model.addAttribute("additionalRule", changeOfUse.getApplicationType().getCode());
             model.addAttribute("validationmessage", resultBinder.getFieldErrors().get(0).getField() + " = "
@@ -193,7 +198,9 @@ public class ChangeOfUseController extends GenericConnectionController {
                 final WaterConnectionDetails parentConnectionDetails = waterConnectionDetailsService
                         .getActiveConnectionDetailsByConnection(changeOfUse.getConnection());
                 loadBasicData(model, parentConnectionDetails, changeOfUse, changeOfUse);
-                prepareWorkflow(model, changeOfUse, new WorkflowContainer());
+                WorkflowContainer workflowContainer= new WorkflowContainer();
+                workflowContainer.setAdditionalRule(changeOfUse.getApplicationType().getCode());
+                prepareWorkflow(model, changeOfUse, workflowContainer);
                 model.addAttribute("additionalRule", changeOfUse.getApplicationType().getCode());
                 model.addAttribute("stateType", changeOfUse.getClass().getSimpleName());
                 model.addAttribute("currentUser", waterTaxUtils.getCurrentUserRole(securityUtils.getCurrentUser()));
@@ -206,7 +213,7 @@ public class ChangeOfUseController extends GenericConnectionController {
 
         changeOfUse.setApplicationDate(new Date());
         changeOfUseService.createChangeOfUseApplication(changeOfUse, approvalPosition, approvalComent, changeOfUse
-                .getApplicationType().getCode(), workFlowAction);
+                .getApplicationType().getCode(), workFlowAction,sourceChannel);
         final Assignment currentUserAssignment = assignmentService.getPrimaryAssignmentForGivenRange(securityUtils
                 .getCurrentUser().getId(), new Date(), new Date());
         String nextDesign = "";

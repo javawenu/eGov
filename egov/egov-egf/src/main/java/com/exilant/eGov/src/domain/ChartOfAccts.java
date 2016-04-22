@@ -44,6 +44,9 @@
 
 package com.exilant.eGov.src.domain;
 
+
+import org.egov.infstr.services.PersistenceService;
+import org.springframework.beans.factory.annotation.Qualifier;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.text.ParseException;
@@ -93,9 +96,18 @@ public class ChartOfAccts {
     private String budgetCheckReqd = null;
     private boolean isId = false, isField = false;
     private static final Logger LOGGER = Logger.getLogger(ChartOfAccts.class);
-    @Autowired
+   
+ @Autowired
+ @Qualifier("persistenceService")
+ private PersistenceService persistenceService;
+ @Autowired
     private AppConfigValueService appConfigValuesService;
-    EGovernCommon cm = new EGovernCommon();
+    
+    @Autowired
+    private EgovMasterDataCaching masterDataCache;
+    
+    private @Autowired EGovernCommon eGovernCommon;
+    
     private final SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy", Locale
             .getDefault());
     private final SimpleDateFormat formatter = new SimpleDateFormat("dd-MMM-yyyy",
@@ -232,22 +244,21 @@ public class ChartOfAccts {
     @Transactional
     public void insert(final Connection connection) throws SQLException,
     TaskFailedException {
-        new EGovernCommon();
         created = new SimpleDateFormat("dd/mm/yyyy").format(new Date());
         try {
             created = formatter.format(sdf.parse(created));
-            EgovMasterDataCaching.getInstance().removeFromCache(
+            masterDataCache.removeFromCache(
                     "egi-activeCoaCodes");
-            EgovMasterDataCaching.getInstance().removeFromCache("egi-coaCodes");
-            EgovMasterDataCaching.getInstance().removeFromCache(
+            masterDataCache.removeFromCache("egi-coaCodes");
+            masterDataCache.removeFromCache(
                     "egi-chartOfAccounts");
-            EgovMasterDataCaching.getInstance().removeFromCache(
+            masterDataCache.removeFromCache(
                     "egi-coaPurposeId10");
-            EgovMasterDataCaching.getInstance().removeFromCache(
+            masterDataCache.removeFromCache(
                     "egi-accountCodes");
-            EgovMasterDataCaching.getInstance().removeFromCache(
+            masterDataCache.removeFromCache(
                     "egi-liabilityCOACodes");
-            EgovMasterDataCaching.getInstance().removeFromCache(
+            masterDataCache.removeFromCache(
                     "egi-coaCodesForLiability");
             setLastModified(created);
             setId(String.valueOf(PrimaryKeyGenerator
@@ -260,7 +271,7 @@ public class ChartOfAccts {
             if (LOGGER.isDebugEnabled())
                 LOGGER.debug(insertQuery);
 
-            HibernateUtil.getCurrentSession().createSQLQuery(insertQuery)
+            persistenceService.getSession().createSQLQuery(insertQuery)
             .setInteger(0, Integer.parseInt(id))
             .setString(1, removeSingleQuotes(glCode))
             .setString(2, removeSingleQuotes(name))
@@ -320,8 +331,7 @@ public class ChartOfAccts {
 
     public void newUpdate() throws TaskFailedException,
     SQLException {
-        final EGovernCommon commommethods = new EGovernCommon();
-        created = commommethods.getCurrentDate();
+        created = eGovernCommon.getCurrentDate();
         Query pstmt = null;
         try {
             created = formatter.format(sdf.parse(created));
@@ -383,7 +393,7 @@ public class ChartOfAccts {
 
         try {
             int i = 1;
-            pstmt = HibernateUtil.getCurrentSession().createSQLQuery(query.toString());
+            pstmt = persistenceService.getSession().createSQLQuery(query.toString());
 
             if (glCode != null)
                 pstmt.setString(i++, glCode);

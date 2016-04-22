@@ -42,6 +42,7 @@ package org.egov.web.actions.report;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
@@ -71,30 +72,31 @@ import org.egov.infra.reporting.engine.ReportService;
 import org.egov.infra.reporting.viewer.ReportViewerUtil;
 import org.egov.infra.web.struts.actions.BaseFormAction;
 import org.egov.infra.web.struts.annotation.ValidationErrorPage;
+import org.egov.infstr.services.PersistenceService;
 import org.egov.infstr.utils.DateUtils;
-import org.egov.infstr.utils.HibernateUtil;
 import org.egov.model.instrument.InstrumentHeader;
 import org.egov.utils.Constants;
 import org.egov.utils.FinancialConstants;
 import org.hibernate.FlushMode;
 import org.hibernate.Query;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 
 @ParentPackage("egov")
-@Transactional(readOnly = true)
 @Results({
-    @Result(name = BankAdviceReportAction.NEW, location = "bankAdviceReport-" + BankAdviceReportAction.NEW + ".jsp"),
-    @Result(name = "downloadText", location = "bankAdviceReport-downloadText.jsp"),
-    @Result(name = "reportview", type = "stream", location = "inputStream", params = { "contentType", "${contentType}",
-            "contentDisposition", "attachment; filename=${fileName}" }),
-            @Result(name = "txtresult", type = "stream", location = "inStream", params = { "contentType", "${contentType}",
-                    "contentDisposition", "attachment; filename=${textFileName}" })
+        @Result(name = BankAdviceReportAction.NEW, location = "bankAdviceReport-" + BankAdviceReportAction.NEW + ".jsp"),
+        @Result(name = "downloadText", location = "bankAdviceReport-downloadText.jsp"),
+        @Result(name = "reportview", type = "stream", location = "inputStream", params = { "contentType", "${contentType}",
+                "contentDisposition", "attachment; filename=${fileName}" }),
+        @Result(name = "txtresult", type = "stream", location = "inStream", params = { "contentType", "${contentType}",
+                "contentDisposition", "attachment; filename=${textFileName}" })
 })
 public class BankAdviceReportAction extends BaseFormAction {
 
-    /**
-     *
-     */
+    @Autowired
+    @Qualifier("persistenceService")
+    private PersistenceService persistenceService;
+
     private static final long serialVersionUID = 1L;
     private static final Logger LOGGER = Logger.getLogger(BankAdviceReportAction.class);
     private Bank bank;
@@ -135,28 +137,27 @@ public class BankAdviceReportAction extends BaseFormAction {
 
     @Override
     public void prepare() {
-        HibernateUtil.getCurrentSession().setDefaultReadOnly(true);
-        HibernateUtil.getCurrentSession().setFlushMode(FlushMode.MANUAL);
+        persistenceService.getSession().setDefaultReadOnly(true);
+        persistenceService.getSession().setFlushMode(FlushMode.MANUAL);
         super.prepare();
-        //persistenceService.setType(Bank.class);
         addDropdownData(
                 "bankList",
                 persistenceService
-                .findAllBy("select distinct b from Bank b , Bankbranch bb , Bankaccount ba WHERE bb.bank=b and ba.bankbranch=bb and ba.type in ('RECEIPTS_PAYMENTS','PAYMENTS') and b.isactive=1 order by upper(b.name)"));
+                        .findAllBy("select distinct b from Bank b , Bankbranch bb , Bankaccount ba WHERE bb.bank=b and ba.bankbranch=bb and ba.type in ('RECEIPTS_PAYMENTS','PAYMENTS') and b.isactive=true order by b.name"));
         if (bankbranch == null)
             addDropdownData("bankBranchList", Collections.EMPTY_LIST);
         else
             addDropdownData(
                     "bankBranchList",
                     persistenceService
-                    .findAllBy(
-                            "select distinct bb from Bankbranch bb,Bankaccount ba where bb.bank.id=? and ba.bankbranch=bb and ba.type in ('RECEIPTS_PAYMENTS','PAYMENTS') and bb.isactive=1",
-                            bank.getId()));
+                            .findAllBy(
+                                    "select distinct bb from Bankbranch bb,Bankaccount ba where bb.bank.id=? and ba.bankbranch=bb and ba.type in ('RECEIPTS_PAYMENTS','PAYMENTS') and bb.isactive=true",
+                                    bank.getId()));
         if (bankaccount == null)
             addDropdownData("bankAccountList", Collections.EMPTY_LIST);
         else
             addDropdownData("bankAccountList",
-                    persistenceService.findAllBy("from Bankaccount where bankbranch.id=? and isactive=1", bankbranch.getId()));
+                    persistenceService.findAllBy("from Bankaccount where bankbranch.id=? and isactive=true", bankbranch.getId()));
         if (instrumentnumber == null)
             addDropdownData("chequeNumberList", Collections.EMPTY_LIST);
         else {
@@ -213,7 +214,7 @@ public class BankAdviceReportAction extends BaseFormAction {
         // Get without subledger one
         final String withNoSubledgerQry = " SELECT gld.DETAILTYPEID,gld.DETAILKEYID , sum(gld.amount) FROM   ( (SELECT voucherheaderid "
                 +
-                "  FROM egf_instrumentvoucher   WHERE instrumentheaderid =?   ) minus   (SELECT DISTINCT payvhid  FROM miscbilldetail mb,"
+                "  FROM egf_instrumentvoucher   WHERE instrumentheaderid =?   ) except   (SELECT DISTINCT payvhid  FROM miscbilldetail mb,"
                 +
                 " voucherheader vh ,    generalledger gl  LEFT JOIN chartofaccountdetail dtl  ON gl.glcodeid    =dtl.glcodeid  "
                 +
@@ -226,11 +227,11 @@ public class BankAdviceReportAction extends BaseFormAction {
                 " AND gl.voucherheaderid =m.billvhid AND gl.id=gld.generalledgerid AND gl.debitamount!=0 " +
                 " group by gld.detailtypeid ,gld.detailkeyid  ";
 
-        final Query WithNetPayableSubledgerQuery = HibernateUtil.getCurrentSession().createSQLQuery(query);
+        final Query WithNetPayableSubledgerQuery = persistenceService.getSession().createSQLQuery(query);
         WithNetPayableSubledgerQuery.setParameter(0, instrumentHeader.getId());
 
         // Get without subledger one
-        final Query getDebitsideSubledgerQuery = HibernateUtil.getCurrentSession().createSQLQuery(withNoSubledgerQry);
+        final Query getDebitsideSubledgerQuery = persistenceService.getSession().createSQLQuery(withNoSubledgerQry);
         getDebitsideSubledgerQuery.setParameter(0, instrumentHeader.getId());
         getDebitsideSubledgerQuery.setParameter(1, instrumentHeader.getId());
 
@@ -240,7 +241,7 @@ public class BankAdviceReportAction extends BaseFormAction {
         for (final Object[] obj : retList)
             if (detailTypeMap.isEmpty()) {
                 detailKeyMap = new HashMap<Object, BigDecimal>();
-                detailKeyMap.put(obj[1], ((BigDecimal) obj[2]).setScale(2));
+                detailKeyMap.put(obj[1], ((BigDecimal) obj[2]).setScale(2, BigDecimal.ROUND_HALF_EVEN));
                 detailTypeMap.put(obj[0], detailKeyMap);
             }
             else {
@@ -250,13 +251,14 @@ public class BankAdviceReportAction extends BaseFormAction {
                     tempMap = detailTypeMap.get(obj[0]);
                     // detailKey=tempMap.get((Integer)obj[1]);
                     if (null != tempMap && tempMap.containsKey(obj[1])) {
-                        detailKeyAmt = tempMap.get(obj[1]).add(((BigDecimal) obj[2]).setScale(2));
+                        detailKeyAmt = tempMap.get(obj[1]).add(
+                                (BigDecimal.valueOf((Double) obj[2]).setScale(2, BigDecimal.ROUND_HALF_EVEN)));
                         tempMap.put(obj[1], detailKeyAmt);
                     } else
-                        tempMap.put(obj[1], ((BigDecimal) obj[2]).setScale(2));
+                        tempMap.put(obj[1], (BigDecimal.valueOf((Double) obj[2]).setScale(2, BigDecimal.ROUND_HALF_EVEN)));
                 } else {
                     detailKeyMap = new HashMap<Object, BigDecimal>();
-                    detailKeyMap.put(obj[1], ((BigDecimal) obj[2]).setScale(2));
+                    detailKeyMap.put(obj[1], (BigDecimal.valueOf((Double) obj[2]).setScale(2, BigDecimal.ROUND_HALF_EVEN)));
                     detailTypeMap.put(obj[0], detailKeyMap);
                 }
             }
@@ -318,7 +320,7 @@ public class BankAdviceReportAction extends BaseFormAction {
 
         for (final Object[] obj : retList) {
             final Accountdetailtype adt = (Accountdetailtype) persistenceService.find("from Accountdetailtype where id=?",
-                    ((BigDecimal) obj[0]).intValue());
+                    ((BigInteger) obj[0]).intValue());
 
             EntityType subDetail = null;
             try
@@ -330,10 +332,10 @@ public class BankAdviceReportAction extends BaseFormAction {
                     LOGGER.debug("data Type = " + dataType);
                 if (dataType.equals("Long"))
                     subDetail = (EntityType) persistenceService.find("from " + adt.getFullQualifiedName() + " where id=?",
-                            ((BigDecimal) obj[1]).longValue());
+                            ((BigInteger) obj[1]).longValue());
                 else
                     subDetail = (EntityType) persistenceService.find("from " + adt.getFullQualifiedName() + " where id=?",
-                            ((BigDecimal) obj[1]).intValue());
+                            ((BigInteger) obj[1]).intValue());
 
             } catch (final ClassCastException e) {
                 LOGGER.error(e);
@@ -348,7 +350,7 @@ public class BankAdviceReportAction extends BaseFormAction {
             bankAdviceReportInfo.setBank(subDetail.getBankname());
             // bankAdviceReportInfo.setBankBranch(subDetail.getBankaccount());
             bankAdviceReportInfo.setIfscCode(subDetail.getIfsccode());
-            bankAdviceReportInfo.setAmount(((BigDecimal) obj[2]).setScale(2));
+            bankAdviceReportInfo.setAmount(((BigDecimal) obj[2]).setScale(2, BigDecimal.ROUND_HALF_EVEN));
             totalAmount = totalAmount.add(bankAdviceReportInfo.getAmount());
             subLedgerList.add(bankAdviceReportInfo);
         }
@@ -362,10 +364,10 @@ public class BankAdviceReportAction extends BaseFormAction {
         final Map<String, Object> reportParams = new HashMap<String, Object>();
         final StringBuffer letterContext = new StringBuffer();
         letterContext
-        .append("             I request you to transfer the amount indicated below through RTGS duly debiting from the")
-        .append("  Current Account No: ")
-        .append(getBankAccountNumber(bankaccount.getId()) != null ? getBankAccountNumber(bankaccount.getId()) : "")
-        .append("  under your bank to the following bank accounts:");
+                .append("             I request you to transfer the amount indicated below through RTGS duly debiting from the")
+                .append("  Current Account No: ")
+                .append(getBankAccountNumber(bankaccount.getId()) != null ? getBankAccountNumber(bankaccount.getId()) : "")
+                .append("  under your bank to the following bank accounts:");
         reportParams.put("bankName", getBankName(bank.getId()));
         reportParams.put("letterContext", letterContext.toString());
         reportParams.put("branchName", getBankBranchName(bankbranch.getId()));
@@ -390,10 +392,10 @@ public class BankAdviceReportAction extends BaseFormAction {
         final Map<String, Object> reportParams = new HashMap<String, Object>();
         final StringBuffer letterContext = new StringBuffer();
         letterContext
-        .append("             I request you to transfer the amount indicated below through RTGS duly debiting from the")
-        .append("  Current Account No: ")
-        .append(getBankAccountNumber(bankaccount.getId()) != null ? getBankAccountNumber(bankaccount.getId()) : "")
-        .append("  under your bank to the following bank accounts:");
+                .append("             I request you to transfer the amount indicated below through RTGS duly debiting from the")
+                .append("  Current Account No: ")
+                .append(getBankAccountNumber(bankaccount.getId()) != null ? getBankAccountNumber(bankaccount.getId()) : "")
+                .append("  under your bank to the following bank accounts:");
         reportParams.put("bankName", getBankName(bank.getId()));
         reportParams.put("letterContext", letterContext.toString());
         reportParams.put("branchName", getBankBranchName(bankbranch.getId()));
@@ -445,10 +447,10 @@ public class BankAdviceReportAction extends BaseFormAction {
         final Map<String, Object> reportParams = new HashMap<String, Object>();
         final StringBuffer letterContext = new StringBuffer();
         letterContext
-        .append("             I request you to transfer the amount indicated below through RTGS duly debiting from the")
-        .append("  Current Account No: ")
-        .append(getBankAccountNumber(bankaccount.getId()) != null ? getBankAccountNumber(bankaccount.getId()) : " ")
-        .append("  under your bank to the following bank accounts:");
+                .append("             I request you to transfer the amount indicated below through RTGS duly debiting from the")
+                .append("  Current Account No: ")
+                .append(getBankAccountNumber(bankaccount.getId()) != null ? getBankAccountNumber(bankaccount.getId()) : " ")
+                .append("  under your bank to the following bank accounts:");
         reportParams.put("bankName", getBankName(bank.getId()));
         reportParams.put("branchName", getBankBranchName(bankbranch.getId()));
         reportParams.put("letterContext", letterContext.toString());

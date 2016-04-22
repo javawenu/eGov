@@ -70,7 +70,6 @@ import org.egov.commons.EgwStatus;
 import org.egov.commons.Fund;
 import org.egov.commons.Vouchermis;
 import org.egov.egf.commons.EgovCommon;
-import org.egov.infra.admin.master.entity.AppConfigValues;
 import org.egov.infra.admin.master.entity.Department;
 import org.egov.infra.admin.master.service.AppConfigValueService;
 import org.egov.infra.exception.ApplicationRuntimeException;
@@ -79,7 +78,6 @@ import org.egov.infra.validation.exception.ValidationException;
 import org.egov.infra.web.struts.annotation.ValidationErrorPage;
 import org.egov.infra.workflow.entity.StateAware;
 import org.egov.infstr.services.PersistenceService;
-import org.egov.infstr.utils.HibernateUtil;
 import org.egov.model.contra.ContraBean;
 import org.egov.model.contra.ContraJournalVoucher;
 import org.egov.model.instrument.InstrumentHeader;
@@ -87,9 +85,11 @@ import org.egov.model.instrument.InstrumentVoucher;
 import org.egov.model.payment.Paymentheader;
 import org.egov.model.voucher.VoucherTypeBean;
 import org.egov.services.cheque.ChequeService;
+import org.egov.services.instrument.InstrumentHeaderService;
 import org.egov.services.instrument.InstrumentService;
 import org.egov.services.payment.PaymentService;
 import org.egov.services.report.FundFlowService;
+import org.egov.services.voucher.ContraJournalVoucherService;
 import org.egov.services.voucher.VoucherService;
 import org.egov.utils.Constants;
 import org.egov.utils.FinancialConstants;
@@ -98,34 +98,32 @@ import org.egov.web.actions.voucher.CommonAction;
 import org.hibernate.HibernateException;
 import org.jboss.logging.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.beans.factory.annotation.Qualifier;
 
 import com.exilant.GLEngine.ChartOfAccounts;
 import com.exilant.GLEngine.Transaxtion;
 import com.exilant.exility.common.TaskFailedException;
-import com.opensymphony.xwork2.validator.annotations.Validation;
 
 /**
  * @author mani
  */
-@Transactional(readOnly = true)
 @ParentPackage("egov")
-@Validation
 @Results({
-    @Result(name = ContraBTBAction.NEW, location = "contraBTB-" + ContraBTBAction.NEW + ".jsp"),
-    @Result(name = ContraBTBAction.EDIT, location = "contraBTB-" + ContraBTBAction.EDIT + ".jsp"),
-    @Result(name = "reverse", location = "contraBTB-reverse.jsp"),
-    @Result(name = "view", location = "contraBTB-view.jsp")
+        @Result(name = "new", location = "contraBTB-new.jsp"),
+        @Result(name = "edit", location = "contraBTB-edit.jsp"),
+        @Result(name = "reverse", location = "contraBTB-reverse.jsp"),
+        @Result(name = "view", location = "contraBTB-view.jsp"),
+        @Result(name = "success", location = "contraBTB-success.jsp")
 })
 public class ContraBTBAction extends BaseVoucherAction {
     private static final String DD_MMM_YYYY = "dd-MMM-yyyy";
-    SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy", Constants.LOCALE);
-    SimpleDateFormat sqlformat = new SimpleDateFormat("dd-MMM-yyyy");
+    private SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy", Constants.LOCALE);
+    private SimpleDateFormat sqlformat = new SimpleDateFormat("dd-MMM-yyyy");
     private static final String EXCEPTION_WHILE_SAVING_DATA = "Exception while saving Data";
     private final static Logger LOGGER = Logger
             .getLogger(ContraBTBAction.class);
     private static final String MDC_CHEQUE = "cheque";
-    private static final String MDC_OTHER = "other";
+    private static final String MDC_OTHER = "RTGS/NEFT";
     private static final String REVERSE = "reverse";
     private static final long serialVersionUID = 1L;
     private static final String TRANSACTION_FAILED = "Transaction failed";
@@ -140,39 +138,69 @@ public class ContraBTBAction extends BaseVoucherAction {
     private String sourceGlcode;
     private String destinationGlcode;
     private ContraJournalVoucher contraVoucher;
+
+    @Autowired
+    @Qualifier("persistenceService")
+    private PersistenceService persistenceService;
+    @Autowired
     private InstrumentService instrumentService;
     private String mode;
+    @Autowired
+    @Qualifier("voucherService")
     private VoucherService voucherService;
     private VoucherTypeBean voucherTypeBean;
-    private @Autowired AppConfigValueService appConfigValuesService;
+    @Autowired
+    private AppConfigValueService appConfigValuesService;
     private Long vhId;
+    @Autowired
+    @Qualifier("paymentService")
     private PaymentService paymentService;
-    private EgovCommon egovCommon;
+    @Autowired
+    @Qualifier("chequeService")
     private ChequeService chequeService;
     private String fromAccnumnar;
     private Fund toFundCode;
+    @Autowired
+    @Qualifier("fundFlowService")
     private FundFlowService fundFlowService;
-    CGeneralLedger generalled;
-    CommonAction commonAction;
-    CChartOfAccounts chartofAccountsList;
-    List<CGeneralLedger> generalLedgerDesList = new ArrayList<CGeneralLedger>();
-    List<CGeneralLedger> generalLedgerSrcList = new ArrayList<CGeneralLedger>();
-    Vouchermis vouchermis = new Vouchermis();
+    private CGeneralLedger generalled;
+    @Autowired
+    private CommonAction commonAction;
+    private CChartOfAccounts chartofAccountsList;
+    private List<CGeneralLedger> generalLedgerDesList = new ArrayList<CGeneralLedger>();
+    private List<CGeneralLedger> generalLedgerSrcList = new ArrayList<CGeneralLedger>();
+    private Vouchermis vouchermis = new Vouchermis();
     private static Logger logger = Logger.getLogger(ContraBTBAction.class);
     private String toAccnumnar;
     private CVoucherHeader voucherHeader2;
     private CVoucherHeader voucherHeaderDes;
     private CVoucherHeader voucherHeader4;
-	private ChartOfAccounts chartOfAccounts;
+    private ChartOfAccounts chartOfAccounts;
+    @Autowired
+    private CreateVoucher createVoucher;
+    @Autowired
+    @Qualifier("instrumentHeaderService")
+    private InstrumentHeaderService instrumentHeaderService;
+
+    @Autowired
+    @Qualifier("contraJournalVoucherService")
+    private ContraJournalVoucherService contraJournalVoucherService;
+
+    @Autowired
+    @Qualifier("contraBTBActionHelper")
+    private ContraBTBActionHelper contraBTBActionHelper;
+
+    @Autowired
+    private EgovCommon egovCommon;
 
     @Override
     public void prepare() {
         super.prepare();
         ModeOfCollectionMap = new LinkedHashMap<String, String>();
-        ModeOfCollectionMap.put(MDC_CHEQUE, MDC_CHEQUE);
+        // ModeOfCollectionMap.put(MDC_CHEQUE, MDC_CHEQUE);
         ModeOfCollectionMap.put(MDC_OTHER, MDC_OTHER);
         final List<CChartOfAccounts> glCodeList = persistenceService
-                .findAllBy("from CChartOfAccounts coa where coa.purposeId=8 and coa.classification=4 and coa.isActiveForPosting=1 order by coa.glcode ");
+                .findAllBy("from CChartOfAccounts coa where coa.purposeId=8 and coa.classification=4 and coa.isActiveForPosting=true order by coa.glcode ");
         addDropdownData("interFundList", glCodeList);
         LoadAjaxedDropDowns();
     }
@@ -217,7 +245,7 @@ public class ContraBTBAction extends BaseVoucherAction {
      * <li>post to ledger</li>
      * </ol>
      */
-    @Transactional
+    @ValidationErrorPage(value = NEW)
     @Action(value = "/contra/contraBTB-create")
     public String create() throws ValidationException {
         if (LOGGER.isDebugEnabled())
@@ -227,45 +255,24 @@ public class ContraBTBAction extends BaseVoucherAction {
             if (egovCommon.isShowChequeNumber())
                 if (contraBean.getModeOfCollection().equals(MDC_CHEQUE))
                     validateChqNumber(contraBean.getChequeNumber(), contraVoucher.getFromBankAccountId().getId(), voucherHeader);
-            final List<InstrumentHeader> instrumentList = instrumentService.addToInstrument(createInstruments(contraBean,
-                    contraVoucher));
-            // check
-            if (contraBean.getToFundId() != null && !voucherHeader.getFundId().getId().equals(contraBean.getToFundId()))
-                voucherHeader = callCreateVoucherForInterFund(voucherHeader, contraVoucher);
-            else
-                voucherHeader = callCreateVoucher(voucherHeader, contraVoucher);
-            if (LOGGER.isDebugEnabled())
-                LOGGER.debug("Voucher Created");
-            updateInstrument(instrumentList.get(0), voucherHeader);
-
-            // DepositCheque(voucherHeader, contraVoucher,
-            // instrumentList.get(0));
-            contraVoucher = addOrupdateContraJournalVoucher(contraVoucher,
-                    instrumentList.get(0), voucherHeader);
-            ContraJournalVoucher contraVoucher2 = null;
-            if (voucherHeader2 != null) {
-                final List<Map<String, Object>> createInstrumentMap = createInstrumentsForReceipt(
-                        contraBean, contraVoucher);
-                // set is pay cheque to 0 saying it is a receipt cheque
-                createInstrumentMap.get(0).put("Is pay cheque", "0");
-                final List<InstrumentHeader> instrumentList2 = instrumentService
-                        .addToInstrument(createInstrumentMap);
-                contraVoucher2 = new ContraJournalVoucher();
-                contraVoucher2 = addOrupdateContraJournalVoucher(
-                        contraVoucher2, instrumentList2.get(0), voucherHeader2);
-                updateInstrument(instrumentList2.get(0), voucherHeader2);
-            }
-            addActionMessage(getText("transaction.success")
-                    + voucherHeader.getVoucherNumber());
+            voucherHeader = contraBTBActionHelper.create(contraBean, contraVoucher, voucherHeader);
+            addActionMessage("Bank to Bank Transfer "+ getText("transaction.success") + " with Voucher number: "+ voucherHeader.getVoucherNumber());
             setVhId(voucherHeader.getId());
             LoadAjaxedDropDowns();
             if (LOGGER.isDebugEnabled())
                 LOGGER.debug("Completed Bank to Bank Transfer .");
-        } catch (final ValidationException e) {
+        } catch (final ValidationException e)
+        {
             LoadAjaxedDropDowns();
-            throw e;
+            throw new ValidationException(Arrays.asList(new ValidationError(e.getErrors().get(0).getMessage(),
+                    e.getErrors().get(0).getMessage())));
+        } catch (final Exception e)
+        {
+            LoadAjaxedDropDowns();
+            throw new ValidationException(Arrays.asList(new ValidationError(e.getMessage(),
+                    e.getMessage())));
         }
-        return NEW;
+        return SUCCESS;
     }
 
     /**
@@ -283,18 +290,19 @@ public class ContraBTBAction extends BaseVoucherAction {
      * <li>If only instrument date and amount is changed update only instrument</li>
      * </ol>
      */
-    @Transactional
     @Action(value = "/contra/contraBTB-edit")
     public String edit() {
         validateFields();
         getHibObjectsFromContraBean();
         final CVoucherHeader oldVoucher = voucherService.updateVoucherHeader(voucherHeader, voucherTypeBean);
 
-        if (oldVoucher.getRefcgNo() != null) {
+        if (oldVoucher.getRefvhId() != null) {
             voucherHeader2 = oldVoucher;
-            voucherHeader = (CVoucherHeader) persistenceService.find("from CVoucherHeader where voucherNumber=?", oldVoucher.getVoucherNumber());
+            voucherHeader = (CVoucherHeader) persistenceService.find("from CVoucherHeader where voucherNumber=?",
+                    oldVoucher.getVoucherNumber());
         } else {
-            voucherHeader2 = (CVoucherHeader) persistenceService.find("from CVoucherHeader where voucherNumber=?", oldVoucher.getVoucherNumber());
+            voucherHeader2 = (CVoucherHeader) persistenceService.find("from CVoucherHeader where voucherNumber=?",
+                    oldVoucher.getVoucherNumber());
             voucherHeader4 = new CVoucherHeader();
 
         }
@@ -302,16 +310,16 @@ public class ContraBTBAction extends BaseVoucherAction {
             if (contraBean.getToFundId() != null && voucherHeader.getFundId().getId().equals(contraBean.getToFundId()))
                 throw new ValidationException(
                         Arrays
-                        .asList(new ValidationError(
-                                "Same Fund Is Not Allowed Cancel this and create New One",
-                                "Same Fund Is Not Allowed Cancel this and create New One")));
+                                .asList(new ValidationError(
+                                        "Same Fund Is Not Allowed Cancel this and create New One",
+                                        "Same Fund Is Not Allowed Cancel this and create New One")));
         CVoucherHeader oldVoucher2 = null;
         Fund toFund = null;
         if (voucherHeader2 != null) {
             toFund = (Fund) persistenceService.find("from Fund where id=?", contraBean.getToFundId());
 
             voucherTypeBean
-            .setVoucherName(FinancialConstants.CONTRAVOUCHER_NAME_INTERFUND);
+                    .setVoucherName(FinancialConstants.CONTRAVOUCHER_NAME_INTERFUND);
             voucherHeader4.setFundId(toFund);
             voucherHeader4.setCgvn(voucherHeader2.getCgvn());
             // This fix is for Phoenix Migration.voucherHeader4.setId(voucherHeader2.getId());
@@ -321,7 +329,7 @@ public class ContraBTBAction extends BaseVoucherAction {
             voucherHeader4.setVoucherDate(voucherDate);
 
             voucherTypeBean
-            .setVoucherName(FinancialConstants.CONTRAVOUCHER_NAME_INTERFUND);
+                    .setVoucherName(FinancialConstants.CONTRAVOUCHER_NAME_INTERFUND);
             oldVoucher2 = voucherService.updateVoucherHeader(voucherHeader4,
                     voucherTypeBean);
 
@@ -343,12 +351,12 @@ public class ContraBTBAction extends BaseVoucherAction {
         InstrumentVoucher instrumentVoucher2 = null;
         if (voucherHeader2 != null)
             instrumentVoucher2 = (InstrumentVoucher) persistenceService
-            .find(
-                    "from InstrumentVoucher iv where iv.instrumentHeaderId.statusId not in (?) and voucherHeaderId.id=?",
-                    exludeStatusList.get(0), oldVoucher2.getId());
+                    .find(
+                            "from InstrumentVoucher iv where iv.instrumentHeaderId.statusId not in (?) and voucherHeaderId.id=?",
+                            exludeStatusList.get(0), oldVoucher2.getId());
         if (instrumentVoucher == null) {
             LOGGER
-            .error("System Error :Instrument is not linked with voucher ");
+                    .error("System Error :Instrument is not linked with voucher ");
             throw new ApplicationRuntimeException(
                     " System Error :Instrument is not linked with voucher  ");
         }
@@ -357,12 +365,12 @@ public class ContraBTBAction extends BaseVoucherAction {
         if (!oldContraVoucher.getFromBankAccountId().getId().toString().equals(
                 contraBean.getFromBankAccountId())
                 || !oldContraVoucher.getToBankAccountId().getId().toString()
-                .equals(contraBean.getToBankAccountId())) {
+                        .equals(contraBean.getToBankAccountId())) {
             instrumentService.cancelInstrument(oldInstrumentHeader);
             if (instrumentVoucher2 != null)
                 instrumentService.cancelInstrument(instrumentVoucher2
                         .getInstrumentHeaderId());
-            HibernateUtil.getCurrentSession().flush();
+            persistenceService.getSession().flush();
             if (contraBean.getModeOfCollection().equals(MDC_CHEQUE))
                 if (!egovCommon.isShowChequeNumber())
                     try {
@@ -370,13 +378,13 @@ public class ContraBTBAction extends BaseVoucherAction {
                                 .nextChequeNumber(contraBean
                                         .getFromBankAccountId(), 1,
                                         voucherHeader.getVouchermis()
-                                        .getDepartmentid().getId().intValue()));
+                                                .getDepartmentid().getId().intValue()));
                     } catch (final ApplicationRuntimeException e) {
                         throw new ValidationException(
                                 Arrays
-                                .asList(new ValidationError(
-                                        "Exception while getting Cheque Number  ",
-                                        e.getMessage())));
+                                        .asList(new ValidationError(
+                                                "Exception while getting Cheque Number  ",
+                                                e.getMessage())));
                     }
                 else
                     validateChqNumber(contraBean.getChequeNumber(),
@@ -387,7 +395,7 @@ public class ContraBTBAction extends BaseVoucherAction {
                             contraVoucher));
             updateInstrument(instrumentList.get(0), oldVoucher);
             // DepositCheque(oldVoucher, contraVoucher, instrumentList.get(0));
-            HibernateUtil.getCurrentSession().flush();
+            persistenceService.getSession().flush();
             final ContraJournalVoucher contraVoucher = addOrupdateContraJournalVoucher(
                     oldContraVoucher, instrumentList.get(0), oldVoucher);
             if (voucherHeader2 != null) {
@@ -429,11 +437,9 @@ public class ContraBTBAction extends BaseVoucherAction {
      * @param contraVoucher2
      * @return
      */
-    @Transactional
     private CVoucherHeader createLedgerAndPostForInterfund(
             final CVoucherHeader voucher, final ContraJournalVoucher contraVoucher2) {
 
-        final CreateVoucher createVoucher = new CreateVoucher();
         try {
             persistenceService.find(
                     "from Fund where id=?", contraBean.getToFundId());
@@ -441,7 +447,7 @@ public class ContraBTBAction extends BaseVoucherAction {
             createVoucher.deleteVoucherdetailAndGL(voucherHeader);
             createVoucher.deleteVoucherdetailAndGL(voucherHeader2);
 
-            HibernateUtil.getCurrentSession().flush();
+            persistenceService.getSession().flush();
             HashMap<String, Object> detailMap = null;
             List<HashMap<String, Object>> accountdetails = new ArrayList<HashMap<String, Object>>();
             final List<HashMap<String, Object>> subledgerDetails = new ArrayList<HashMap<String, Object>>();
@@ -460,10 +466,9 @@ public class ContraBTBAction extends BaseVoucherAction {
             detailMap.put(VoucherConstant.CREDITAMOUNT, "0");
             detailMap.put(VoucherConstant.GLCODE, contraBean.getSourceGlcode());
             accountdetails.add(detailMap);
-            final CreateVoucher cv = new CreateVoucher();
-            final List<Transaxtion> transactions = cv.createTransaction(null,
+            final List<Transaxtion> transactions = createVoucher.createTransaction(null,
                     accountdetails, subledgerDetails, voucher);
-            HibernateUtil.getCurrentSession().flush();
+            persistenceService.getSession().flush();
 
             Transaxtion txnList[] = new Transaxtion[transactions.size()];
             txnList = transactions.toArray(txnList);
@@ -472,9 +477,9 @@ public class ContraBTBAction extends BaseVoucherAction {
                     .getVoucherDate())))
                 throw new ValidationException(
                         Arrays
-                        .asList(new ValidationError(
-                                EXCEPTION_WHILE_SAVING_DATA,
-                                TRANSACTION_FAILED)));
+                                .asList(new ValidationError(
+                                        EXCEPTION_WHILE_SAVING_DATA,
+                                        TRANSACTION_FAILED)));
 
             accountdetails = new ArrayList<HashMap<String, Object>>();
             detailMap = new HashMap<String, Object>();
@@ -492,19 +497,19 @@ public class ContraBTBAction extends BaseVoucherAction {
             detailMap.put(VoucherConstant.GLCODE, contraVoucher
                     .getToBankAccountId().getChartofaccounts().getGlcode());
             accountdetails.add(detailMap);
-            final CreateVoucher cv1 = new CreateVoucher();
-            final List<Transaxtion> transactions2 = cv1.createTransaction(null,
+
+            final List<Transaxtion> transactions2 = createVoucher.createTransaction(null,
                     accountdetails, subledgerDetails, voucherHeader2);
-            HibernateUtil.getCurrentSession().flush();
+            persistenceService.getSession().flush();
             Transaxtion txnList2[] = new Transaxtion[transactions2.size()];
             txnList2 = transactions2.toArray(txnList2);
             if (!chartOfAccounts.postTransaxtions(txnList2, formatter.format(voucherHeader2
                     .getVoucherDate())))
                 throw new ValidationException(
                         Arrays
-                        .asList(new ValidationError(
-                                EXCEPTION_WHILE_SAVING_DATA,
-                                TRANSACTION_FAILED)));
+                                .asList(new ValidationError(
+                                        EXCEPTION_WHILE_SAVING_DATA,
+                                        TRANSACTION_FAILED)));
 
         } catch (final HibernateException e) {
             LOGGER.error(e.getMessage());
@@ -604,16 +609,22 @@ public class ContraBTBAction extends BaseVoucherAction {
         return voucherTypeBean;
     }
 
-    @Override
     @SkipValidation
     @Action(value = "/contra/contraBTB-newform")
     public String newform() {
-        reset();
-        LoadAjaxedDropDowns();
-        loadDefalutDates();
-        final Date currDate = new Date();
-        final SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
-        contraBean.setChequeDate(sdf.format(currDate));
+        try {
+
+            reset();
+            LoadAjaxedDropDowns();
+            loadDefalutDates();
+            final Date currDate = new Date();
+            final SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+            contraBean.setChequeDate(sdf.format(currDate));
+            voucherDate = sdf.parse(sdf.format(currDate));
+        } catch (ParseException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
         return NEW;
     }
 
@@ -624,11 +635,9 @@ public class ContraBTBAction extends BaseVoucherAction {
         return NEW;
     }
 
-    @Transactional
     @ValidationErrorPage(value = "reverse")
     @Action(value = "/contra/contraBTB-reverse")
     public String reverse() {
-        final CreateVoucher cv = new CreateVoucher();
         CVoucherHeader reversalVoucher = null;
         final HashMap<String, Object> reversalVoucherMap = new HashMap<String, Object>();
         reversalVoucherMap.put("Original voucher header id", voucherHeader
@@ -649,7 +658,7 @@ public class ContraBTBAction extends BaseVoucherAction {
         final List<HashMap<String, Object>> reversalList = new ArrayList<HashMap<String, Object>>();
         reversalList.add(reversalVoucherMap);
         try {
-            reversalVoucher = cv.reverseVoucher(reversalList);
+            reversalVoucher = createVoucher.reverseVoucher(reversalList);
         } catch (final ApplicationRuntimeException e) {
             LOGGER.error("Error in reverse" + e.getMessage());
             throw new ValidationException(Arrays.asList(new ValidationError(
@@ -695,10 +704,14 @@ public class ContraBTBAction extends BaseVoucherAction {
     }
 
     public boolean checkIfInterFund() {
-        contraBean.setFromFundId(voucherHeader.getFundId().getId());
-        if (contraBean.getToFundId() != null && contraBean.getFromFundId() != null
-                && !contraBean.getFromFundId().equals(contraBean.getToFundId()))
-            return true;
+        if (voucherHeader.getFundId() != null) {
+            contraBean.setFromFundId(voucherHeader.getFundId().getId());
+            if (contraBean.getToFundId() != null && contraBean.getFromFundId() != null
+                    && !contraBean.getFromFundId().equals(contraBean.getToFundId()))
+                return true;
+            else
+                return false;
+        }
         else
             return false;
     }
@@ -757,7 +770,6 @@ public class ContraBTBAction extends BaseVoucherAction {
                 }
 
         } else {
-
             if (contraBean.getFromBankId() == null
                     || contraBean.getFromBankId().equals("-1"))
                 addFieldError("contraBean.fromBankId",
@@ -775,13 +787,22 @@ public class ContraBTBAction extends BaseVoucherAction {
                     || contraBean.getToBankAccountId().equals("-1"))
                 addFieldError("contraBean.toBankAccountId()",
                         getText("toBankAccountId.required"));
-            if (contraBean.getToFundId() != null && !contraBean.getToFundId().equals("-1")) {
-                final Fund toFund = (Fund) persistenceService.find("from Fund where id=?", contraBean.getToFundId());
-                if (!toFund.getCode().equalsIgnoreCase("03"))
-                    if (contraBean.getToDepartment() == null
-                    || contraBean.getToDepartment().equals("-1"))
-                        addFieldError("contraBean.contraBean.toDepartment()",
-                                getText("toDepartment.required"));
+            /*
+             * if (contraBean.getToFundId() != null && !contraBean.getToFundId().equals("-1")) { final Fund toFund = (Fund)
+             * persistenceService.find("from Fund where id=?", contraBean.getToFundId()); if
+             * (!toFund.getCode().equalsIgnoreCase("03")) if (contraBean.getToDepartment() == null ||
+             * contraBean.getToDepartment().equals("-1")) addFieldError("contraBean.contraBean.toDepartment()",
+             * getText("toDepartment.required")); }
+             */
+            if (voucherHeader.getVouchermis().getDepartmentid() == null
+                    || voucherHeader.getVouchermis().getDepartmentid().getId() == null) {
+                addFieldError("voucherHeader.vouchermis.departmentid.id",
+                        getText("fromDepartment.required"));
+            }
+            if (voucherHeader.getVouchermis().getFunction() == null
+                    || voucherHeader.getVouchermis().getFunction().getId() == null) {
+                addFieldError("voucherHeader.vouchermis.departmentid.id",
+                        getText("fromFunction.required"));
             }
             if (egovCommon.isShowChequeNumber()
                     || contraBean.getModeOfCollection().equals(MDC_OTHER)) {
@@ -804,6 +825,10 @@ public class ContraBTBAction extends BaseVoucherAction {
                         || contraBean.getSourceGlcode().equals("-1"))
                     addFieldError("contraBean.sourceGlcode",
                             getText("sourceGlcode.required"));
+                if (contraBean.getToDepartment() == null
+                        || contraBean.getToDepartment().equals("-1"))
+                    addFieldError("contraBean.contraBean.toDepartment()",
+                            getText("toDepartment.required"));
             }
 
             if (getAmount() == null)
@@ -811,7 +836,7 @@ public class ContraBTBAction extends BaseVoucherAction {
             else
                 try {
                     contraBean.setAmount(new BigDecimal(getAmount()));
-                    
+
                     /*
                      * if Voucherdate is of previous years dont check bank balance else{ if (new
                      * BigDecimal(contraBean.getFromBankBalance()).compareTo(contraBean.getAmount()) == -1) {
@@ -842,18 +867,18 @@ public class ContraBTBAction extends BaseVoucherAction {
             final ContraJournalVoucher cjv, final InstrumentHeader ih,
             final CVoucherHeader vh) {
         cjv.setInstrumentHeaderId(ih);
-        final PersistenceService<ContraJournalVoucher, Long> contraJVService = new PersistenceService<ContraJournalVoucher, Long>();
-        //contraJVService.setType(ContraJournalVoucher.class);
         cjv.setVoucherHeaderId(vh);
         getHibObjectsFromContraBean();
         cjv.setFromBankAccountId(contraVoucher.getFromBankAccountId());
         cjv.setToBankAccountId(contraVoucher.getToBankAccountId());
         if (cjv.getId() != null) {
-            contraJVService.update(cjv);
+            contraJournalVoucherService.applyAuditing(cjv);
+            contraJournalVoucherService.update(cjv);
             if (LOGGER.isInfoEnabled())
                 LOGGER.info("Contra Journal Voucher Updated");
         } else {
-            contraJVService.persist(cjv);
+            contraJournalVoucherService.applyAuditing(cjv);
+            contraJournalVoucherService.persist(cjv);
             if (LOGGER.isInfoEnabled())
                 LOGGER.info("Contra Journal Voucher created");
         }
@@ -866,10 +891,10 @@ public class ContraBTBAction extends BaseVoucherAction {
             final HashMap<String, Object> headerDetails = createHeaderAndMisDetails();
             // update ContraBTB source path
             headerDetails
-            .put(VoucherConstant.SOURCEPATH,
-                    "/EGF/contra/contraBTB!beforeView.action?voucherHeader.id=");
+                    .put(VoucherConstant.SOURCEPATH,
+                            "/EGF/contra/contraBTB!beforeView.action?voucherHeader.id=");
             if (voucherHeader.getFundId().getCode().equalsIgnoreCase("03")) {
-                final Department department = (Department) persistenceService.find("from Department where deptCode=?", "Z");
+                final Department department = (Department) persistenceService.find("from Department where code=?", "Z");
                 headerDetails.remove(VoucherConstant.DEPARTMENTCODE);
                 headerDetails.put(VoucherConstant.DEPARTMENTCODE, department.getCode());
             }
@@ -892,8 +917,7 @@ public class ContraBTBAction extends BaseVoucherAction {
             detailMap.put(VoucherConstant.GLCODE, contraVoucher
                     .getToBankAccountId().getChartofaccounts().getGlcode());
             accountdetails.add(detailMap);
-            final CreateVoucher cv = new CreateVoucher();
-            voucherHeader = cv.createVoucher(headerDetails, accountdetails,
+            voucherHeader = createVoucher.createVoucher(headerDetails, accountdetails,
                     subledgerDetails);
 
         } catch (final HibernateException e) {
@@ -934,21 +958,22 @@ public class ContraBTBAction extends BaseVoucherAction {
             final Fund toFund = (Fund) persistenceService.find("from Fund where id=?", contraBean.getToFundId());
             Department toDepartment = new Department();
             if (contraBean.getToDepartment() != null && !contraBean.getToDepartment().equals("-1"))
-                toDepartment = (Department) persistenceService.find("from Department where id=?", contraBean.getToDepartment());
+                toDepartment = (Department) persistenceService.find("from Department where id=?", contraBean.getToDepartment()
+                        .longValue());
             // validateInterFundAccount(voucherHeader.getFundId(),toFund);
             final HashMap<String, Object> headerDetails = createHeaderAndMisDetails();
 
             headerDetails.put(VoucherConstant.VOUCHERNAME,
                     FinancialConstants.CONTRAVOUCHER_NAME_INTERFUND);
             if (voucherHeader.getFundId().getCode().equalsIgnoreCase("03")) {
-                final Department department = (Department) persistenceService.find("from Department where deptCode=?", "Z");
+                final Department department = (Department) persistenceService.find("from Department where code=?", "Z");
                 headerDetails.remove(VoucherConstant.DEPARTMENTCODE);
                 headerDetails.put(VoucherConstant.DEPARTMENTCODE, department.getCode());
             }
             // update ContraBTB source path
             headerDetails
-            .put(VoucherConstant.SOURCEPATH,
-                    "/EGF/contra/contraBTB!beforeView.action?voucherHeader.id=");
+                    .put(VoucherConstant.SOURCEPATH,
+                            "/EGF/contra/contraBTB!beforeView.action?voucherHeader.id=");
 
             HashMap<String, Object> detailMap = null;
             List<HashMap<String, Object>> accountdetails = new ArrayList<HashMap<String, Object>>();
@@ -972,8 +997,7 @@ public class ContraBTBAction extends BaseVoucherAction {
             // e
             // here
             accountdetails.add(detailMap);
-            final CreateVoucher cv = new CreateVoucher();
-            voucherHeader = cv.createVoucher(headerDetails, accountdetails,
+            voucherHeader = createVoucher.createVoucher(headerDetails, accountdetails,
                     subledgerDetails);
 
             // update ContraBTB source path
@@ -988,7 +1012,7 @@ public class ContraBTBAction extends BaseVoucherAction {
                     .getName());
             headerDetails.put(VoucherConstant.FUNDCODE, toFund.getCode());
             if (toFund.getCode().equalsIgnoreCase("03")) {
-                final Department department = (Department) persistenceService.find("from Department where deptCode=?", "Z");
+                final Department department = (Department) persistenceService.find("from Department where code=?", "Z");
                 headerDetails.remove(VoucherConstant.DEPARTMENTCODE);
                 headerDetails.put(VoucherConstant.DEPARTMENTCODE, department.getCode());
             } else {
@@ -1015,7 +1039,7 @@ public class ContraBTBAction extends BaseVoucherAction {
             detailMap.put(VoucherConstant.GLCODE, contraVoucher
                     .getToBankAccountId().getChartofaccounts().getGlcode());
             accountdetails.add(detailMap);
-            voucherHeader2 = cv.createVoucher(headerDetails, accountdetails,
+            voucherHeader2 = createVoucher.createVoucher(headerDetails, accountdetails,
                     subledgerDetails);
 
         } catch (final HibernateException e) {
@@ -1055,7 +1079,7 @@ public class ContraBTBAction extends BaseVoucherAction {
                     if (!oldInstrumentHeader.getInstrumentNumber()
                             .equalsIgnoreCase(contraBean.getChequeNumber())) {
                         instrumentService.cancelInstrument(oldInstrumentHeader);
-                        HibernateUtil.getCurrentSession().flush();
+                        persistenceService.getSession().flush();
                         validateChqNumber(contraBean.getChequeNumber(),
                                 contraVoucher2.getFromBankAccountId().getId(),
                                 oldVoucher);
@@ -1065,7 +1089,7 @@ public class ContraBTBAction extends BaseVoucherAction {
                         updateInstrument(instrumentList.get(0), oldVoucher);
                         // DepositCheque(oldVoucher, contraVoucher,
                         // instrumentList.get(0));
-                        HibernateUtil.getCurrentSession().flush();
+                        persistenceService.getSession().flush();
                         final ContraJournalVoucher contraVoucher = addOrupdateContraJournalVoucher(
                                 contraVoucher2, instrumentList.get(0),
                                 oldVoucher);
@@ -1076,7 +1100,7 @@ public class ContraBTBAction extends BaseVoucherAction {
                         if (!(oldInstrumentHeader.getInstrumentDate()
                                 .compareTo(newInstrumentDate) == 0)) {
                             oldInstrumentHeader
-                            .setInstrumentDate(newInstrumentDate);
+                                    .setInstrumentDate(newInstrumentDate);
                             updateInstrument = true;
                         }
                         if (!(oldInstrumentHeader.getInstrumentAmount()
@@ -1092,24 +1116,24 @@ public class ContraBTBAction extends BaseVoucherAction {
                     // reset
                     // transaction number and date
                     instrumentService.cancelInstrument(oldInstrumentHeader);
-                    HibernateUtil.getCurrentSession().flush();
+                    persistenceService.getSession().flush();
                     if (!egovCommon.isShowChequeNumber())
                         try {
                             contraBean
-                            .setChequeNumber(chequeService
-                                    .nextChequeNumber(contraBean
-                                            .getFromBankAccountId(), 1,
-                                            voucherHeader
-                                            .getVouchermis()
-                                            .getDepartmentid()
-                                            .getId().intValue()));
+                                    .setChequeNumber(chequeService
+                                            .nextChequeNumber(contraBean
+                                                    .getFromBankAccountId(), 1,
+                                                    voucherHeader
+                                                            .getVouchermis()
+                                                            .getDepartmentid()
+                                                            .getId().intValue()));
                         } catch (final ApplicationRuntimeException e) {
                             LOGGER.error(e.getMessage(), e);
                             throw new ValidationException(
                                     Arrays
-                                    .asList(new ValidationError(
-                                            "Exception while getting Cheque Number  ",
-                                            e.getMessage())));
+                                            .asList(new ValidationError(
+                                                    "Exception while getting Cheque Number  ",
+                                                    e.getMessage())));
                         }
                     validateChqNumber(contraBean.getChequeNumber(),
                             contraVoucher2.getFromBankAccountId().getId(),
@@ -1120,7 +1144,7 @@ public class ContraBTBAction extends BaseVoucherAction {
                     updateInstrument(instrumentList.get(0), oldVoucher);
                     // DepositCheque(oldVoucher, contraVoucher,
                     // instrumentList.get(0));
-                    HibernateUtil.getCurrentSession().flush();
+                    persistenceService.getSession().flush();
                     final ContraJournalVoucher contraVoucher = addOrupdateContraJournalVoucher(
                             contraVoucher2, instrumentList.get(0), oldVoucher);
                     createLedgerAndPost(oldVoucher, contraVoucher);
@@ -1132,14 +1156,14 @@ public class ContraBTBAction extends BaseVoucherAction {
                 // instrment number and set transaction number and date
                 if (oldInstrumentHeader.getInstrumentNumber() != null) {
                     instrumentService.cancelInstrument(oldInstrumentHeader);
-                    HibernateUtil.getCurrentSession().flush();
+                    persistenceService.getSession().flush();
                     final List<InstrumentHeader> instrumentList = instrumentService
                             .addToInstrument(createInstruments(contraBean,
                                     contraVoucher2));
                     updateInstrument(instrumentList.get(0), oldVoucher);
                     // DepositCheque(oldVoucher, contraVoucher,
                     // instrumentList.get(0));
-                    HibernateUtil.getCurrentSession().flush();
+                    persistenceService.getSession().flush();
                     final ContraJournalVoucher contraVoucher = addOrupdateContraJournalVoucher(
                             contraVoucher2, instrumentList.get(0), oldVoucher);
                     createLedgerAndPost(oldVoucher, contraVoucher);
@@ -1169,8 +1193,7 @@ public class ContraBTBAction extends BaseVoucherAction {
         }
 
         if (updateInstrument) {
-            instrumentService.instrumentHeaderService
-            .update(oldInstrumentHeader);
+            instrumentHeaderService.update(oldInstrumentHeader);
             // logic for second instrument
             if (voucherHeader2 != null) {
                 final List exludeStatusList = getExcludeStatusListForInstruments();
@@ -1209,8 +1232,7 @@ public class ContraBTBAction extends BaseVoucherAction {
                         .getSurrendarReason());
                 oldInstrumentHeader2.setStatusId(oldInstrumentHeader2
                         .getStatusId());
-                instrumentService.instrumentHeaderService
-                .update(oldInstrumentHeader2);
+                instrumentHeaderService.update(oldInstrumentHeader2);
             }
             createLedgerAndPost(oldVoucher, contraVoucher2);
         }
@@ -1221,7 +1243,6 @@ public class ContraBTBAction extends BaseVoucherAction {
      * @param oldInstrumentHeader
      * @param oldInstrumentHeader2
      */
-    @Transactional
     private List<Map<String, Object>> createInstruments(final ContraBean cBean,
             final ContraJournalVoucher cVoucher) {
         final Map<String, Object> iMap = new HashMap<String, Object>();
@@ -1243,12 +1264,12 @@ public class ContraBTBAction extends BaseVoucherAction {
 
                 try {
                     iMap
-                    .put("Instrument number", chequeService
-                            .nextChequeNumber(cVoucher
-                                    .getFromBankAccountId().getId()
-                                    .toString(), 1, voucherHeader
-                                    .getVouchermis().getDepartmentid()
-                                    .getId().intValue()));
+                            .put("Instrument number", chequeService
+                                    .nextChequeNumber(cVoucher
+                                            .getFromBankAccountId().getId()
+                                            .toString(), 1, voucherHeader
+                                            .getVouchermis().getDepartmentid()
+                                            .getId().intValue()));
                 } catch (final ApplicationRuntimeException e) {
                     LOGGER.error(e.getMessage(), e);
                     throw new ValidationException(Arrays
@@ -1290,8 +1311,8 @@ public class ContraBTBAction extends BaseVoucherAction {
             iMap.put("Transaction date", dt);
             // change this to advice type later
             iMap
-            .put("Instrument type",
-                    FinancialConstants.INSTRUMENT_TYPE_BANK);
+                    .put("Instrument type",
+                            FinancialConstants.INSTRUMENT_TYPE_BANK);
         }
         iMap.put("Is pay cheque", "1");
         iList.add(iMap);
@@ -1319,12 +1340,12 @@ public class ContraBTBAction extends BaseVoucherAction {
 
                 try {
                     iMap
-                    .put("Instrument number", chequeService
-                            .nextChequeNumber(cVoucher
-                                    .getToBankAccountId().getId()
-                                    .toString(), 1, voucherHeader
-                                    .getVouchermis().getDepartmentid()
-                                    .getId().intValue()));
+                            .put("Instrument number", chequeService
+                                    .nextChequeNumber(cVoucher
+                                            .getToBankAccountId().getId()
+                                            .toString(), 1, voucherHeader
+                                            .getVouchermis().getDepartmentid()
+                                            .getId().intValue()));
                 } catch (final ApplicationRuntimeException e) {
                     throw new ValidationException(Arrays
                             .asList(new ValidationError(
@@ -1363,25 +1384,23 @@ public class ContraBTBAction extends BaseVoucherAction {
             iMap.put("Transaction date", dt);
             // change this to advice type later
             iMap
-            .put("Instrument type",
-                    FinancialConstants.INSTRUMENT_TYPE_BANK);
+                    .put("Instrument type",
+                            FinancialConstants.INSTRUMENT_TYPE_BANK);
         }
         iMap.put("Is pay cheque", "0");
         iList.add(iMap);
         return iList;
     }
 
-    @Transactional
     private void createLedgerAndPost(final CVoucherHeader voucher,
             final ContraJournalVoucher contraVoucher) {
-        final CreateVoucher createVoucher = new CreateVoucher();
 
         try {
             if (voucherHeader2 != null)
                 createLedgerAndPostForInterfund(voucher, contraVoucher);
             else {
                 createVoucher.deleteVoucherdetailAndGL(voucher);
-                HibernateUtil.getCurrentSession().flush();
+                persistenceService.getSession().flush();
                 HashMap<String, Object> detailMap = null;
                 final List<HashMap<String, Object>> accountdetails = new ArrayList<HashMap<String, Object>>();
                 final List<HashMap<String, Object>> subledgerDetails = new ArrayList<HashMap<String, Object>>();
@@ -1402,10 +1421,9 @@ public class ContraBTBAction extends BaseVoucherAction {
                 detailMap.put(VoucherConstant.GLCODE, contraVoucher
                         .getToBankAccountId().getChartofaccounts().getGlcode());
                 accountdetails.add(detailMap);
-                final CreateVoucher cv = new CreateVoucher();
-                final List<Transaxtion> transactions = cv.createTransaction(
+                final List<Transaxtion> transactions = createVoucher.createTransaction(
                         null, accountdetails, subledgerDetails, voucher);
-                HibernateUtil.getCurrentSession().flush();
+                persistenceService.getSession().flush();
 
                 Transaxtion txnList[] = new Transaxtion[transactions.size()];
                 txnList = transactions.toArray(txnList);
@@ -1450,9 +1468,9 @@ public class ContraBTBAction extends BaseVoucherAction {
         if (branchId != null)
             // as per 1781 story
             accountNumbersList = persistenceService
-            .findAllBy(
-                    "from Bankaccount account where account.bankbranch.id=? and account.fund.id=?  and account.isactive=1 ",
-                    branchId, fundId);
+                    .findAllBy(
+                            "from Bankaccount account where account.bankbranch.id=? and account.fund.id=?  and account.isactive=true ",
+                            branchId, fundId);
         return accountNumbersList;
     }
 
@@ -1465,7 +1483,7 @@ public class ContraBTBAction extends BaseVoucherAction {
                     .findAllBy(
                             "select DISTINCT concat(concat(bank.id,'-'),bankBranch.id) as bankbranchid,concat(concat(bank.name,' '),bankBranch.branchname) as bankbranchname "
                                     + " FROM Bank bank,Bankbranch bankBranch,Bankaccount bankaccount "
-                                    + " where  bank.isactive=1  and bankBranch.isactive=1 and bankaccount.isactive=1 and bank.id = bankBranch.bank.id and bankBranch.id = bankaccount.bankbranch.id"
+                                    + " where  bank.isactive=true  and bankBranch.isactive=true and bankaccount.isactive=true and bank.id = bankBranch.bank.id and bankBranch.id = bankaccount.bankbranch.id"
                                     + " and bankaccount.fund.id=?", fundId);
             for (final Object[] element : bankBranch)
                 bankBrmap.put(element[0].toString(), element[1].toString());
@@ -1480,11 +1498,11 @@ public class ContraBTBAction extends BaseVoucherAction {
         final String bankQry = "from Bankaccount where id=?";
         if (contraBean != null && contraBean.getFromBankAccountId() != null && !contraBean.getFromBankAccountId().equals("-1"))
             contraVoucher.setFromBankAccountId((Bankaccount) persistenceService.find(bankQry,
-                    Integer.valueOf(contraBean.getFromBankAccountId())));
+                    Long.valueOf(contraBean.getFromBankAccountId())));
         if (contraBean != null && contraBean.getToBankAccountId() != null
                 && !contraBean.getFromBankAccountId().equals("-1"))
             contraVoucher.setToBankAccountId((Bankaccount) persistenceService.find(bankQry,
-                    Integer.valueOf(contraBean.getToBankAccountId())));
+                    Long.valueOf(contraBean.getToBankAccountId())));
     }
 
     /*
@@ -1510,11 +1528,11 @@ public class ContraBTBAction extends BaseVoucherAction {
             final String[] split = fromBankId.split("-");
             if (split[1] != null && !split[1].isEmpty())
                 if (contraBean.getFromFundId() != null
-                && contraBean.getFromFundId() != -1)
+                        && contraBean.getFromFundId() != -1)
 
                     addDropdownData("fromAccNumList", getAccountNumbers(Integer
                             .valueOf(split[1]), Integer.valueOf(contraBean
-                                    .getFromFundId()), "RECEIPTS_PAYMENTS,RECEIPTS"));
+                            .getFromFundId()), "RECEIPTS_PAYMENTS,RECEIPTS"));
                 else
                     addDropdownData("fromAccNumList", Collections.EMPTY_LIST);
         } else
@@ -1554,16 +1572,15 @@ public class ContraBTBAction extends BaseVoucherAction {
      *
      */
     private void loadBankBalances() {
-        final EgovCommon common = new EgovCommon();
-        common.setPersistenceService(persistenceService);
-        common.setFundFlowService(fundFlowService);
+        egovCommon.setPersistenceService(persistenceService);
+        egovCommon.setFundFlowService(fundFlowService);
         if (contraVoucher != null
                 && contraVoucher.getFromBankAccountId() != null) {
             if (LOGGER.isInfoEnabled())
                 LOGGER.info(voucherHeader.getVoucherDate());
             BigDecimal fromBalance;
             try {
-                fromBalance = common.getAccountBalance(voucherHeader
+                fromBalance = egovCommon.getAccountBalance(voucherHeader
                         .getVoucherDate(), contraVoucher.getFromBankAccountId()
                         .getId());
             } catch (final Exception e) {
@@ -1578,7 +1595,7 @@ public class ContraBTBAction extends BaseVoucherAction {
         if (contraVoucher != null && contraVoucher.getToBankAccountId() != null) {
             BigDecimal toBalance;
             try {
-                toBalance = common.getAccountBalance(voucherHeader
+                toBalance = egovCommon.getAccountBalance(voucherHeader
                         .getVoucherDate(), contraVoucher.getToBankAccountId()
                         .getId());
             } catch (final Exception e) {
@@ -1615,12 +1632,11 @@ public class ContraBTBAction extends BaseVoucherAction {
     private void prepareForViewModifyReverse() {
         voucherHeader = (CVoucherHeader) persistenceService.find(
                 "from CVoucherHeader where id=?", voucherHeader.getId());
-        if (voucherHeader.getVoucherNumber() != null) {
+        if (voucherHeader.getRefvhId() != null) {
             voucherHeaderDes = voucherHeader;
             voucherHeader = (CVoucherHeader) persistenceService.find(
-                    "from CVoucherHeader where voucherNumber=?", voucherHeader
-                    .getVoucherNumber());
-        } 
+                    "from CVoucherHeader where id =?", voucherHeader.getRefvhId());
+        }
 
         if (LOGGER.isDebugEnabled())
             LOGGER.debug("voucherHeader.fundId.id"
@@ -1633,7 +1649,7 @@ public class ContraBTBAction extends BaseVoucherAction {
         for (final CGeneralLedger generalled : generalLedgerSrcList)
             if (!generalled.getGlcode().equals(
                     contraVoucher.getFromBankAccountId().getChartofaccounts()
-                    .getGlcode()))
+                            .getGlcode()))
                 contraBean.setSourceGlcode(generalled.getGlcode());
         contraBean.setFromFundId(voucherHeader.getFundId().getId());
         contraBean.setFromBankAccountId(contraVoucher.getFromBankAccountId()
@@ -1649,8 +1665,15 @@ public class ContraBTBAction extends BaseVoucherAction {
                     "from CGeneralLedger where voucherHeaderId = ?",
                     voucherHeaderDes);
             for (final CGeneralLedger generalled : generalLedgerDesList)
-                if (!generalled.getGlcode().equals(
-                        contraVoucher.getToBankAccountId().getChartofaccounts()
+                if (!generalled.getGlcode().equalsIgnoreCase(contraVoucher.getToBankAccountId().getChartofaccounts()
+                        .getGlcode()))
+                    contraBean.setDestinationGlcode(generalled.getGlcode());
+        } else {
+            generalLedgerDesList = persistenceService.findAllBy(
+                    "from CGeneralLedger where voucherHeaderId.refvhId = ?",
+                    voucherHeader.getId());
+            for (final CGeneralLedger generalled : generalLedgerDesList)
+                if (!generalled.getGlcode().equalsIgnoreCase(contraVoucher.getToBankAccountId().getChartofaccounts()
                         .getGlcode()))
                     contraBean.setDestinationGlcode(generalled.getGlcode());
         }
@@ -1661,12 +1684,12 @@ public class ContraBTBAction extends BaseVoucherAction {
                 .getBankbranch().getBank().getId().toString()
                 + "-"
                 + contraVoucher.getFromBankAccountId().getBankbranch().getId()
-                .toString();
+                        .toString();
         final String toBankAndBranchId = contraVoucher.getToBankAccountId()
                 .getBankbranch().getBank().getId().toString()
                 + "-"
                 + contraVoucher.getToBankAccountId().getBankbranch().getId()
-                .toString();
+                        .toString();
 
         contraBean.setFromBankId(fromBankAndBranchId);
         contraBean.setToBankId(toBankAndBranchId);
@@ -1679,7 +1702,7 @@ public class ContraBTBAction extends BaseVoucherAction {
                         exludeStatusList.get(0), voucherHeader);
         if (instrumentVoucher == null) {
             LOGGER
-            .error("System Error :Instrument is not linked with voucher ");
+                    .error("System Error :Instrument is not linked with voucher ");
             throw new ApplicationRuntimeException(
                     " System Error :Instrument is not linked with voucher  ");
         }
@@ -1709,7 +1732,6 @@ public class ContraBTBAction extends BaseVoucherAction {
     /**
      * @param id
      */
-    @Transactional
     private void updateInstrument(final InstrumentHeader ih,
             final CVoucherHeader vh) {
         final Map<String, Object> iMap = new HashMap<String, Object>();
@@ -1809,11 +1831,11 @@ public class ContraBTBAction extends BaseVoucherAction {
         this.fromAccnumnar = fromAccnumnar;
     }
 
-	public ChartOfAccounts getChartOfAccounts() {
-		return chartOfAccounts;
-	}
+    public ChartOfAccounts getChartOfAccounts() {
+        return chartOfAccounts;
+    }
 
-	public void setChartOfAccounts(ChartOfAccounts chartOfAccounts) {
-		this.chartOfAccounts = chartOfAccounts;
-	}
+    public void setChartOfAccounts(ChartOfAccounts chartOfAccounts) {
+        this.chartOfAccounts = chartOfAccounts;
+    }
 }

@@ -39,6 +39,9 @@
  ******************************************************************************/
 package org.egov.web.actions.masters;
 
+
+import org.egov.infstr.services.PersistenceService;
+import org.springframework.beans.factory.annotation.Qualifier;
 import java.util.Arrays;
 import java.util.List;
 
@@ -56,13 +59,14 @@ import org.egov.infra.web.struts.actions.BaseFormAction;
 import org.egov.infra.web.struts.annotation.ValidationErrorPage;
 import org.egov.infstr.utils.EgovMasterDataCaching;
 import org.egov.infstr.utils.HibernateUtil;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.beans.factory.annotation.Autowired;
+
 
 import com.opensymphony.xwork2.validator.annotations.Validation;
 
 @ParentPackage("egov")
 @Validation()
-@Transactional(readOnly = true)
+
 @Results({
     @Result(name = PartyTypeAction.NEW, location = "partyType-" + PartyTypeAction.NEW + ".jsp"),
     @Result(name = "search", location = "partyType-search.jsp"),
@@ -81,6 +85,13 @@ public class PartyTypeAction extends BaseFormAction {
     private String success = "";
     protected static final Logger LOGGER = Logger.getLogger(PartyTypeAction.class);
 
+   
+ @Autowired
+ @Qualifier("persistenceService")
+ private PersistenceService persistenceService;
+ @Autowired
+    private EgovMasterDataCaching masterDataCache;
+    
     @Override
     @SkipValidation
     public Object getModel() {
@@ -114,21 +125,21 @@ public class PartyTypeAction extends BaseFormAction {
             partyType.setCode(partyType.getCode());
             partyType.setDescription(partyType.getDescription());
 
-            EgovMasterDataCaching.getInstance().removeFromCache("egi-partyTypeMaster");
-            EgovMasterDataCaching.getInstance().removeFromCache("egi-partyTypeAllChild");
-            EgovMasterDataCaching.getInstance().removeFromCache("egi-typeOfWorkParent");
-            EgovMasterDataCaching.getInstance().removeFromCache("egi-coaCodesForLiability");
+            masterDataCache.removeFromCache("egi-partyTypeMaster");
+            masterDataCache.removeFromCache("egi-partyTypeAllChild");
+            masterDataCache.removeFromCache("egi-typeOfWorkParent");
+            masterDataCache.removeFromCache("egi-coaCodesForLiability");
 
-            EgovMasterDataCaching.getInstance().removeFromCache("egi-tds");
-            EgovMasterDataCaching.getInstance().removeFromCache("egi-tdsType");
-            EgovMasterDataCaching.getInstance().removeFromCache("egi-recovery");
-            EgovMasterDataCaching.getInstance().removeFromCache("egi-egwTypeOfWork");
-            EgovMasterDataCaching.getInstance().removeFromCache("egi-egwSubTypeOfWork");
+            masterDataCache.removeFromCache("egi-tds");
+            masterDataCache.removeFromCache("egi-tdsType");
+            masterDataCache.removeFromCache("egi-recovery");
+            masterDataCache.removeFromCache("egi-egwTypeOfWork");
+            masterDataCache.removeFromCache("egi-egwSubTypeOfWork");
 
             //persistenceService.setType(EgPartytype.class);
             persistenceService.persist(partyType);
-            HibernateUtil.getCurrentSession().flush();
-            HibernateUtil.getCurrentSession().clear();
+            persistenceService.getSession().flush();
+            persistenceService.getSession().clear();
             setSuccess("yes");
         } catch (final Exception e) {
             setSuccess("no");
@@ -157,16 +168,16 @@ public class PartyTypeAction extends BaseFormAction {
 
             setPartyType(partyOld);
 
-            EgovMasterDataCaching.getInstance().removeFromCache("egi-partyTypeMaster");
-            EgovMasterDataCaching.getInstance().removeFromCache("egi-partyTypeAllChild");
-            EgovMasterDataCaching.getInstance().removeFromCache("egi-typeOfWorkParent");
-            EgovMasterDataCaching.getInstance().removeFromCache("egi-coaCodesForLiability");
+            masterDataCache.removeFromCache("egi-partyTypeMaster");
+            masterDataCache.removeFromCache("egi-partyTypeAllChild");
+            masterDataCache.removeFromCache("egi-typeOfWorkParent");
+            masterDataCache.removeFromCache("egi-coaCodesForLiability");
 
-            EgovMasterDataCaching.getInstance().removeFromCache("egi-tds");
-            EgovMasterDataCaching.getInstance().removeFromCache("egi-tdsType");
-            EgovMasterDataCaching.getInstance().removeFromCache("egi-recovery");
-            EgovMasterDataCaching.getInstance().removeFromCache("egi-egwTypeOfWork");
-            EgovMasterDataCaching.getInstance().removeFromCache("egi-egwSubTypeOfWork");
+            masterDataCache.removeFromCache("egi-tds");
+            masterDataCache.removeFromCache("egi-tdsType");
+            masterDataCache.removeFromCache("egi-recovery");
+            masterDataCache.removeFromCache("egi-egwTypeOfWork");
+            masterDataCache.removeFromCache("egi-egwSubTypeOfWork");
 
             //persistenceService.setType(EgPartytype.class);
             persistenceService.persist(partyType);
@@ -202,7 +213,7 @@ public class PartyTypeAction extends BaseFormAction {
             query.append(" and egPartytype =" + partyType.getEgPartytype());
         partySearchList = persistenceService.findAllBy(query.toString());
 
-        // this.partySearchList = EgovMasterDataCaching.getInstance().get(query.toString());
+        // this.partySearchList = masterDataCache.get(query.toString());
         return "search";
     }
 

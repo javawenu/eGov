@@ -50,7 +50,6 @@ import org.apache.struts2.convention.annotation.Action;
 import org.apache.struts2.convention.annotation.ParentPackage;
 import org.apache.struts2.convention.annotation.Result;
 import org.apache.struts2.interceptor.validation.SkipValidation;
-import org.egov.commons.service.CommonsService;
 import org.egov.eis.entity.Assignment;
 import org.egov.eis.entity.DrawingOfficer;
 import org.egov.infra.admin.master.entity.User;
@@ -64,7 +63,7 @@ import org.egov.infra.workflow.entity.StateAware;
 import org.egov.infra.workflow.service.WorkflowService;
 import org.egov.infstr.utils.DateUtils;
 import org.egov.model.advance.EgAdvanceRequisitionDetails;
-import org.egov.works.models.contractorBill.ContractorBillRegister;
+import org.egov.works.contractorbill.entity.ContractorBillRegister;
 import org.egov.works.models.contractoradvance.ContractorAdvanceRequisition;
 import org.egov.works.models.measurementbook.MBHeader;
 import org.egov.works.models.workorder.WorkOrderEstimate;
@@ -84,8 +83,6 @@ public class ContractorAdvanceRequisitionAction extends BaseFormAction {
     private Long id;
     private WorkOrderEstimate workOrderEstimate = new WorkOrderEstimate();
     private BigDecimal advancePaid = BigDecimal.ZERO;
-    @Autowired
-    private CommonsService commonsService;
     private WorksService worksService;
     private ContractorAdvanceService contractorAdvanceService;
     private static final String ADVANCE_COA_LIST = "advanceAccountCodeList";
@@ -346,14 +343,6 @@ public class ContractorAdvanceRequisitionAction extends BaseFormAction {
 
     public void setWorksService(final WorksService worksService) {
         this.worksService = worksService;
-    }
-
-    public CommonsService getCommonsService() {
-        return commonsService;
-    }
-
-    public void setCommonsService(final CommonsService commonsService) {
-        this.commonsService = commonsService;
     }
 
     public Long getAdvanceAccountCode() {

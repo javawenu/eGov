@@ -39,6 +39,8 @@
 #-------------------------------------------------------------------------------*/
 $createdDate="";
 jQuery('#btnsearch').click(function(e) {
+	$('#btndownloadpdf').hide();
+	$('#btndownloadexcel').hide();
 	var adminSanctionFromDate = '';
 	var adminSanctionToDate = '';
 	if($('#adminSanctionFromDate').val() != "") {
@@ -54,7 +56,7 @@ jQuery('#btnsearch').click(function(e) {
 			bootbox.alert('Admin Sanction To Date should be greater than Admin Sanction From Date');
 		}
 	}
-	if(flag)
+	if(flag && $('form').valid())
 		callAjaxSearch();
 	
 	var spillOver = document.getElementById("spillOverFlag");
@@ -173,6 +175,8 @@ function callAjaxSearch() {
 					"aButtons" : []
 				},
 				"fnRowCallback" : function(row, data, index) {
+					$('#btndownloadpdf').show();
+					$('#btndownloadexcel').show();
 					$('td:eq(0)',row).html(index+1);
 					if(data.adminSanctionAmount != "")
 						$('td:eq(13)',row).html(parseFloat(Math.round(data.adminSanctionAmount * 100) / 100).toFixed(2));
@@ -198,7 +202,7 @@ function callAjaxSearch() {
 						$('td:eq(25)',row).html(parseFloat(Math.round(data.balanceValueOfWorkToBill * 100) / 100).toFixed(2));
 					else
 						$('td:eq(25)',row).html('NA');
-					if(index == reportdatatable.fnSettings().fnRecordsTotal() - 1) {
+					if(index == 0) {
 						$createdDate = data.createdDate;
 						var dataRunmTime = "The information in this report is not real time, it provides information of the transactions that happened till " + $createdDate;
 						$('#dataRun').html(dataRunmTime);
@@ -222,7 +226,7 @@ function callAjaxSearch() {
 					"data" : "subTypeOfWork", "sClass" : "text-left"} ,{
 					"data" : "adminSanctionAuthorityDate", "sClass" : "text-left"} ,{
 					"data" : "adminSanctionAmount", "sClass" : "text-right"}, {
-					"data" : "technicalSanctionAuthorityDate", "sClass" : "text-right"}, {
+					"data" : "technicalSanctionAuthorityDate", "sClass" : "text-center"}, {
 					"data" : "estimateAmount", "sClass" : "text-right"}, {
 					"data" : "modeOfAllotment", "sClass" : "text-right"}, {
 					"data" : "agreementNumberDate", "sClass" : "text-right"}, {

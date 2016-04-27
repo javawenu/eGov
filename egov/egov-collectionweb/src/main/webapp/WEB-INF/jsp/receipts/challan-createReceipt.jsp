@@ -488,11 +488,6 @@ function checkForCurrentDate(obj)
 	       dom.get("challan_dateerror_area").style.display="block";
 	       document.getElementById("challan_dateerror_area").innerHTML+=
 					'<s:text name="billreceipt.datelessthancurrentdate.errormessage" />'+ '<br>';
-		   var keyCode = document.all? window.event.keyCode:event.which;
-		   if(keyCode==9) {
-	       window.scroll(0,0);
-		   }
-		   window.scroll(0,0);
 	       return false;
 	   }
    }
@@ -800,7 +795,9 @@ function autocompletecodeBank(obj,myEvent)
 				oAutoComp.useShadow = true;
 				oAutoComp.maxResultsDisplayed = 15;
 				oAutoComp.useIFrame = true;
-				
+				bankfuncObj.applyLocalFilter = true;
+				bankfuncObj.queryMatchContains = true;
+				oAutoComp.minQueryLength = 0;
 			}
 		}
 		yuiflagBank[currRow] = 1;

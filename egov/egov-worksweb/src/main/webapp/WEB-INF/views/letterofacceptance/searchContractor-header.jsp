@@ -41,14 +41,11 @@
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
 <%@ taglib uri="http://www.springframework.org/tags" prefix="spring"%>
 <%@ taglib uri="http://www.springframework.org/tags/form" prefix="form"%>
-<%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt"%>
-		<form:form name="SearchRequestForLOA" role="form" action=""
-			modelAttribute="searchRequestLetterOfAcceptance"
-			id="searchRequestLetterOfAcceptance"
-			class="form-horizontal form-groups-bordered">
+<%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
+		<form:form name="SearchRequest" role="form" action="" modelAttribute="searchRequestContractor" id="searchRequestContractor" class="form-horizontal form-groups-bordered">
 			<div class="row">
 				<div class="col-md-12">
-					<jsp:include page="searchLOACreateContractor-form.jsp" />
+					<jsp:include page="searchContractor-form.jsp"/>
 				</div>
 			</div>
 			<div class="row">
@@ -57,11 +54,11 @@
 						<spring:message code='lbl.search' />
 					</button>
 					<a href='javascript:void(0)' class='btn btn-default'
-						onclick='self.close()'><spring:message code='lbl.close' /></a>
+				onclick='self.close()'><spring:message code='lbl.close' /></a>
 				</div>
 			</div>
-		</form:form>
-<jsp:include page="searchLOaContractorBill-searchResult.jsp" />
+		</form:form>  
+	<jsp:include page="contractor-searchResult.jsp"/>
 <script>
 	$('#btnsearch').click(function(e) {
 		if ($('form').valid()) {
@@ -70,5 +67,4 @@
 		}
 	});
 </script>
-<script
-	src="<c:url value='/resources/js/searchloacreatecontractorbill.js?rnd=${app_release_no}'/>"></script>
+<script src="<c:url value='/resources/js/searchcontractorhelper.js?rnd=${app_release_no}'/>"></script>

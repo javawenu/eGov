@@ -64,8 +64,6 @@ import org.egov.works.models.contractorBill.DeductionTypeForBill;
 import org.egov.works.models.contractorBill.StatutoryDeductionsForBill;
 import org.egov.works.models.measurementbook.MBHeader;
 import org.egov.works.models.workorder.WorkOrder;
-import org.springframework.web.bind.annotation.ModelAttribute;
-
 
 @Entity
 @Table(name = "EGW_CONTRACTORBILL")
@@ -94,7 +92,7 @@ public class ContractorBillRegister extends EgBillregister {
 
     @OneToMany(orphanRemoval = true, cascade = CascadeType.ALL, fetch = FetchType.LAZY, mappedBy = "egBillReg", targetEntity = StatutoryDeductionsForBill.class)
     private List<StatutoryDeductionsForBill> statutoryDeductionsList = new LinkedList<StatutoryDeductionsForBill>();
-    
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "approvedBy")
     private User approvedBy;
@@ -105,9 +103,8 @@ public class ContractorBillRegister extends EgBillregister {
     @Transient
     private List<String> billActions = new ArrayList<String>();
 
-    @Transient
-    private List<DocumentDetails> documentDetails = new ArrayList<DocumentDetails>(0);
-    
+    private final transient List<DocumentDetails> documentDetails = new ArrayList<DocumentDetails>(0);
+
     @Transient
     private List<EgBilldetails> billDetailes = new ArrayList<EgBilldetails>(0);
 
@@ -116,7 +113,7 @@ public class ContractorBillRegister extends EgBillregister {
 
     @Transient
     private String approvalComent;
-    
+
     @Transient
     private MBHeader mbHeader;
 
@@ -206,14 +203,16 @@ public class ContractorBillRegister extends EgBillregister {
     }
 
     public void setDocumentDetails(final List<DocumentDetails> documentDetails) {
-        this.documentDetails = documentDetails;
+        this.documentDetails.clear();
+        if (documentDetails != null)
+            this.documentDetails.addAll(documentDetails);
     }
 
     public List<EgBilldetails> getBillDetailes() {
         return billDetailes;
     }
 
-    public void setBillDetailes(List<EgBilldetails> billDetailes) {
+    public void setBillDetailes(final List<EgBilldetails> billDetailes) {
         this.billDetailes = billDetailes;
     }
 
@@ -221,7 +220,7 @@ public class ContractorBillRegister extends EgBillregister {
         return approvalDepartment;
     }
 
-    public void setApprovalDepartment(Long approvalDepartment) {
+    public void setApprovalDepartment(final Long approvalDepartment) {
         this.approvalDepartment = approvalDepartment;
     }
 
@@ -229,7 +228,7 @@ public class ContractorBillRegister extends EgBillregister {
         return approvalComent;
     }
 
-    public void setApprovalComent(String approvalComent) {
+    public void setApprovalComent(final String approvalComent) {
         this.approvalComent = approvalComent;
     }
 
@@ -237,7 +236,7 @@ public class ContractorBillRegister extends EgBillregister {
         return approvedBy;
     }
 
-    public void setApprovedBy(User approvedBy) {
+    public void setApprovedBy(final User approvedBy) {
         this.approvedBy = approvedBy;
     }
 
@@ -245,7 +244,7 @@ public class ContractorBillRegister extends EgBillregister {
         return mbHeader;
     }
 
-    public void setMbHeader(MBHeader mbHeader) {
+    public void setMbHeader(final MBHeader mbHeader) {
         this.mbHeader = mbHeader;
     }
 }

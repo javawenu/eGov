@@ -55,11 +55,14 @@ import org.egov.eis.service.DesignationService;
 import org.egov.pims.commons.Designation;
 import org.egov.works.contractorbill.entity.ContractorBillRegister;
 import org.egov.works.contractorbill.entity.enums.BillTypes;
+import org.egov.works.letterofacceptance.entity.SearchRequestContractor;
 import org.egov.works.letterofacceptance.entity.SearchRequestLetterOfAcceptance;
 import org.egov.works.letterofacceptance.repository.LetterOfAcceptanceRepository;
 import org.egov.works.lineestimate.entity.DocumentDetails;
 import org.egov.works.lineestimate.repository.LineEstimateDetailsRepository;
 import org.egov.works.lineestimate.service.LineEstimateService;
+import org.egov.works.models.masters.Contractor;
+import org.egov.works.models.masters.ContractorDetail;
 import org.egov.works.models.workorder.WorkOrder;
 import org.egov.works.services.WorksService;
 import org.egov.works.utils.WorksConstants;
@@ -68,6 +71,7 @@ import org.hibernate.Criteria;
 import org.hibernate.Session;
 import org.hibernate.criterion.CriteriaSpecification;
 import org.hibernate.criterion.MatchMode;
+import org.hibernate.criterion.Order;
 import org.hibernate.criterion.Restrictions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -100,7 +104,7 @@ public class LetterOfAcceptanceService {
 
     @Autowired
     private LineEstimateDetailsRepository lineEstimateDetailsRepository;
-    
+
     @Autowired
     private LineEstimateService lineEstimateService;
 
@@ -191,7 +195,10 @@ public class LetterOfAcceptanceService {
         // TODO Need TO handle in single query
         final List<String> estimateNumbers = lineEstimateDetailsRepository
                 .findEstimateNumbersForDepartment(searchRequestLetterOfAcceptance.getDepartmentName());
+        if (estimateNumbers.isEmpty())
+            estimateNumbers.add("");
         final Criteria criteria = entityManager.unwrap(Session.class).createCriteria(WorkOrder.class, "wo")
+                .addOrder(Order.asc("workOrderDate"))
                 .createAlias("wo.contractor", "woc")
                 .createAlias("egwStatus", "status");
         if (searchRequestLetterOfAcceptance != null) {
@@ -208,8 +215,7 @@ public class LetterOfAcceptanceService {
                         Restrictions.ilike("fileNumber", searchRequestLetterOfAcceptance.getFileNumber(), MatchMode.ANYWHERE));
             if (searchRequestLetterOfAcceptance.getEstimateNumber() != null)
                 criteria.add(Restrictions.eq("estimateNumber", searchRequestLetterOfAcceptance.getEstimateNumber()));
-            if (searchRequestLetterOfAcceptance.getDepartmentName() != null
-                    && !searchRequestLetterOfAcceptance.getEstimateNumber().isEmpty())
+            if (searchRequestLetterOfAcceptance.getDepartmentName() != null)
                 criteria.add(Restrictions.in("estimateNumber", estimateNumbers));
             if (searchRequestLetterOfAcceptance.getEgwStatus() != null)
                 criteria.add(Restrictions.eq("status.code", searchRequestLetterOfAcceptance.getEgwStatus()));
@@ -220,7 +226,8 @@ public class LetterOfAcceptanceService {
 
     public List<WorkOrder> searchLetterOfAcceptanceForContractorBill(
             final SearchRequestLetterOfAcceptance searchRequestLetterOfAcceptance) {
-        final List<String> estimateNumbers = lineEstimateService.getEstimateNumberForDepartment(searchRequestLetterOfAcceptance.getDepartmentName());
+        final List<String> estimateNumbers = lineEstimateService
+                .getEstimateNumberForDepartment(searchRequestLetterOfAcceptance.getDepartmentName());
         if (estimateNumbers.isEmpty())
             estimateNumbers.add("");
         // TODO: replace fetching workorders by query with criteria alias
@@ -295,14 +302,30 @@ public class LetterOfAcceptanceService {
         return results;
     }
 
-    public Boolean validateContractorBillInWorkflowForWorkorder(Long workOrderId) {
+    public Boolean validateContractorBillInWorkflowForWorkorder(final Long workOrderId) {
         final List<String> results = letterOfAcceptanceRepository.getContractorBillInWorkflowForWorkorder(workOrderId,
                 ContractorBillRegister.BillStatus.CANCELLED.toString(), ContractorBillRegister.BillStatus.APPROVED.toString());
-        if(results.isEmpty())
+        if (results.isEmpty())
             return true;
         else
             return false;
     }
-
+    
+    public List<ContractorDetail> searchContractorDetails(final SearchRequestContractor searchRequestContractor) {
+        final Criteria criteria = entityManager.unwrap(Session.class).createCriteria(ContractorDetail.class, "cd")
+                .createAlias("contractor", "contractor");
+        if (searchRequestContractor != null) {
+            if (searchRequestContractor.getDepartment() != null)
+                criteria.add(Restrictions.eq("department.id", searchRequestContractor.getDepartment()));
+            if (searchRequestContractor.getContractorClass() != null)
+                criteria.add(Restrictions.ge("grade.id", searchRequestContractor.getContractorClass()));
+            if (searchRequestContractor.getContractorCode() != null)
+                criteria.add(Restrictions.ilike("contractor.code", searchRequestContractor.getContractorCode(), MatchMode.ANYWHERE));
+            if (searchRequestContractor.getNameOfAgency() != null)
+                criteria.add(Restrictions.eq("contractor.name", searchRequestContractor.getNameOfAgency()));
+        }
+        criteria.setResultTransformer(CriteriaSpecification.DISTINCT_ROOT_ENTITY);
+        return criteria.list();
+    }
 
 }

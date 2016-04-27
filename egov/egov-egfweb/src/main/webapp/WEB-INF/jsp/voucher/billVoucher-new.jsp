@@ -63,7 +63,7 @@
 			</div>
 			<div id="listid" style="display: block">
 				<br />
-				<div align="center">
+				<div align="left">
 					<font style='color: red; font-weight: bold'>
 						<p class="error-block" id="lblError"></p>
 					</font> <span class="mandatory1"> <font
@@ -123,7 +123,7 @@
 						<td><s:submit value="Search" onclick="return validate()"
 								cssClass="buttonsubmit" />&nbsp;</td>
 						<td><input type="button" value="Reset" class="button"
-							onclick="return resetForm()" />&nbsp;</td>
+							onclick="return resetForm();" />&nbsp;</td>
 						<td><input type="button" value="Close"
 							onclick="javascript:window.close()" class="button" />&nbsp;</td>
 					</tr>
@@ -131,7 +131,7 @@
 			</div>
 		</div>
 		<s:if
-			test="%{preApprovedVoucherList.size!=0 || preApprovedVoucherList!=null}">
+			test="%{preApprovedVoucherList.size!=0 && preApprovedVoucherList!=null}">
 			<div id="listid" style="display: block">
 				<table width="100%" align="center" class="tablebottom">
 					<tr>
@@ -213,7 +213,7 @@ return true;
 	{
 
 		document.getElementById("expType").value=-1;
-		document.getElementById("deptLabel").value=-1;
+		document.getElementById("departmentid").value=-1;
 		document.getElementById("voucherDateFrom").value="";
 		document.getElementById("voucherDateTo").value="";
 		document.getElementById("billNumber").value="";

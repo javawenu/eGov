@@ -42,6 +42,7 @@ package org.egov.stms.utils;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
 
 import org.egov.commons.EgwStatus;
 import org.egov.eis.entity.Assignment;
@@ -66,6 +67,7 @@ import org.egov.infstr.services.PersistenceService;
 import org.egov.pims.commons.Designation;
 import org.egov.pims.commons.Position;
 import org.egov.ptis.domain.model.AssessmentDetails;
+import org.egov.ptis.domain.model.enums.BasicPropertyStatus;
 import org.egov.ptis.domain.service.property.PropertyExternalService;
 import org.egov.ptis.wtms.PropertyIntegrationService;
 import org.egov.stms.transactions.entity.SewerageApplicationDetails;
@@ -132,7 +134,7 @@ public class SewerageTaxUtils {
 
     public AssessmentDetails getAssessmentDetailsForFlag(final String asessmentNumber, final Integer flagDetail) {
         final AssessmentDetails assessmentDetails = propertyIntegrationService.getAssessmentDetailsForFlag(asessmentNumber,
-                flagDetail);
+                flagDetail,BasicPropertyStatus.ACTIVE); //TODO: CHECK AGAIN. ADDED "BasicPropertyStatus.ACTIVE" TO FIX COMPILATION ISSUES.
         return assessmentDetails;
     }
 
@@ -223,7 +225,7 @@ public class SewerageTaxUtils {
     }
 
     public Long getApproverPosition(final String designationName, final SewerageApplicationDetails sewerageApplicationDetails) {
-        final List<StateHistory> stateHistoryList = sewerageApplicationDetails.getState().getHistory();
+        final Set<StateHistory> stateHistoryList = sewerageApplicationDetails.getState().getHistory();
         Long approverPosition = 0l;
         final String[] desgnArray = designationName.split(",");
         User currentUser = null;

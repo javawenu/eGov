@@ -371,12 +371,15 @@ public class SewerageApplicationDetailsService {
             if (applicationIndex == null) {
                 if (LOG.isDebugEnabled())
                     LOG.debug("Application Index creation Started... ");
-                final ApplicationIndexBuilder applicationIndexBuilder = new ApplicationIndexBuilder(
+                
+                //TODO: TEMPORARILY COMMENTED TO FIX COMPILATION ISSUES. CHECK AGAIN.
+                
+                final ApplicationIndexBuilder applicationIndexBuilder = null;/*new ApplicationIndexBuilder(
                         SewerageTaxConstants.APPL_INDEX_MODULE_NAME, sewerageApplicationDetails.getApplicationNumber(),
                         sewerageApplicationDetails.getApplicationDate(), sewerageApplicationDetails.getApplicationType().getName(),
                         consumerName.toString(), sewerageApplicationDetails.getStatus().getDescription().toString(),
                         "/stms/application/view/" + sewerageApplicationDetails.getApplicationNumber(),
-                        assessmentDetails.getPropertyAddress(), user.getUsername() + "::" + user.getName());
+                        assessmentDetails.getPropertyAddress(), user.getUsername() + "::" + user.getName())*/;
 
                 if (sewerageApplicationDetails.getDisposalDate() != null)
                     applicationIndexBuilder.disposalDate(sewerageApplicationDetails.getDisposalDate());

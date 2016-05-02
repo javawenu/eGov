@@ -40,14 +40,6 @@
 
 package org.egov.collection.web.actions.service;
 
-import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 import org.apache.commons.lang.StringUtils;
 import org.apache.struts2.convention.annotation.Action;
 import org.apache.struts2.convention.annotation.ParentPackage;
@@ -76,6 +68,14 @@ import org.egov.infstr.services.PersistenceService;
 import org.hibernate.Query;
 import org.hibernate.criterion.Restrictions;
 import org.springframework.beans.factory.annotation.Autowired;
+
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 @ParentPackage("egov")
 @Results({ @Result(name = ServiceDetailsAction.NEW, location = "serviceDetails-new.jsp"),
@@ -337,12 +337,7 @@ public class ServiceDetailsAction extends BaseFormAction {
     private boolean validateAccountDetails() {
         int index = 0;
         for (final ServiceAccountDetails account : accountDetails)
-            if (null != account.getGlCodeId() && null != account.getGlCodeId().getGlcode()
-                    && account.getAmount().compareTo(BigDecimal.ZERO) == 0) {
-                addActionError(getText("service.accdetail.amountZero", new String[] { "" + ++index,
-                        account.getGlCodeId().getGlcode() }));
-                return Boolean.FALSE;
-            } else if (account.getAmount().compareTo(BigDecimal.ZERO) > 0
+            if (account.getAmount().compareTo(BigDecimal.ZERO) > 0
                     && (null == account.getGlCodeId() || null == account.getGlCodeId().getId())) {
                 addActionError(getText("service.accdetail.accmissing", new String[] { "" + ++index }));
                 return Boolean.FALSE;

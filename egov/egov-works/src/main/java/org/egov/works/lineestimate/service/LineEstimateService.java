@@ -39,18 +39,6 @@
  */
 package org.egov.works.lineestimate.service;
 
-import java.io.IOException;
-import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Date;
-import java.util.Hashtable;
-import java.util.Iterator;
-import java.util.List;
-
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
-
 import org.egov.commons.CFinancialYear;
 import org.egov.commons.dao.EgwStatusHibernateDAO;
 import org.egov.commons.dao.FinancialYearHibernateDAO;
@@ -69,8 +57,8 @@ import org.egov.infra.security.utils.SecurityUtils;
 import org.egov.infra.validation.exception.ValidationException;
 import org.egov.infra.workflow.entity.State;
 import org.egov.infra.workflow.entity.StateHistory;
+import org.egov.infra.workflow.matrix.entity.WorkFlowMatrix;
 import org.egov.infra.workflow.service.SimpleWorkflowService;
-import org.egov.infstr.workflow.WorkFlowMatrix;
 import org.egov.model.budget.BudgetUsage;
 import org.egov.pims.commons.Position;
 import org.egov.works.lineestimate.entity.DocumentDetails;
@@ -99,6 +87,17 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+import java.io.IOException;
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
+import java.util.Hashtable;
+import java.util.Iterator;
+import java.util.List;
 
 @Service
 @Transactional(readOnly = true)
@@ -259,7 +258,7 @@ public class LineEstimateService {
                 .createAlias("lineEstimateDetails", "lineEstimateDetail");
         if (lineEstimateSearchRequest != null) {
             if (lineEstimateSearchRequest.getAdminSanctionNumber() != null)
-                criteria.add(Restrictions.eq("adminSanctionNumber", lineEstimateSearchRequest.getAdminSanctionNumber()));
+                criteria.add(Restrictions.eq("adminSanctionNumber", lineEstimateSearchRequest.getAdminSanctionNumber()).ignoreCase());
             if (lineEstimateSearchRequest.getBudgetHead() != null)
                 criteria.add(Restrictions.eq("budgetHead.id", lineEstimateSearchRequest.getBudgetHead()));
             if (lineEstimateSearchRequest.getExecutingDepartment() != null)
@@ -269,7 +268,7 @@ public class LineEstimateService {
             if (lineEstimateSearchRequest.getFund() != null)
                 criteria.add(Restrictions.eq("fund.id", lineEstimateSearchRequest.getFund().intValue()));
             if (lineEstimateSearchRequest.getEstimateNumber() != null)
-                criteria.add(Restrictions.eq("lineEstimateNumber", lineEstimateSearchRequest.getEstimateNumber()));
+                criteria.add(Restrictions.eq("lineEstimateNumber", lineEstimateSearchRequest.getEstimateNumber()).ignoreCase());
             if (lineEstimateSearchRequest.getAdminSanctionFromDate() != null)
                 criteria.add(Restrictions.ge("adminSanctionDate", lineEstimateSearchRequest.getAdminSanctionFromDate()));
             if (lineEstimateSearchRequest.getAdminSanctionToDate() != null)
@@ -554,12 +553,14 @@ public class LineEstimateService {
             else
                 appropriationAmount = led.getEstimateAmount();
 
-            final boolean flag = lineEstimateDetailService.checkConsumeEncumbranceBudget(led, getCurrentFinancialYear(new Date())
-                    .getId(),
-                    appropriationAmount.doubleValue(), budgetheadid);
+            if(appropriationAmount.compareTo(BigDecimal.ZERO) == 1) {
+                final boolean flag = lineEstimateDetailService.checkConsumeEncumbranceBudget(led, getCurrentFinancialYear(new Date())
+                        .getId(),
+                        appropriationAmount.doubleValue(), budgetheadid);
 
-            if (!flag)
-                throw new ValidationException("", "error.budgetappropriation.insufficient.amount");
+                if (!flag)
+                    throw new ValidationException("", "error.budgetappropriation.insufficient.amount");
+            }
         }
     }
 

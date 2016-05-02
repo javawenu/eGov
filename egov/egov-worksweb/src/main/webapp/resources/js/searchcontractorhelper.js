@@ -7,11 +7,12 @@ $(document).ready(function(){
 				},
 				queryTokenizer : Bloodhound.tokenizers.whitespace,
 				remote : {
-					url : '/egworks/letterofacceptance/ajaxsearchcontractors-loa?contractorname=%QUERY',
+					url : '/egworks/letterofacceptance/ajaxcontractorsbycode-loa?name=%QUERY',
 					filter : function(data) {
 						return $.map(data, function(ct) {
 							return {
-								name : ct,
+								name : ct.name,
+								code : ct.code
 							};
 						});
 					}
@@ -25,14 +26,27 @@ $(document).ready(function(){
 				highlight : true,
 				minLength : 3
 			}, {
-				displayKey : 'name',
-				source : contractorSearch.ttAdapter()
+				displayKey : 'code',
+				source : contractorSearch.ttAdapter(),
+				templates: {
+			        suggestion: function (item) {
+			        	return item.code+' ~ '+item.name;
+			        }
+			    }
 			});
 });
 
 jQuery('#btnsearch').click(function(e) {
-
-	callAjaxSearch();
+	
+	var contractorCode = $('#contractorCode').val();
+	var nameOfAgency = $('#nameOfAgency').val();
+	var contractorClass = $('#contractorClass').val();
+	var department = $('#department').val();
+	
+	if(contractorCode != '' || nameOfAgency != '' || contractorClass != '' || department != '')
+		callAjaxSearch();
+	else
+		bootbox.alert("At least one search criteria is mandatory!");
 });
 
 function getFormData($form) {
@@ -82,10 +96,10 @@ function callAjaxSearch() {
 					"data" : "",
 					"sClass" : "text-center"
 				}, {
-					"data" : "name",
+					"data" : "code",
 					"sClass" : "text-center"
 				}, {
-					"data" : "code",
+					"data" : "name",
 					"sClass" : "text-center"
 				} ]
 			});

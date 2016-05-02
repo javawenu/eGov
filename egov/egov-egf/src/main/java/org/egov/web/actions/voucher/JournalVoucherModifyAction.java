@@ -34,15 +34,7 @@
 package org.egov.web.actions.voucher;
 
 
-
-import org.egov.infstr.services.PersistenceService;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-
+import com.exilant.GLEngine.ChartOfAccounts;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.apache.struts2.convention.annotation.Action;
@@ -59,9 +51,10 @@ import org.egov.infra.utils.EgovThreadLocals;
 import org.egov.infra.validation.exception.ValidationError;
 import org.egov.infra.validation.exception.ValidationException;
 import org.egov.infra.web.struts.annotation.ValidationErrorPage;
+import org.egov.infra.workflow.entity.WorkflowAction;
 import org.egov.infra.workflow.service.SimpleWorkflowService;
+import org.egov.infstr.services.PersistenceService;
 import org.egov.infstr.utils.EgovMasterDataCaching;
-import org.egov.infstr.utils.HibernateUtil;
 import org.egov.model.bills.EgBillregister;
 import org.egov.model.bills.EgBillregistermis;
 import org.egov.model.voucher.VoucherDetails;
@@ -80,7 +73,12 @@ import org.hibernate.Query;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 
-import com.exilant.GLEngine.ChartOfAccounts;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
 
 @ParentPackage("egov")
 @Results({
@@ -389,8 +387,8 @@ public class JournalVoucherModifyAction extends BaseVoucherAction {
     }
 
     @SkipValidation
-    public List<Action> getValidActions(final String purpose) {
-        final List<Action> validButtons = new ArrayList<Action>();
+    public List<WorkflowAction> getValidActions(final String purpose) {
+        final List<WorkflowAction> validButtons = new ArrayList<WorkflowAction>();
         final List<String> list = (List<String>) scriptService.executeScript("pjv.validbuttons", ScriptService.createContext(
                 "eisCommonServiceBean", eisCommonService, "userId", EgovThreadLocals.getUserId().intValue(), "date", new Date(),
                 "purpose", purpose));
@@ -398,8 +396,8 @@ public class JournalVoucherModifyAction extends BaseVoucherAction {
         {
             if ("invalid".equals(s))
                 break;
-            final Action action = (Action) getPersistenceService().find(
-                    " from org.egov.infstr.workflow.Action where type='CVoucherHeader' and name=?", s.toString());
+            final WorkflowAction action = (WorkflowAction) getPersistenceService().find(
+                    " from WorkflowAction where type='CVoucherHeader' and name=?", s.toString());
             validButtons.add(action);
         }
         return validButtons;

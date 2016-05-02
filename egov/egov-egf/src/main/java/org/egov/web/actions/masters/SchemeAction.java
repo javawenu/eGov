@@ -39,11 +39,8 @@
  ******************************************************************************/
 package org.egov.web.actions.masters;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
-
+import com.opensymphony.xwork2.validator.annotations.RequiredFieldValidator;
+import com.opensymphony.xwork2.validator.annotations.Validations;
 import org.apache.log4j.Logger;
 import org.apache.struts2.convention.annotation.Action;
 import org.apache.struts2.convention.annotation.ParentPackage;
@@ -64,8 +61,10 @@ import org.egov.utils.Constants;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 
-import com.opensymphony.xwork2.validator.annotations.RequiredFieldValidator;
-import com.opensymphony.xwork2.validator.annotations.Validations;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.List;
 
 @ParentPackage("egov")
 @Results({
@@ -234,16 +233,16 @@ public class SchemeAction extends BaseFormAction {
             LOGGER.debug("......Scheme Unique check Begins......");
         if (uniqueCode) {
             if (!scheme.getCode().equals("") && scheme.getId() != null)
-                scheme_validate = (Scheme) persistenceService.find("from Scheme where code=? and id!=?",
-                        scheme.getCode(), scheme.getId());
+                scheme_validate = (Scheme) persistenceService.find("from Scheme where lower(code)=? and id!=?",
+                        scheme.getCode().toLowerCase(), scheme.getId());
             else if (!scheme.getCode().equals(""))
-                scheme_validate = (Scheme) persistenceService.find("from Scheme where code=?", scheme.getCode());
+                scheme_validate = (Scheme) persistenceService.find("from Scheme where lower(code)=?", scheme.getCode().toLowerCase());
             uniqueCode = false;
         } else if (!scheme.getName().equals("") && scheme.getId() != null)
-            scheme_validate = (Scheme) persistenceService.find("from Scheme where name=? and id!=?", scheme.getName(),
+            scheme_validate = (Scheme) persistenceService.find("from Scheme where lower(name)=? and id!=?", scheme.getName().toLowerCase(),
                     scheme.getId());
         else if (!scheme.getName().equals(""))
-            scheme_validate = (Scheme) persistenceService.find("from Scheme where name=?", scheme.getName());
+            scheme_validate = (Scheme) persistenceService.find("from Scheme where lower(name)=?", scheme.getName().toLowerCase());
         if (scheme_validate != null)
             isDuplicate = true;
         if (LOGGER.isDebugEnabled())

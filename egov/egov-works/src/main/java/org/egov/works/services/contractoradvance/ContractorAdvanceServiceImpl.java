@@ -39,15 +39,6 @@
  */
 package org.egov.works.services.contractoradvance;
 
-import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-
 import org.apache.log4j.Logger;
 import org.egov.commons.Accountdetailtype;
 import org.egov.commons.CChartOfAccounts;
@@ -76,6 +67,15 @@ import org.egov.works.services.WorksService;
 import org.egov.works.utils.WorksConstants;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+
 public class ContractorAdvanceServiceImpl extends PersistenceService<ContractorAdvanceRequisition, Long> implements
         ContractorAdvanceService {
 
@@ -85,7 +85,7 @@ public class ContractorAdvanceServiceImpl extends PersistenceService<ContractorA
     @Autowired
     private ChartOfAccountsHibernateDAO chartOfAccountsHibernateDAO;
     @Autowired
-    private FinancialYearHibernateDAO finYearHibernateDAO;
+    private FinancialYearHibernateDAO financialYearHibernateDAO;
     @Autowired
     private EgwStatusHibernateDAO egwStatusHibernateDAO;
 
@@ -190,7 +190,7 @@ public class ContractorAdvanceServiceImpl extends PersistenceService<ContractorA
      */
     public void setARFNumber(final ContractorAdvanceRequisition contractorAdvanceRequisition) {
         try {
-            final CFinancialYear financialYear = finYearHibernateDAO.getFinancialYearByDate(contractorAdvanceRequisition
+            final CFinancialYear financialYear = financialYearHibernateDAO.getFinancialYearByDate(contractorAdvanceRequisition
                     .getAdvanceRequisitionDate());
             if (financialYear == null)
                 throw new ValidationException(Arrays.asList(new ValidationError(

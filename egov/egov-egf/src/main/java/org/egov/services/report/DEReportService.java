@@ -38,13 +38,6 @@
  *   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
  ******************************************************************************/
 package org.egov.services.report;
-import org.springframework.beans.factory.annotation.Qualifier;
-import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.GregorianCalendar;
-import java.util.List;
 
 import org.apache.log4j.Logger;
 import org.egov.commons.CFinancialYear;
@@ -52,9 +45,8 @@ import org.egov.commons.dao.FinancialYearHibernateDAO;
 import org.egov.infra.admin.master.entity.Department;
 import org.egov.infra.admin.master.service.AppConfigValueService;
 import org.egov.infra.exception.ApplicationRuntimeException;
+import org.egov.infra.utils.DateUtils;
 import org.egov.infstr.services.PersistenceService;
-import org.egov.infstr.utils.DateUtils;
-import org.egov.infstr.utils.HibernateUtil;
 import org.egov.utils.Constants;
 import org.egov.utils.FinancialConstants;
 import org.egov.web.actions.report.DepartmentwiseExpenditureReport;
@@ -62,6 +54,13 @@ import org.egov.web.actions.report.DepartmentwiseExpenditureResult;
 import org.hibernate.Query;
 import org.hibernate.transform.Transformers;
 import org.springframework.beans.factory.annotation.Autowired;
+
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.GregorianCalendar;
+import java.util.List;
 
 public class DEReportService {
 

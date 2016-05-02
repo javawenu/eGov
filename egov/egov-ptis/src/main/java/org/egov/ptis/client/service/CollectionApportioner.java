@@ -39,15 +39,6 @@
  ******************************************************************************/
 package org.egov.ptis.client.service;
 
-import static org.egov.ptis.constants.PropertyTaxConstants.GLCODES_FOR_CURRENTTAX;
-import static org.egov.ptis.constants.PropertyTaxConstants.GLCODE_FOR_TAXREBATE;
-
-import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-
 import org.apache.log4j.Logger;
 import org.egov.collection.entity.ReceiptDetail;
 import org.egov.commons.dao.ChartOfAccountsHibernateDAO;
@@ -57,6 +48,15 @@ import org.egov.infra.validation.exception.ValidationError;
 import org.egov.infra.validation.exception.ValidationException;
 import org.egov.ptis.constants.PropertyTaxConstants;
 
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+
+import static org.egov.ptis.constants.PropertyTaxConstants.GLCODES_FOR_CURRENTTAX;
+import static org.egov.ptis.constants.PropertyTaxConstants.GLCODE_FOR_TAXREBATE;
+
 public class CollectionApportioner {
 
     private static final String REBATE_STR = "REBATE";
@@ -65,7 +65,6 @@ public class CollectionApportioner {
     private static final Logger LOGGER = Logger.getLogger(CollectionApportioner.class);
     private boolean isEligibleForCurrentRebate;
     private boolean isEligibleForAdvanceRebate;
-    private BigDecimal rebate;
 
     public CollectionApportioner(boolean isEligibleForCurrentRebate, boolean isEligibleForAdvanceRebate,
             BigDecimal rebate) {
@@ -82,7 +81,7 @@ public class CollectionApportioner {
             for (final ReceiptDetail receiptDetail : receiptDetails) {
                 totalCrAmountToBePaid = totalCrAmountToBePaid.add(receiptDetail.getCramountToBePaid());
             }
-            if (amtPaid.compareTo(totalCrAmountToBePaid) == 0) {
+            if (amtPaid.compareTo(totalCrAmountToBePaid) >= 0) {
                 isFullPayment = Boolean.TRUE;
             }
         }
@@ -125,13 +124,24 @@ public class CollectionApportioner {
         LOGGER.info("receiptDetails after apportioning: " + receiptDetails);
     }
 
-    public List<ReceiptDetail> reConstruct(final BigDecimal amountPaid, final List<EgBillDetails> billDetails, FunctionHibernateDAO functionDAO, ChartOfAccountsHibernateDAO chartOfAccountsDAO) {
+    public List<ReceiptDetail> reConstruct(final BigDecimal amountPaid, final List<EgBillDetails> billDetails,
+            FunctionHibernateDAO functionDAO, ChartOfAccountsHibernateDAO chartOfAccountsDAO) {
         final List<ReceiptDetail> receiptDetails = new ArrayList<ReceiptDetail>(0);
         LOGGER.info("receiptDetails before reApportion amount " + amountPaid + ": " + receiptDetails);
         LOGGER.info("billDetails before reApportion " + billDetails);
         Amount balance = new Amount(amountPaid);
-
+        Boolean isFullPayment = Boolean.FALSE;
         BigDecimal crAmountToBePaid = BigDecimal.ZERO;
+
+        if (isEligibleForCurrentRebate) {
+            BigDecimal totalCrAmountToBePaid = BigDecimal.ZERO;
+            for (final ReceiptDetail receiptDetail : receiptDetails) {
+                totalCrAmountToBePaid = totalCrAmountToBePaid.add(receiptDetail.getCramountToBePaid());
+            }
+            if (amountPaid.compareTo(totalCrAmountToBePaid) >= 0) {
+                isFullPayment = Boolean.TRUE;
+            }
+        }
 
         for (final EgBillDetails billDetail : billDetails) {
             final String glCode = billDetail.getGlcode();
@@ -139,10 +149,16 @@ public class CollectionApportioner {
             receiptDetail.setOrdernumber(Long.valueOf(billDetail.getOrderNo()));
             receiptDetail.setDescription(billDetail.getDescription());
             receiptDetail.setIsActualDemand(true);
+            if(billDetail.getFunctionCode() !=null){
             receiptDetail.setFunction(functionDAO.getFunctionByCode(billDetail.getFunctionCode()));
+            }
             receiptDetail.setAccounthead(chartOfAccountsDAO.getCChartOfAccountsByGlCode(glCode));
             receiptDetail.setCramountToBePaid(balance.amount);
-            receiptDetail.setDramount(BigDecimal.ZERO);
+            if (billDetail.getDescription().contains(REBATE_STR)) {
+                receiptDetail.setDramount(billDetail.getDrAmount());
+            } else {
+                receiptDetail.setDramount(BigDecimal.ZERO);
+            }
 
             if (balance.isZero()) {
                 // nothing left to apportion
@@ -152,17 +168,24 @@ public class CollectionApportioner {
             }
             crAmountToBePaid = billDetail.getCrAmount();
 
-            if (balance.isLessThanOrEqualTo(crAmountToBePaid)) {
-                // partial or exact payment
-                receiptDetail.setCramount(balance.amount);
-                receiptDetail.setCramountToBePaid(balance.amount);
-                balance = Amount.ZERO;
-            } else { // excess payment
-                receiptDetail.setCramount(crAmountToBePaid);
-                receiptDetail.setCramountToBePaid(crAmountToBePaid);
-                balance = balance.minus(crAmountToBePaid);
+            if (receiptDetail.getDescription().contains(REBATE_STR)) {
+                if (isFullPayment) {
+                    balance = balance.minus(crAmountToBePaid);
+                } else {
+                    receiptDetail.setDramount(BigDecimal.ZERO);
+                }
+            } else {
+                if (balance.isLessThanOrEqualTo(crAmountToBePaid)) {
+                    // partial or exact payment
+                    receiptDetail.setCramount(balance.amount);
+                    receiptDetail.setCramountToBePaid(balance.amount);
+                    balance = Amount.ZERO;
+                } else { // excess payment
+                    receiptDetail.setCramount(crAmountToBePaid);
+                    receiptDetail.setCramountToBePaid(crAmountToBePaid);
+                    balance = balance.minus(crAmountToBePaid);
+                }
             }
-
             receiptDetails.add(receiptDetail);
         }
 

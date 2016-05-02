@@ -33,8 +33,12 @@ package org.egov.commons;
 
 // Generated Jul 19, 2007 2:41:17 PM by Hibernate Tools 3.2.0.b9
 
-import java.math.BigDecimal;
-import java.util.Date;
+import org.egov.infra.admin.master.entity.User;
+import org.egov.infra.persistence.entity.AbstractPersistable;
+import org.egov.infra.persistence.validator.annotation.Required;
+import org.egov.infra.persistence.validator.annotation.Unique;
+import org.hibernate.search.annotations.Field;
+import org.hibernate.validator.constraints.Length;
 
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
@@ -45,18 +49,13 @@ import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
-
-import org.egov.infra.admin.master.entity.User;
-import org.egov.infra.persistence.entity.AbstractPersistable;
-import org.egov.infra.persistence.validator.annotation.Required;
-import org.egov.infra.persistence.validator.annotation.Unique;
-import org.hibernate.search.annotations.Field;
-import org.hibernate.validator.constraints.Length;
+import java.math.BigDecimal;
+import java.util.Date;
 
 @Entity
 @Table(name = "fund")
 @SequenceGenerator(name = Fund.SEQ, sequenceName = Fund.SEQ, allocationSize = 1)
-@Unique(id = "id", tableName = "Fund", fields = { "code" }, columnName = { "code" }, enableDfltMsg = true)
+@Unique(id = "id", tableName = "Fund", fields = { "code","name" }, columnName = { "code","name" }, enableDfltMsg = true)
 public class Fund extends AbstractPersistable<Integer> {
 
 	private static final long serialVersionUID =7977534010758407945L;

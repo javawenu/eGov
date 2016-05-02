@@ -39,11 +39,6 @@
  */
 package org.egov.works.web.controller.letterofacceptance;
 
-import java.io.IOException;
-import java.util.Date;
-
-import javax.servlet.http.HttpServletRequest;
-
 import org.egov.infra.admin.master.service.DepartmentService;
 import org.egov.infra.exception.ApplicationException;
 import org.egov.infra.security.utils.SecurityUtils;
@@ -52,6 +47,7 @@ import org.egov.works.letterofacceptance.service.LetterOfAcceptanceNumberGenerat
 import org.egov.works.letterofacceptance.service.LetterOfAcceptanceService;
 import org.egov.works.lineestimate.entity.LineEstimateDetails;
 import org.egov.works.lineestimate.service.LineEstimateService;
+import org.egov.works.master.services.ContractorGradeService;
 import org.egov.works.models.workorder.WorkOrder;
 import org.elasticsearch.common.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -63,6 +59,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
+
+import javax.servlet.http.HttpServletRequest;
+import java.io.IOException;
+import java.util.Date;
 
 @Controller
 @RequestMapping(value = "/letterofacceptance")
@@ -79,6 +79,9 @@ public class CreateLetterOfAcceptanceController {
     
     @Autowired
     private DepartmentService departmentService;
+    
+    @Autowired
+    private ContractorGradeService contractorGradeService;
 
     @RequestMapping(value = "/newform", method = RequestMethod.GET)
     public String showNewForm(@ModelAttribute("workOrder") final WorkOrder workOrder,
@@ -179,6 +182,7 @@ public class CreateLetterOfAcceptanceController {
             @ModelAttribute final SearchRequestContractor searchRequestContractor,
             final Model model) throws ApplicationException {
         model.addAttribute("departments", departmentService.getAllDepartments());
+        model.addAttribute("contractorClasses", contractorGradeService.getAllContractorGrades());
         model.addAttribute("searchRequestContractor", searchRequestContractor);
         return "contractor-search";
     }

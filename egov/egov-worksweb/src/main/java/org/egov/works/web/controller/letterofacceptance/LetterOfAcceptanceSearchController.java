@@ -39,9 +39,10 @@
  */
 package org.egov.works.web.controller.letterofacceptance;
 
-import java.util.List;
-
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import org.egov.commons.dao.EgwStatusHibernateDAO;
+import org.egov.commons.dao.EgwTypeOfWorkHibernateDAO;
 import org.egov.infra.admin.master.entity.Department;
 import org.egov.infra.admin.master.service.DepartmentService;
 import org.egov.infra.exception.ApplicationException;
@@ -56,8 +57,7 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
+import java.util.List;
 
 @Controller
 @RequestMapping(value = "/searchletterofacceptance")
@@ -74,6 +74,9 @@ public class LetterOfAcceptanceSearchController {
 
     @Autowired
     private SecurityUtils securityUtils;
+    
+    @Autowired
+    private EgwTypeOfWorkHibernateDAO egwTypeOfWorkHibernateDAO;
 
     @RequestMapping(value = "/searchform", method = RequestMethod.GET)
     public String showSearchLineEstimateForm(
@@ -87,6 +90,7 @@ public class LetterOfAcceptanceSearchController {
     private void setDropDownValues(final Model model) {
         model.addAttribute("departments", departmentService.getAllDepartments());
         model.addAttribute("egwStatus", egwStatusDAO.getStatusByModule(WorksConstants.WORKORDER));
+        model.addAttribute("typeOfWork", egwTypeOfWorkHibernateDAO.getTypeOfWorkForPartyTypeContractor());
 
     }
 
@@ -95,6 +99,9 @@ public class LetterOfAcceptanceSearchController {
             @ModelAttribute final SearchRequestLetterOfAcceptance searchRequestLetterOfAcceptance,
             final Model model) throws ApplicationException {
         setDropDownValues(model);
+        final List<Department> departments = lineEstimateService.getUserDepartments(securityUtils.getCurrentUser());
+        if (departments != null && !departments.isEmpty())
+            searchRequestLetterOfAcceptance.setDepartmentName(departments.get(0).getId());
         model.addAttribute("searchRequestLetterOfAcceptance", searchRequestLetterOfAcceptance);
         return "search-searchmilestone";
     }

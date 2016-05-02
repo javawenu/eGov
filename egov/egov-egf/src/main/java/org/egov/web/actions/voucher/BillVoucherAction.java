@@ -42,14 +42,6 @@
  */
 package org.egov.web.actions.voucher;
 
-import java.text.ParseException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.apache.struts2.convention.annotation.Action;
@@ -67,6 +59,7 @@ import org.egov.infra.utils.EgovThreadLocals;
 import org.egov.infra.validation.exception.ValidationError;
 import org.egov.infra.validation.exception.ValidationException;
 import org.egov.infra.web.struts.annotation.ValidationErrorPage;
+import org.egov.infra.workflow.entity.WorkflowAction;
 import org.egov.infstr.utils.EgovMasterDataCaching;
 import org.egov.model.bills.EgBillregister;
 import org.egov.model.voucher.VoucherTypeBean;
@@ -75,6 +68,14 @@ import org.egov.services.voucher.VoucherService;
 import org.egov.utils.Constants;
 import org.egov.utils.VoucherHelper;
 import org.springframework.beans.factory.annotation.Autowired;
+
+import java.text.ParseException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 @ParentPackage("egov")
 @Results({ @Result(name = JournalVoucherAction.NEW, location = "billVoucher-new.jsp") })
@@ -165,8 +166,8 @@ public class BillVoucherAction extends BaseVoucherAction {
         return newForm();
     }
 
-    public List<Action> getValidActions(final String purpose) {
-        final List<Action> validButtons = new ArrayList<Action>();
+    public List<WorkflowAction> getValidActions(final String purpose) {
+        final List<WorkflowAction> validButtons = new ArrayList<WorkflowAction>();
         final Script validScript = (Script) getPersistenceService().findAllByNamedQuery(Script.BY_NAME, "pjv.validbuttons")
                 .get(0);
         final List<String> list = (List<String>) scriptService.executeScript(validScript, ScriptService.createContext(
@@ -176,8 +177,8 @@ public class BillVoucherAction extends BaseVoucherAction {
         {
             if ("invalid".equals(s))
                 break;
-            final Action action = (Action) getPersistenceService().find(
-                    " from org.egov.infstr.workflow.Action where type='CVoucherHeader' and name=?", s.toString());
+            final WorkflowAction action = (WorkflowAction) getPersistenceService().find(
+                    " from WorkflowAction where type='CVoucherHeader' and name=?", s.toString());
             validButtons.add(action);
         }
         return validButtons;

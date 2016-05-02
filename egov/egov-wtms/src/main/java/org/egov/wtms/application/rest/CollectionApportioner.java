@@ -39,36 +39,25 @@
  */
 package org.egov.wtms.application.rest;
 
+import org.apache.log4j.Logger;
+import org.egov.collection.entity.ReceiptDetail;
+import org.egov.commons.dao.ChartOfAccountsHibernateDAO;
+import org.egov.commons.dao.FunctionHibernateDAO;
+import org.egov.demand.model.EgBillDetails;
+import org.egov.infra.validation.exception.ValidationError;
+import org.egov.infra.validation.exception.ValidationException;
+
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.log4j.Logger;
-import org.egov.collection.entity.ReceiptDetail;
-import org.egov.commons.dao.ChartOfAccountsHibernateDAO;
-import org.egov.commons.dao.FunctionHibernateDAO;
-import org.egov.demand.dao.EgBillDao;
-import org.egov.demand.model.EgBillDetails;
-import org.egov.infra.validation.exception.ValidationError;
-import org.egov.infra.validation.exception.ValidationException;
-import org.springframework.beans.factory.annotation.Autowired;
-
 public class CollectionApportioner {
 
     public static final String STRING_FULLTAX = "FULLTAX";
     public static final String STRING_ADVANCE = "ADVANCE";
     private static final Logger LOGGER = Logger.getLogger(CollectionApportioner.class);
-
-    @Autowired
-    private FunctionHibernateDAO functionDAO;
-
-    @Autowired
-    private ChartOfAccountsHibernateDAO chartOfAccountsDAO;
-
-    @Autowired
-    private EgBillDao egBillDAO;
 
     public CollectionApportioner() {
 
@@ -110,7 +99,8 @@ public class CollectionApportioner {
         LOGGER.info("receiptDetails after apportioning: " + receiptDetails);
     }
 
-    public List<ReceiptDetail> reConstruct(final BigDecimal amountPaid, final List<EgBillDetails> billDetails) {
+    public List<ReceiptDetail> reConstruct(final BigDecimal amountPaid, final List<EgBillDetails> billDetails,
+            FunctionHibernateDAO functionDAO, ChartOfAccountsHibernateDAO chartOfAccountsDAO) {
         final List<ReceiptDetail> receiptDetails = new ArrayList<ReceiptDetail>(0);
         LOGGER.info("receiptDetails before reApportion amount " + amountPaid + ": " + receiptDetails);
         LOGGER.info("billDetails before reApportion " + billDetails);
@@ -124,7 +114,9 @@ public class CollectionApportioner {
             receiptDetail.setOrdernumber(Long.valueOf(billDetail.getOrderNo()));
             receiptDetail.setDescription(billDetail.getDescription());
             receiptDetail.setIsActualDemand(true);
-            receiptDetail.setFunction(functionDAO.getFunctionByCode(billDetail.getFunctionCode()));
+            if (billDetail.getFunctionCode() != null) {
+                receiptDetail.setFunction(functionDAO.getFunctionByCode(billDetail.getFunctionCode()));
+            }
             receiptDetail.setAccounthead(chartOfAccountsDAO.getCChartOfAccountsByGlCode(glCode));
             receiptDetail.setCramountToBePaid(balance.amount);
             receiptDetail.setDramount(BigDecimal.ZERO);

@@ -39,16 +39,6 @@
  */
 package org.egov.works.web.controller.letterofacceptance;
 
-import java.io.IOException;
-import java.math.BigDecimal;
-import java.text.DecimalFormat;
-import java.text.SimpleDateFormat;
-import java.util.HashMap;
-import java.util.Map;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpSession;
-
 import org.egov.infra.filestore.service.FileStoreService;
 import org.egov.infra.reporting.engine.ReportConstants;
 import org.egov.infra.reporting.engine.ReportOutput;
@@ -71,6 +61,15 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpSession;
+import java.io.IOException;
+import java.math.BigDecimal;
+import java.text.DecimalFormat;
+import java.text.SimpleDateFormat;
+import java.util.HashMap;
+import java.util.Map;
 
 @Controller
 @RequestMapping(value = "/letterofacceptance")
@@ -110,7 +109,7 @@ public class LetterOfAcceptancePDFController {
         if (workOrder != null) {
 
             final SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy");
-            final DecimalFormat df = new DecimalFormat("#.##");
+            final DecimalFormat df = new DecimalFormat("0.00");
             final LineEstimateDetails lineEstimateDetails = lineEstimateService.findByEstimateNumber(workOrder
                     .getEstimateNumber());
 
@@ -137,7 +136,7 @@ public class LetterOfAcceptancePDFController {
                     .getBankaccount() : "");
             reportParams.put("subject", lineEstimateDetails.getNameOfWork());
             reportParams.put("modeOfAllotment", lineEstimateDetails.getLineEstimate().getModeOfAllotment().toString());
-            reportParams.put("agreementAmount", Double.valueOf(df.format(workOrder.getWorkOrderAmount())));
+            reportParams.put("agreementAmount", df.format(workOrder.getWorkOrderAmount()));
             reportParams.put("emd", df.format(workOrder.getEmdAmountDeposited()));
             reportParams.put("asd", df.format(workOrder.getSecurityDeposit()));
             reportParams.put("WINCode", lineEstimateDetails.getProjectCode().getCode());

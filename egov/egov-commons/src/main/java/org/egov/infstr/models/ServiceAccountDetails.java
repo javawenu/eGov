@@ -1,11 +1,10 @@
 package org.egov.infstr.models;
 
+import org.egov.commons.CChartOfAccounts;
+
 import java.math.BigDecimal;
 import java.util.LinkedHashSet;
 import java.util.Set;
-
-import org.egov.commons.CChartOfAccounts;
-import org.egov.commons.CFunction;
 
 public class ServiceAccountDetails {
 	
@@ -16,8 +15,6 @@ public class ServiceAccountDetails {
 	private CChartOfAccounts glCodeId;
 	
 	private ServiceDetails serviceDetails;
-	
-	private CFunction function;
 	
 	private Set<ServiceSubledgerInfo> subledgerDetails = new LinkedHashSet<ServiceSubledgerInfo>(0);
 
@@ -88,12 +85,4 @@ public class ServiceAccountDetails {
 	public void setSubledgerDetails(Set<ServiceSubledgerInfo> subledgerDetails) {
 		this.subledgerDetails = subledgerDetails;
 	}
-	public CFunction getFunction() {
-		return function;
-	}
-	public void setFunction(CFunction function) {
-		this.function = function;
-	}
-	
-
 }

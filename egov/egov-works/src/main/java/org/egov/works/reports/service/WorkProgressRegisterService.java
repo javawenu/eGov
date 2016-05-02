@@ -39,12 +39,6 @@
  */
 package org.egov.works.reports.service;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
-
 import org.egov.works.lineestimate.entity.enums.LineEstimateStatus;
 import org.egov.works.lineestimate.repository.LineEstimateDetailsRepository;
 import org.egov.works.reports.entity.WorkProgressRegister;
@@ -52,10 +46,16 @@ import org.egov.works.reports.entity.WorkProgressRegisterSearchRequest;
 import org.hibernate.Criteria;
 import org.hibernate.Session;
 import org.hibernate.criterion.CriteriaSpecification;
+import org.hibernate.criterion.MatchMode;
 import org.hibernate.criterion.Restrictions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+import java.util.ArrayList;
+import java.util.List;
 
 @Service
 public class WorkProgressRegisterService {
@@ -84,12 +84,12 @@ public class WorkProgressRegisterService {
                         workProgressRegisterSearchRequest.getDepartment()));
             if (workProgressRegisterSearchRequest.getWorkIdentificationNumber() != null)
                 criteria.add(Restrictions.eq("winCode",
-                        workProgressRegisterSearchRequest.getWorkIdentificationNumber()));
+                        workProgressRegisterSearchRequest.getWorkIdentificationNumber()).ignoreCase());
             if (workProgressRegisterSearchRequest.getContractor() != null) {
                 criteria.createAlias("contractor", "contractor");
                 criteria.add(Restrictions.or(Restrictions.ilike("contractor.code",
-                        workProgressRegisterSearchRequest.getContractor()), Restrictions.ilike("contractor.name",
-                                workProgressRegisterSearchRequest.getContractor())));
+                        workProgressRegisterSearchRequest.getContractor(), MatchMode.ANYWHERE), Restrictions.ilike("contractor.name",
+                                workProgressRegisterSearchRequest.getContractor(), MatchMode.ANYWHERE)));
             }
             if (workProgressRegisterSearchRequest.getAdminSanctionFromDate() != null)
                 criteria.add(Restrictions.ge("adminSanctionDate",

@@ -39,19 +39,8 @@
  ******************************************************************************/
 package org.egov.ptis.actions.reports;
 
-import static java.math.BigDecimal.ZERO;
-import static org.egov.ptis.constants.PropertyTaxConstants.OWNERSHIP_OF_PROPERTY_FOR_DEFAULTERS_REPORT;
-import static org.egov.ptis.constants.PropertyTaxConstants.REVENUE_HIERARCHY_TYPE;
-
-import java.io.IOException;
-import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-
-import javax.servlet.http.HttpServletResponse;
-
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
@@ -74,8 +63,17 @@ import org.hibernate.Query;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+
+import static java.math.BigDecimal.ZERO;
+import static org.egov.ptis.constants.PropertyTaxConstants.OWNERSHIP_OF_PROPERTY_FOR_DEFAULTERS_REPORT;
+import static org.egov.ptis.constants.PropertyTaxConstants.REVENUE_HIERARCHY_TYPE;
 
 @SuppressWarnings("serial")
 @ParentPackage("egov")
@@ -173,11 +171,15 @@ public class DefaultersReportAction extends BaseFormAction {
         List<DefaultersInfo> defaultersList = new ArrayList<DefaultersInfo>();
         DefaultersInfo defaultersInfo = null;
         BigDecimal totalDue = BigDecimal.ZERO;
+        BigDecimal currPenalty = BigDecimal.ZERO;
+        BigDecimal currPenaltyColl = BigDecimal.ZERO;
         int count = 0;
         Installment curInstallment = propertyTaxUtil.getCurrentInstallment();
         for (final PropertyMaterlizeView propView : propertyViewList) {
             defaultersInfo = new DefaultersInfo();
             totalDue = BigDecimal.ZERO;
+            currPenalty = BigDecimal.ZERO;
+            currPenaltyColl = BigDecimal.ZERO;
             count++;
             defaultersInfo.setSlNo(count);
             defaultersInfo.setAssessmentNo(propView.getPropertyId());
@@ -193,8 +195,9 @@ public class DefaultersReportAction extends BaseFormAction {
             defaultersInfo
                     .setAggrArrearPenalyDue((propView.getAggrArrearPenaly() != null ? propView.getAggrArrearPenaly() : ZERO)
                             .subtract(propView.getAggrArrearPenalyColl() != null ? propView.getAggrArrearPenalyColl() : ZERO));
-            defaultersInfo.setAggrCurrPenalyDue((propView.getAggrCurrFirstHalfPenaly() != null ? propView.getAggrCurrFirstHalfPenaly() : ZERO)
-                    .subtract((propView.getAggrCurrFirstHalfPenalyColl() != null ? propView.getAggrCurrFirstHalfPenalyColl() : ZERO)));
+            currPenalty = (propView.getAggrCurrFirstHalfPenaly() != null ? propView.getAggrCurrFirstHalfPenaly() : ZERO).add(propView.getAggrCurrSecondHalfPenaly() != null ? propView.getAggrCurrSecondHalfPenaly() : ZERO);
+            currPenaltyColl = (propView.getAggrCurrFirstHalfPenalyColl() != null ? propView.getAggrCurrFirstHalfPenalyColl() : ZERO).add(propView.getAggrCurrSecondHalfPenalyColl() != null ? propView.getAggrCurrSecondHalfPenalyColl() : ZERO); 
+            defaultersInfo.setAggrCurrPenalyDue(currPenalty.subtract(currPenaltyColl));
             totalDue = defaultersInfo.getArrearsDue().add(defaultersInfo.getCurrentDue())
                     .add(defaultersInfo.getAggrArrearPenalyDue()).add(defaultersInfo.getAggrCurrPenalyDue());
             defaultersInfo.setTotalDue(totalDue);

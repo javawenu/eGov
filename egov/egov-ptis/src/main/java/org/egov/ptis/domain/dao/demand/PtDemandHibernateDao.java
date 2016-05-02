@@ -39,24 +39,7 @@
  ******************************************************************************/
 package org.egov.ptis.domain.dao.demand;
 
-import static org.egov.ptis.constants.PropertyTaxConstants.CURRENTYEAR_FIRST_HALF;
-import static org.egov.ptis.constants.PropertyTaxConstants.CURRENTYEAR_SECOND_HALF;
-
-import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
-
 import org.egov.commons.Installment;
-import org.egov.commons.dao.InstallmentDao;
 import org.egov.commons.dao.InstallmentHibDao;
 import org.egov.demand.dao.DemandGenericDao;
 import org.egov.demand.model.EgBill;
@@ -73,10 +56,24 @@ import org.egov.ptis.domain.entity.property.BasicProperty;
 import org.egov.ptis.domain.entity.property.Property;
 import org.hibernate.Query;
 import org.hibernate.Session;
-import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Repository;
+
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import static org.egov.ptis.constants.PropertyTaxConstants.CURRENTYEAR_FIRST_HALF;
+import static org.egov.ptis.constants.PropertyTaxConstants.CURRENTYEAR_SECOND_HALF;
 
 @Repository(value = "ptDemandDAO")
 public class PtDemandHibernateDao implements PtDemandDao {
@@ -531,6 +528,7 @@ public class PtDemandHibernateDao implements PtDemandDao {
                     + " from  egwtr_connection conn,egwtr_connectiondetails bp,egwtr_demand_connection demconn , eg_demand d, eg_demand_details dd, eg_demand_reason dr, eg_demand_reason_master drm, eg_installment_master inst "
                     + " where conn.id =bp.connection " + " and demconn.connectiondetails = bp.id " + " and demconn.demand = d.id " + " and d.id = dd.id_demand "
                     + " and dd.id_demand_reason = dr.id and drm.id = dr.id_demand_reason_master "
+                    + " and d.is_history='N' "
                     + " and dr.id_installment = inst.id and conn.consumercode =:consumerNo"
                     + " and dd.amount > dd.amt_collected  ";
             // +

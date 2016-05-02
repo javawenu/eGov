@@ -39,19 +39,25 @@
  ******************************************************************************/
 package org.egov.ptis.bean;
 
-import static org.egov.ptis.constants.PropertyTaxConstants.DEMANDRSN_CODE_EDUCATIONAL_CESS;
-import static org.egov.ptis.constants.PropertyTaxConstants.DEMANDRSN_CODE_GENERAL_TAX;
-import static org.egov.ptis.constants.PropertyTaxConstants.DEMANDRSN_CODE_LIBRARY_CESS;
-import static org.egov.ptis.constants.PropertyTaxConstants.NON_HISTORY_TAX_DETAIL;
-import static org.egov.ptis.constants.PropertyTaxConstants.OCC_COMMERCIAL;
-import static org.egov.ptis.constants.PropertyTaxConstants.OCC_OWNER;
-import static org.egov.ptis.constants.PropertyTaxConstants.OCC_TENANT;
-import static org.egov.ptis.constants.PropertyTaxConstants.OPEN_PLOT_SHORTFORM;
-import static org.egov.ptis.constants.PropertyTaxConstants.OWNERSHIP_TYPE_CENTRAL_GOVT_50;
-import static org.egov.ptis.constants.PropertyTaxConstants.OWNERSHIP_TYPE_STATE_GOVT;
-import static org.egov.ptis.constants.PropertyTaxConstants.OWNERSHIP_TYPE_VAC_LAND;
-import static org.egov.ptis.constants.PropertyTaxConstants.OWNERSHIP_TYPE_VAC_LAND_STR;
-import static org.egov.ptis.constants.PropertyTaxConstants.STATUS_ISHISTORY;
+import org.apache.log4j.Logger;
+import org.egov.commons.Installment;
+import org.egov.infra.admin.master.entity.Module;
+import org.egov.infra.admin.master.service.ModuleService;
+import org.egov.infra.exception.ApplicationRuntimeException;
+import org.egov.infra.utils.DateUtils;
+import org.egov.infstr.utils.HibernateUtil;
+import org.egov.ptis.client.util.PropertyTaxUtil;
+import org.egov.ptis.constants.PropertyTaxConstants;
+import org.egov.ptis.domain.dao.demand.PtDemandDao;
+import org.egov.ptis.domain.entity.demand.Ptdemand;
+import org.egov.ptis.domain.entity.property.Property;
+import org.egov.ptis.domain.entity.property.PropertyImpl;
+import org.egov.ptis.domain.entity.property.PropertyMutation;
+import org.egov.ptis.domain.model.calculator.MiscellaneousTax;
+import org.egov.ptis.domain.model.calculator.MiscellaneousTaxDetail;
+import org.egov.ptis.domain.model.calculator.TaxCalculationInfo;
+import org.egov.ptis.domain.model.calculator.UnitTaxCalculationInfo;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.math.BigDecimal;
 import java.text.DateFormat;
@@ -70,25 +76,19 @@ import java.util.SortedSet;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
-import org.apache.log4j.Logger;
-import org.egov.commons.Installment;
-import org.egov.infra.admin.master.entity.Module;
-import org.egov.infra.admin.master.service.ModuleService;
-import org.egov.infra.exception.ApplicationRuntimeException;
-import org.egov.infstr.utils.DateUtils;
-import org.egov.infstr.utils.HibernateUtil;
-import org.egov.ptis.client.util.PropertyTaxUtil;
-import org.egov.ptis.constants.PropertyTaxConstants;
-import org.egov.ptis.domain.dao.demand.PtDemandDao;
-import org.egov.ptis.domain.entity.demand.Ptdemand;
-import org.egov.ptis.domain.entity.property.Property;
-import org.egov.ptis.domain.entity.property.PropertyImpl;
-import org.egov.ptis.domain.entity.property.PropertyMutation;
-import org.egov.ptis.domain.model.calculator.MiscellaneousTax;
-import org.egov.ptis.domain.model.calculator.MiscellaneousTaxDetail;
-import org.egov.ptis.domain.model.calculator.TaxCalculationInfo;
-import org.egov.ptis.domain.model.calculator.UnitTaxCalculationInfo;
-import org.springframework.beans.factory.annotation.Autowired;
+import static org.egov.ptis.constants.PropertyTaxConstants.DEMANDRSN_CODE_EDUCATIONAL_CESS;
+import static org.egov.ptis.constants.PropertyTaxConstants.DEMANDRSN_CODE_GENERAL_TAX;
+import static org.egov.ptis.constants.PropertyTaxConstants.DEMANDRSN_CODE_LIBRARY_CESS;
+import static org.egov.ptis.constants.PropertyTaxConstants.NON_HISTORY_TAX_DETAIL;
+import static org.egov.ptis.constants.PropertyTaxConstants.OCC_COMMERCIAL;
+import static org.egov.ptis.constants.PropertyTaxConstants.OCC_OWNER;
+import static org.egov.ptis.constants.PropertyTaxConstants.OCC_TENANT;
+import static org.egov.ptis.constants.PropertyTaxConstants.OPEN_PLOT_SHORTFORM;
+import static org.egov.ptis.constants.PropertyTaxConstants.OWNERSHIP_TYPE_CENTRAL_GOVT_50;
+import static org.egov.ptis.constants.PropertyTaxConstants.OWNERSHIP_TYPE_STATE_GOVT;
+import static org.egov.ptis.constants.PropertyTaxConstants.OWNERSHIP_TYPE_VAC_LAND;
+import static org.egov.ptis.constants.PropertyTaxConstants.OWNERSHIP_TYPE_VAC_LAND_STR;
+import static org.egov.ptis.constants.PropertyTaxConstants.STATUS_ISHISTORY;
 
 /**
  * The property information object

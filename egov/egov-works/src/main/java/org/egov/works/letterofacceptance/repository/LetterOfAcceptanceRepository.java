@@ -39,13 +39,13 @@
  */
 package org.egov.works.letterofacceptance.repository;
 
-import java.util.List;
-
 import org.egov.works.models.workorder.WorkOrder;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+
+import java.util.List;
 
 @Repository
 public interface LetterOfAcceptanceRepository extends JpaRepository<WorkOrder, Long> {
@@ -92,4 +92,8 @@ public interface LetterOfAcceptanceRepository extends JpaRepository<WorkOrder, L
     @Query("select distinct(cbr.workOrder.workOrderNumber) from ContractorBillRegister as cbr where cbr.workOrder.id = :workOrderId and upper(cbr.billstatus) not in (:billstatus1,:billstatus2)")
     List<String> getContractorBillInWorkflowForWorkorder(@Param("workOrderId") Long workOrderId,
             @Param("billstatus1") String billstatus1, @Param("billstatus2") String billstatus2);
+    
+    @Query("select distinct(led.projectCode.code) from LineEstimateDetails as led  where upper(led.projectCode.code) like upper(:code) and exists (select distinct(wo.estimateNumber) from WorkOrder as wo where led.estimateNumber = wo.estimateNumber)")
+    List<String> findWorkIdentificationNumberToCreateMilestone(@Param("code") String code);
+
 }

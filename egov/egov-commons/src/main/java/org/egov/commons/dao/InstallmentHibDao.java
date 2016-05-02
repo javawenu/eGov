@@ -41,14 +41,13 @@ package org.egov.commons.dao;
 
 import org.egov.commons.Installment;
 import org.egov.infra.admin.master.entity.Module;
-import org.egov.infstr.utils.DateUtils;
+import org.egov.infra.utils.DateUtils;
 import org.hibernate.Query;
 import org.hibernate.Session;
 import org.springframework.stereotype.Repository;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
-
 import java.io.Serializable;
 import java.util.Calendar;
 import java.util.Date;

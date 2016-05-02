@@ -39,29 +39,6 @@
  ******************************************************************************/
 package org.egov.ptis.domain.dao.property;
 
-import static org.egov.ptis.constants.PropertyTaxConstants.SRCH_BOUNDARY_ID;
-import static org.egov.ptis.constants.PropertyTaxConstants.SRCH_DEFAULTER_FROM_AMOUNT;
-import static org.egov.ptis.constants.PropertyTaxConstants.SRCH_DEFAULTER_TO_AMOUNT;
-import static org.egov.ptis.constants.PropertyTaxConstants.SRCH_DEMAND_FROM_AMOUNT;
-import static org.egov.ptis.constants.PropertyTaxConstants.SRCH_DEMAND_TO_AMOUNT;
-import static org.egov.ptis.constants.PropertyTaxConstants.SRCH_NEW_HOUSE_NO;
-import static org.egov.ptis.constants.PropertyTaxConstants.SRCH_OWNER_NAME;
-import static org.egov.ptis.constants.PropertyTaxConstants.SRCH_PROPERTY_TYPE;
-
-import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.StringTokenizer;
-
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
-
 import org.apache.log4j.Logger;
 import org.egov.commons.Installment;
 import org.egov.commons.dao.InstallmentDao;
@@ -71,6 +48,7 @@ import org.egov.infra.admin.master.service.BoundaryService;
 import org.egov.infra.admin.master.service.ModuleService;
 import org.egov.infra.exception.ApplicationRuntimeException;
 import org.egov.infra.persistence.entity.Address;
+import org.egov.infra.utils.DateUtils;
 import org.egov.infra.validation.exception.ValidationException;
 import org.egov.ptis.constants.PropertyTaxConstants;
 import org.egov.ptis.domain.dao.demand.PtDemandDao;
@@ -93,6 +71,28 @@ import org.hibernate.criterion.Subqueries;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
+
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.StringTokenizer;
+
+import static org.egov.ptis.constants.PropertyTaxConstants.SRCH_BOUNDARY_ID;
+import static org.egov.ptis.constants.PropertyTaxConstants.SRCH_DEFAULTER_FROM_AMOUNT;
+import static org.egov.ptis.constants.PropertyTaxConstants.SRCH_DEFAULTER_TO_AMOUNT;
+import static org.egov.ptis.constants.PropertyTaxConstants.SRCH_DEMAND_FROM_AMOUNT;
+import static org.egov.ptis.constants.PropertyTaxConstants.SRCH_DEMAND_TO_AMOUNT;
+import static org.egov.ptis.constants.PropertyTaxConstants.SRCH_NEW_HOUSE_NO;
+import static org.egov.ptis.constants.PropertyTaxConstants.SRCH_OWNER_NAME;
+import static org.egov.ptis.constants.PropertyTaxConstants.SRCH_PROPERTY_TYPE;
 
 @Repository(value = "searchPropertyDAO")
 @Transactional(readOnly = true)
@@ -755,7 +755,7 @@ public class SearchPropertyHibernateDAO implements SearchPropertyDAO {
 
 			Boundary boundary = boundaryService.getBoundaryById(boundaryID.longValue());
 			java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("dd/MM/yyyy");
-			String finEndDate = sdf.format(org.egov.infstr.utils.DateUtils.getFinancialYear().getEndOnOnDate());
+			String finEndDate = sdf.format(DateUtils.getFinancialYear().getEndOnOnDate());
 			StringBuffer qryStr = new StringBuffer(2000);
 			qryStr.append("select distinct pi From PropertyImpl pi inner join pi.basicProperty bp inner join "
 					+ "pi.ptDemandARVSet rv where rv.toDate = to_date('" + finEndDate + "','dd/mm/yyyy') and "

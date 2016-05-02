@@ -39,15 +39,7 @@
  */
 package org.egov.infra.web.controller;
 
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
-import javax.validation.Valid;
-
+import com.google.gson.GsonBuilder;
 import org.egov.infra.admin.common.entity.Favourites;
 import org.egov.infra.admin.common.entity.MenuLink;
 import org.egov.infra.admin.common.service.FavouritesService;
@@ -77,7 +69,13 @@ import org.springframework.web.servlet.LocaleResolver;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import org.springframework.web.servlet.support.RequestContextUtils;
 
-import com.google.gson.GsonBuilder;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
+import javax.validation.Valid;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
 
 @Controller
 @RequestMapping(value = "/home")
@@ -209,8 +207,8 @@ public class HomeController {
     private String prepareApplicationMenu(final List<MenuLink> menuLinks, final User user) {
         final Menu menu = new Menu();
         menu.setId("menuID");
-        menu.setTitle("Hi, " + user.getName());
-        menu.setIcon("fa fa-reorder");
+        menu.setTitle(" ");
+        menu.setIcon("fa fa-reply-all");
         menu.setItems(new LinkedList<Menu>());
         final List<MenuLink> favourites = moduleService.getUserFavouritesMenuLinks(user.getId());
         createApplicationMenu(menuLinks, favourites, user, menu);
@@ -234,7 +232,7 @@ public class HomeController {
 
     private void createFavouritesMenu(final List<MenuLink> favourites, final Menu menu) {
         final Menu favouritesMenu = createSubmenu("favMenu", "Favourites", "Favourites", "javascript:void(0);",
-                "fa fa-briefcase floatLeft", menu);
+                "fa fa-star floatLeft", menu);
         favourites.stream().forEach(favourite -> {
             final Menu appLinks = new Menu();
             appLinks.setId("fav-" + favourite.getId());

@@ -39,7 +39,10 @@
  */
 package org.egov.commons;
 
-import java.util.Date;
+import org.egov.commons.utils.EntityType;
+import org.egov.infra.persistence.entity.AbstractPersistable;
+import org.egov.infra.persistence.validator.annotation.Unique;
+import org.hibernate.validator.constraints.Length;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -51,16 +54,12 @@ import javax.persistence.ManyToOne;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.validation.constraints.NotNull;
-
-import org.egov.commons.utils.EntityType;
-import org.egov.infra.persistence.entity.AbstractPersistable;
-import org.egov.infra.persistence.validator.annotation.Unique;
-import org.hibernate.validator.constraints.Length;
+import java.util.Date;
 
 @Entity
 @Table(name = "Supplier")
 @SequenceGenerator(name = Relation.SEQ, sequenceName = Relation.SEQ)
-@Unique(id = "id", tableName = "Supplier", fields = { "code" }, columnName = { "code" }, enableDfltMsg = true)
+@Unique(id = "id", tableName = "Supplier", fields = { "code","name" }, columnName = { "code","name" }, enableDfltMsg = true)
 public class Relation extends AbstractPersistable<Integer> implements java.io.Serializable, EntityType {
     private static final long serialVersionUID = 1L;
     public static final String SEQ = "SEQ_Supplier";

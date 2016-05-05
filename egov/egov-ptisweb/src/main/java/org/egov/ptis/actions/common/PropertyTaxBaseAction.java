@@ -1,4 +1,4 @@
-/*******************************************************************************
+/*
  * eGov suite of products aim to improve the internal efficiency,transparency,
  *    accountability and the service delivery of the government  organizations.
  *
@@ -24,19 +24,19 @@
  *     In addition to the terms of the GPL license to be adhered to in using this
  *     program, the following additional terms are to be complied with:
  *
- *      1) All versions of this program, verbatim or modified must carry this
- *         Legal Notice.
+ *         1) All versions of this program, verbatim or modified must carry this
+ *            Legal Notice.
  *
- *      2) Any misrepresentation of the origin of the material is prohibited. It
- *         is required that all modified versions of this material be marked in
- *         reasonable ways as different from the original version.
+ *         2) Any misrepresentation of the origin of the material is prohibited. It
+ *            is required that all modified versions of this material be marked in
+ *            reasonable ways as different from the original version.
  *
- *      3) This license does not grant any rights to any user of the program
- *         with regards to rights under trademark law for use of the trade names
- *         or trademarks of eGovernments Foundation.
+ *         3) This license does not grant any rights to any user of the program
+ *            with regards to rights under trademark law for use of the trade names
+ *            or trademarks of eGovernments Foundation.
  *
  *   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
- ******************************************************************************/
+ */
 package org.egov.ptis.actions.common;
 
 import org.apache.commons.lang.StringUtils;
@@ -698,8 +698,16 @@ public abstract class PropertyTaxBaseAction extends GenericWorkFlowAction {
     }
 
     public void preparePropertyTaxDetails(Property property) {
-        final Map<String, BigDecimal> demandCollMap = propertyTaxUtil.prepareDemandDetForWorkflowProperty(property,
-                propertyTaxUtil.getCurrentInstallment());
+    	Map<String, Installment> installmentMap = propertyTaxUtil.getInstallmentsForCurrYear(new Date());
+        Installment installmentFirstHalf = installmentMap.get(PropertyTaxConstants.CURRENTYEAR_FIRST_HALF);
+        Installment installmentSecondHalf = installmentMap.get(PropertyTaxConstants.CURRENTYEAR_SECOND_HALF);
+        Map<String, BigDecimal> demandCollMap = null;
+        //Based on the current date, the tax details will be fetched for the respective installment
+        if(DateUtils.between(new Date(), installmentFirstHalf.getFromDate(), installmentFirstHalf.getToDate()))
+        	demandCollMap = propertyTaxUtil.prepareDemandDetForWorkflowProperty(property,installmentFirstHalf,installmentFirstHalf);
+        else if(DateUtils.between(new Date(), installmentSecondHalf.getFromDate(), installmentSecondHalf.getToDate()))
+        	demandCollMap = propertyTaxUtil.prepareDemandDetForWorkflowProperty(property,installmentFirstHalf,installmentSecondHalf);
+       
         Ptdemand ptDemand = ptDemandDAO.getNonHistoryCurrDmdForProperty(property);
         if (null != ptDemand && ptDemand.getDmdCalculations() != null && ptDemand.getDmdCalculations().getAlv() != null)
             propertyTaxDetailsMap.put("ARV", ptDemand.getDmdCalculations().getAlv());

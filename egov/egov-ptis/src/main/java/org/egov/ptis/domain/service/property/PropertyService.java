@@ -1,4 +1,4 @@
-/*******************************************************************************
+/*
  * eGov suite of products aim to improve the internal efficiency,transparency,
  *    accountability and the service delivery of the government  organizations.
  *
@@ -24,19 +24,19 @@
  *     In addition to the terms of the GPL license to be adhered to in using this
  *     program, the following additional terms are to be complied with:
  *
- *      1) All versions of this program, verbatim or modified must carry this
- *         Legal Notice.
+ *         1) All versions of this program, verbatim or modified must carry this
+ *            Legal Notice.
  *
- *      2) Any misrepresentation of the origin of the material is prohibited. It
- *         is required that all modified versions of this material be marked in
- *         reasonable ways as different from the original version.
+ *         2) Any misrepresentation of the origin of the material is prohibited. It
+ *            is required that all modified versions of this material be marked in
+ *            reasonable ways as different from the original version.
  *
- *      3) This license does not grant any rights to any user of the program
- *         with regards to rights under trademark law for use of the trade names
- *         or trademarks of eGovernments Foundation.
+ *         3) This license does not grant any rights to any user of the program
+ *            with regards to rights under trademark law for use of the trade names
+ *            or trademarks of eGovernments Foundation.
  *
- *   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org
- ******************************************************************************/
+ *   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
+ */
 package org.egov.ptis.domain.service.property;
 
 import org.apache.commons.lang3.StringUtils;
@@ -69,6 +69,7 @@ import org.egov.infra.search.elastic.entity.ApplicationIndexBuilder;
 import org.egov.infra.search.elastic.service.ApplicationIndexService;
 import org.egov.infra.security.utils.SecurityUtils;
 import org.egov.infra.utils.ApplicationNumberGenerator;
+import org.egov.infra.utils.DateUtils;
 import org.egov.infra.utils.EgovThreadLocals;
 import org.egov.infra.web.utils.WebUtils;
 import org.egov.infra.workflow.entity.State;
@@ -484,17 +485,28 @@ public class PropertyService {
         Installment installmentFirstHalf = yearwiseInstMap.get(PropertyTaxConstants.CURRENTYEAR_FIRST_HALF);
         Installment installmentSecondHalf = yearwiseInstMap.get(PropertyTaxConstants.CURRENTYEAR_SECOND_HALF);
         
+        APTaxCalculationInfo taxCalcInfo = null;
+
         /**
          * Only 1 Ptdemand will be created, i.e., for 1st half of current year. 
          * Demand Details will be created from the effective date till 2nd installment of current year 
+         * 
+         * In case of demolition done in 2nd half, APTaxCalculationInfo is generated for current year 2nd installment.
+         * In this case, demand needs to be calculated for both installments of next financial year only.
+         * Currently, entering future date is not allowed during create/modify etc
+         * Demolition in 2nd is the only use case where demand will be calculated for future date
+         * The below conditions are added to handle all above use cases
          */
-        APTaxCalculationInfo taxCalcInfo = null;
-        
         if(instList.size()==1 && instList.get(0).equals(installmentSecondHalf)){
         	taxCalcInfo = (APTaxCalculationInfo) instTaxMap.get(installmentSecondHalf);
-        }else{
+        } else if(dateOfCompletion.after(installmentSecondHalf.getToDate())){
+        	//Executed only in case of demolition done in 2nd half
+        	taxCalcInfo = (APTaxCalculationInfo) instTaxMap.get(installmentSecondHalf);
+        	instList.remove(installmentSecondHalf);
+        } else{
         	taxCalcInfo = (APTaxCalculationInfo) instTaxMap.get(installmentFirstHalf);
         }
+
         dmdDetailSet = createAllDmdDetails(instList, instTaxMap);
         final PTDemandCalculations ptDmdCalc = new PTDemandCalculations();
         ptDemand = new Ptdemand();
@@ -1475,7 +1487,7 @@ public class PropertyService {
                     oldCurrPtDmd = ptDmd;
             }
         
-        addArrDmdDetToCurrentDmd(oldCurrPtDmd, currPtDmd, effectiveInstall);
+        addArrDmdDetToCurrentDmd(oldCurrPtDmd, currPtDmd, effectiveInstall,false);
 
         LOGGER.debug("Exiting from createArrearsDemand");
         return property;
@@ -1487,15 +1499,24 @@ public class PropertyService {
      * @param ptDmd
      * @param currPtDmd
      * @param effectiveInstall
+     * @param isDemolition
      */
-    private void addArrDmdDetToCurrentDmd(final Ptdemand ptDmd, final Ptdemand currPtDmd,
-            final Installment effectiveInstall) {
+    public void addArrDmdDetToCurrentDmd(final Ptdemand ptDmd, final Ptdemand currPtDmd,
+            final Installment effectiveInstall,boolean isDemolition) {
         LOGGER.debug("Entered into addArrDmdDetToCurrentDmd. ptDmd: " + ptDmd + ", currPtDmd: " + currPtDmd);
-        //Other than Penalty, rest other demand details will be added, as penalty is already added before
+        /*
+         * For create/modify/GRP/Bifurcation arrear penalty demand details will be added before, other demand details will be added below
+         * In case of demolition, arrear penalty also needs to be added along with other demand details
+         * This check is done using isDemolition flag
+         */
         for (final EgDemandDetails dmdDet : ptDmd.getEgDemandDetails())
             if (dmdDet.getInstallmentStartDate().before(effectiveInstall.getFromDate()))
-            	if(!dmdDet.getEgDemandReason().getEgDemandReasonMaster().getCode().equalsIgnoreCase(DEMANDRSN_CODE_PENALTY_FINES))
+            	if(!isDemolition){
+	            	if(!dmdDet.getEgDemandReason().getEgDemandReasonMaster().getCode().equalsIgnoreCase(DEMANDRSN_CODE_PENALTY_FINES))
+	            		currPtDmd.addEgDemandDetails((EgDemandDetails) dmdDet.clone());
+            	} else {
             		currPtDmd.addEgDemandDetails((EgDemandDetails) dmdDet.clone());
+            	}
         LOGGER.debug("Exiting from addArrDmdDetToCurrentDmd");
     }
 
@@ -1782,7 +1803,6 @@ public class PropertyService {
                                         .getValue().get(demandReason), currerntInstallment);
                         ptDemand.addEgDemandDetails(currentDemandDetail);
                         newDemandDetailsByInstallment.get(currerntInstallment).add(currentDemandDetail);
-                        // HibernateUtil.getCurrentSession().flush();
                     } else {
                         currentDemandDetail.setAmtCollected(currentDemandDetail.getAmtCollected().add(
                                 excessAmountByDemandReasonForInstallment.getValue().get(demandReason)));
@@ -2108,7 +2128,7 @@ public class PropertyService {
             user = stateAwareObject.getState().getCreatedBy();
         else
             user = assignmentService.getAssignmentsForPosition(position.getId(), new Date()).get(0).getEmployee();
-        Map<String, String> ownerMap = new HashMap<String, String>();
+        User owner = null;
         if (applictionType != null
                 && (applictionType.equalsIgnoreCase(APPLICATION_TYPE_NEW_ASSESSENT)
                         || applictionType.equalsIgnoreCase(APPLICATION_TYPE_ALTER_ASSESSENT) || applictionType
@@ -2118,23 +2138,23 @@ public class PropertyService {
                     .getApplicationNo());
             final String url = "/ptis/view/viewProperty-viewForm.action?applicationNo=" + property.getApplicationNo()
                     + "&applicationType=" + applictionType;
-            ownerMap = property.getBasicProperty().getOwnerMap();
+            owner = property.getBasicProperty().getPrimaryOwner();
             if (null == applicationIndex) {
                 final ApplicationIndexBuilder applicationIndexBuilder = new ApplicationIndexBuilder(PTMODULENAME,
-                        property.getApplicationNo(), new Date(), applictionType, ownerMap.get("OWNERNAME"), property
+                        property.getApplicationNo(), new Date(), applictionType, owner.getName(), property
                                 .getState().getValue(), url, property.getBasicProperty().getAddress().toString(),
                         user.getUsername() + "::" + user.getName(), Source.SYSTEM.toString());
                 applicationIndexBuilder.consumerCode(property.getBasicProperty().getUpicNo());
-                applicationIndexBuilder.mobileNumber(ownerMap.get("MOBILENO"));
-                applicationIndexBuilder.aadharNumber(ownerMap.get("AADHARNO"));
+                applicationIndexBuilder.mobileNumber(owner.getMobileNumber());
+                applicationIndexBuilder.aadharNumber(owner.getAadhaarNumber());
                 applicationIndexService.createApplicationIndex(applicationIndexBuilder.build());
             } else {
                 applicationIndex.setStatus(property.getState().getValue());
                 if (applictionType.equalsIgnoreCase(APPLICATION_TYPE_NEW_ASSESSENT)) {
                     applicationIndex.setConsumerCode(property.getBasicProperty().getUpicNo());
-                    applicationIndex.setApplicantName(ownerMap.get("OWNERNAME"));
-                    applicationIndex.setMobileNumber(ownerMap.get("MOBILENO"));
-                    applicationIndex.setAadharNumber(ownerMap.get("AADHARNO"));
+                    applicationIndex.setApplicantName(owner.getName());
+                    applicationIndex.setMobileNumber(owner.getMobileNumber());
+                    applicationIndex.setAadharNumber(owner.getAadhaarNumber());
                 }
                 applicationIndexService.updateApplicationIndex(applicationIndex);
             }
@@ -2146,15 +2166,15 @@ public class PropertyService {
             final String url = "/ptis/view/viewProperty-viewForm.action?applicationNo=" + property.getObjectionNumber()
                     + "&applicationType=" + applictionType;
             if (null == applicationIndex) {
-                ownerMap = property.getBasicProperty().getOwnerMap();
+                owner = property.getBasicProperty().getPrimaryOwner();
                 final ApplicationIndexBuilder applicationIndexBuilder = new ApplicationIndexBuilder(PTMODULENAME,
                         property.getObjectionNumber(), property.getCreatedDate() != null ? property.getCreatedDate()
-                                : new Date(), applictionType, ownerMap.get("OWNERNAME"),
+                                : new Date(), applictionType, owner.getName(),
                         property.getState().getValue(), url, property.getBasicProperty().getAddress().toString(),
                         user.getUsername() + "::" + user.getName(), Source.SYSTEM.toString());
                 applicationIndexBuilder.consumerCode(property.getBasicProperty().getUpicNo());
-                applicationIndexBuilder.mobileNumber(ownerMap.get("MOBILENO"));
-                applicationIndexBuilder.aadharNumber(ownerMap.get("AADHARNO"));
+                applicationIndexBuilder.mobileNumber(owner.getMobileNumber());
+                applicationIndexBuilder.aadharNumber(owner.getAadhaarNumber());
                 applicationIndexService.createApplicationIndex(applicationIndexBuilder.build());
             } else {
                 applicationIndex.setStatus(property.getState().getValue());
@@ -2167,22 +2187,22 @@ public class PropertyService {
                     .getApplicationNo());
             final String url = "/ptis/view/viewProperty-viewForm.action?applicationNo=" + property.getApplicationNo()
                     + "&applicationType=" + applictionType;
-            ownerMap = property.getBasicProperty().getOwnerMap();
+            owner = property.getBasicProperty().getPrimaryOwner();
             if (null == applicationIndex) {
                 final ApplicationIndexBuilder applicationIndexBuilder = new ApplicationIndexBuilder(PTMODULENAME,
                         property.getApplicationNo(), property.getCreatedDate() != null ? property.getCreatedDate()
-                                : new Date(), applictionType, ownerMap.get("OWNERNAME"),
+                                : new Date(), applictionType, owner.getName(),
                         property.getState().getValue(), url, property.getBasicProperty().getAddress().toString(),
                         user.getUsername() + "::" + user.getName(), Source.SYSTEM.toString());
                 applicationIndexBuilder.consumerCode(property.getBasicProperty().getUpicNo());
-                applicationIndexBuilder.mobileNumber(ownerMap.get("MOBILENO"));
-                applicationIndexBuilder.aadharNumber(ownerMap.get("AADHARNO"));
+                applicationIndexBuilder.mobileNumber(owner.getMobileNumber());
+                applicationIndexBuilder.aadharNumber(owner.getAadhaarNumber());
                 applicationIndexService.createApplicationIndex(applicationIndexBuilder.build());
             } else {
                 applicationIndex.setStatus(property.getState().getValue());
-                applicationIndex.setApplicantName(ownerMap.get("OWNERNAME"));
-                applicationIndex.setMobileNumber(ownerMap.get("MOBILENO"));
-                applicationIndex.setAadharNumber(ownerMap.get("AADHARNO"));
+                applicationIndex.setApplicantName(owner.getName());
+                applicationIndex.setMobileNumber(owner.getMobileNumber());
+                applicationIndex.setAadharNumber(owner.getAadhaarNumber());
                 applicationIndexService.updateApplicationIndex(applicationIndex);
             }
 
@@ -2454,6 +2474,31 @@ public class PropertyService {
         final List<PropertyMaterlizeView> propertyList = query.list();
         return propertyList;
     }
+    /**
+     * @param assessmentNum,ownerName,doorNo
+     * @return List of property matching the input params
+    */
+   public List<PropertyMaterlizeView> getPropertyByAssessmentAndOwnerDetails(final String assessmentNum, final String ownerName,final String doorNo) {
+       final StringBuilder queryStr = new StringBuilder();
+       queryStr.append("select distinct pmv from PropertyMaterlizeView pmv ").append(
+               " where pmv.isActive = true ");
+       if (assessmentNum != null && !assessmentNum.trim().isEmpty())
+           queryStr.append(" and pmv.propertyId=:assessmentNum ");
+       if (ownerName != null && !ownerName.trim().isEmpty())
+           queryStr.append(" and upper(trim(pmv.ownerName)) like :OwnerName ");
+       if (doorNo != null && !doorNo.trim().isEmpty())
+           queryStr.append(" and pmv.houseNo like :HouseNo ");
+       final Query query = propPerServ.getSession().createQuery(queryStr.toString());
+       if (assessmentNum != null && !assessmentNum.trim().isEmpty())
+           query.setString("assessmentNum", assessmentNum);
+       if (doorNo != null && !doorNo.trim().isEmpty())
+           query.setString("HouseNo", doorNo + "%");
+       if (ownerName != null && !ownerName.trim().isEmpty())
+           query.setString("OwnerName", "%" + ownerName.toUpperCase() + "%");
+
+       final List<PropertyMaterlizeView> propertyList = query.list();
+       return propertyList;
+   }
 
     /**
      * @param locationId
@@ -2726,7 +2771,7 @@ public class PropertyService {
     	Map<String, BigDecimal> taxValues = new HashMap<String, BigDecimal>();
     	Map<String,Installment> currYearInstMap = propertyTaxUtil.getInstallmentsForCurrYear(currDate);
     	Installment currInstFirstHalf = currYearInstMap.get(PropertyTaxConstants.CURRENTYEAR_FIRST_HALF);
-        if(between(new Date(),currInstFirstHalf.getFromDate(),currInstFirstHalf.getToDate())){
+        if(DateUtils.between(new Date(),currInstFirstHalf.getFromDate(),currInstFirstHalf.getToDate())){
         	taxValues.put(PropertyTaxConstants.CURR_DMD_STR, propertyTaxDetails.get(PropertyTaxConstants.CURR_FIRSTHALF_DMD_STR));
         	taxValues.put(PropertyTaxConstants.CURR_BAL_STR, propertyTaxDetails.get(PropertyTaxConstants.CURR_FIRSTHALF_DMD_STR)
                     .subtract(propertyTaxDetails.get(PropertyTaxConstants.CURR_FIRSTHALF_COLL_STR)));
@@ -2737,6 +2782,54 @@ public class PropertyService {
         }
     	return taxValues;
     }
+    
+    /**
+     * Returns a map of current tax and balance, based on passed date being in first half or second half of the installments for current year
+     * @param propertyTaxDetails
+     * @param currDate
+     * @return
+     */
+    public Map<String, BigDecimal> getCurrentTaxDetails(Map<String, Map<String,BigDecimal>> propertyTaxDetails, Date currDate){
+    	Map<String, BigDecimal> taxValues = new HashMap<String, BigDecimal>();
+    	Map<String,Installment> currYearInstMap = propertyTaxUtil.getInstallmentsForCurrYear(currDate);
+    	Installment currInstFirstHalf = currYearInstMap.get(PropertyTaxConstants.CURRENTYEAR_FIRST_HALF);
+        if(DateUtils.between(new Date(),currInstFirstHalf.getFromDate(),currInstFirstHalf.getToDate())){
+        	getTaxDetails(propertyTaxDetails, taxValues,PropertyTaxConstants.CURRENTYEAR_FIRST_HALF,currInstFirstHalf);
+        }else{
+        	getTaxDetails(propertyTaxDetails, taxValues,PropertyTaxConstants.CURRENTYEAR_SECOND_HALF,null);
+        }
+    	return taxValues;
+    }
+
+    /**
+     * Gives the tax details for the installment
+     * @param propertyTaxDetails
+     * @param taxValues
+     * @param installmentHalf
+     * @param currInstFirstHalf
+     */
+	private void getTaxDetails(Map<String, Map<String, BigDecimal>> propertyTaxDetails, Map<String, BigDecimal> taxValues, 
+			String installmentHalf, Installment currInstFirstHalf) {
+		if(currInstFirstHalf != null){
+			taxValues.put(PropertyTaxConstants.CURR_DMD_STR, (propertyTaxDetails.get(installmentHalf)).get(PropertyTaxConstants.CURR_FIRSTHALF_DMD_STR));
+			taxValues.put(PropertyTaxConstants.CURR_COLL_STR, (propertyTaxDetails.get(installmentHalf)).get(PropertyTaxConstants.CURR_FIRSTHALF_COLL_STR));
+			taxValues.put(PropertyTaxConstants.CURR_BAL_STR, (propertyTaxDetails.get(installmentHalf)).get(PropertyTaxConstants.CURR_FIRSTHALF_DMD_STR)
+					.subtract((propertyTaxDetails.get(installmentHalf)).get(PropertyTaxConstants.CURR_FIRSTHALF_COLL_STR)));
+		}else{
+			taxValues.put(PropertyTaxConstants.CURR_DMD_STR, (propertyTaxDetails.get(installmentHalf)).get(PropertyTaxConstants.CURR_SECONDHALF_DMD_STR));
+			taxValues.put(PropertyTaxConstants.CURR_COLL_STR, (propertyTaxDetails.get(installmentHalf)).get(PropertyTaxConstants.CURR_SECONDHALF_COLL_STR));
+			taxValues.put(PropertyTaxConstants.CURR_BAL_STR, (propertyTaxDetails.get(installmentHalf)).get(PropertyTaxConstants.CURR_SECONDHALF_DMD_STR)
+					.subtract((propertyTaxDetails.get(installmentHalf)).get(PropertyTaxConstants.CURR_SECONDHALF_COLL_STR)));
+		}
+		taxValues.put(PropertyTaxConstants.DEMANDRSN_STR_GENERAL_TAX, (propertyTaxDetails.get(installmentHalf)).get(PropertyTaxConstants.DEMANDRSN_STR_GENERAL_TAX));
+		taxValues.put(PropertyTaxConstants.DEMANDRSN_STR_LIBRARY_CESS, (propertyTaxDetails.get(installmentHalf)).get(PropertyTaxConstants.DEMANDRSN_STR_LIBRARY_CESS));
+		taxValues.put(PropertyTaxConstants.DEMANDRSN_STR_EDUCATIONAL_CESS, (propertyTaxDetails.get(installmentHalf)).get(PropertyTaxConstants.DEMANDRSN_STR_EDUCATIONAL_CESS));
+		taxValues.put(PropertyTaxConstants.DEMANDRSN_STR_UNAUTHORIZED_PENALTY, (propertyTaxDetails.get(installmentHalf)).get(PropertyTaxConstants.DEMANDRSN_STR_UNAUTHORIZED_PENALTY));
+		taxValues.put(PropertyTaxConstants.ARR_DMD_STR,(propertyTaxDetails.get(PropertyTaxConstants.ARREARS)).get(PropertyTaxConstants.ARR_DMD_STR));
+		taxValues.put(PropertyTaxConstants.ARR_COLL_STR,(propertyTaxDetails.get(PropertyTaxConstants.ARREARS)).get(PropertyTaxConstants.ARR_COLL_STR));
+		taxValues.put(PropertyTaxConstants.ARR_BAL_STR,((propertyTaxDetails.get(PropertyTaxConstants.ARREARS)).get(PropertyTaxConstants.ARR_DMD_STR))
+				.subtract((propertyTaxDetails.get(PropertyTaxConstants.ARREARS)).get(PropertyTaxConstants.ARR_COLL_STR)));
+	}
     
     public Map<Installment, Map<String, BigDecimal>> getExcessCollAmtMap() {
         return excessCollAmtMap;
@@ -2762,7 +2855,4 @@ public class PropertyService {
         this.totalAlv = totalAlv;
     }
     
-    public Boolean between(final Date date, final Date fromDate, final Date toDate) {
-        return (date.after(fromDate) || date.equals(fromDate)) && date.before(toDate) || date.equals(toDate);
-    }
 }

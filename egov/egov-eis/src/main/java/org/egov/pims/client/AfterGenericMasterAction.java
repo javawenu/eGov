@@ -1,41 +1,41 @@
-/**
- * eGov suite of products aim to improve the internal efficiency,transparency, 
-   accountability and the service delivery of the government  organizations.
-
-    Copyright (C) <2015>  eGovernments Foundation
-
-    The updated version of eGov suite of products as by eGovernments Foundation 
-    is available at http://www.egovernments.org
-
-    This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    any later version.
-
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with this program. If not, see http://www.gnu.org/licenses/ or 
-    http://www.gnu.org/licenses/gpl.html .
-
-    In addition to the terms of the GPL license to be adhered to in using this
-    program, the following additional terms are to be complied with:
-
-	1) All versions of this program, verbatim or modified must carry this 
-	   Legal Notice.
-
-	2) Any misrepresentation of the origin of the material is prohibited. It 
-	   is required that all modified versions of this material be marked in 
-	   reasonable ways as different from the original version.
-
-	3) This license does not grant any rights to any user of the program 
-	   with regards to rights under trademark law for use of the trade names 
-	   or trademarks of eGovernments Foundation.
-
-  In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
+/*
+ * eGov suite of products aim to improve the internal efficiency,transparency,
+ *    accountability and the service delivery of the government  organizations.
+ *
+ *     Copyright (C) <2015>  eGovernments Foundation
+ *
+ *     The updated version of eGov suite of products as by eGovernments Foundation
+ *     is available at http://www.egovernments.org
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program. If not, see http://www.gnu.org/licenses/ or
+ *     http://www.gnu.org/licenses/gpl.html .
+ *
+ *     In addition to the terms of the GPL license to be adhered to in using this
+ *     program, the following additional terms are to be complied with:
+ *
+ *         1) All versions of this program, verbatim or modified must carry this
+ *            Legal Notice.
+ *
+ *         2) Any misrepresentation of the origin of the material is prohibited. It
+ *            is required that all modified versions of this material be marked in
+ *            reasonable ways as different from the original version.
+ *
+ *         3) This license does not grant any rights to any user of the program
+ *            with regards to rights under trademark law for use of the trade names
+ *            or trademarks of eGovernments Foundation.
+ *
+ *   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
  */
 package org.egov.pims.client;
 
@@ -46,7 +46,6 @@ import org.apache.struts.action.ActionMapping;
 import org.apache.struts.actions.DispatchAction;
 import org.egov.infra.exception.ApplicationRuntimeException;
 import org.egov.infstr.utils.EgovMasterDataCaching;
-import org.egov.infstr.utils.HibernateUtil;
 import org.egov.pims.dao.GenericMasterDAO;
 import org.egov.pims.model.GenericMaster;
 import org.egov.pims.service.EmployeeServiceOld;
@@ -72,6 +71,9 @@ public class AfterGenericMasterAction extends DispatchAction {
 
 	@Autowired
 	private EgovMasterDataCaching masterDataCache;
+
+	@Autowired
+	private GenericMasterDAO genericMasterDAO;
 	
 	public AfterGenericMasterAction() {
 	}
@@ -83,7 +85,6 @@ public class AfterGenericMasterAction extends DispatchAction {
 
 		String alertMessage = null;
 		String className = req.getParameter("className").trim();
-		GenericMasterDAO genericMasterDAO = new GenericMasterDAO();
 		GenericMaster genericMaster = null;
 		try {
 			GenericForm genericForm = (GenericForm) form;
@@ -114,7 +115,6 @@ public class AfterGenericMasterAction extends DispatchAction {
 			}
 			genericMasterDAO.create(genericMaster);
 			removeFromCache(className);
-			HibernateUtil.getCurrentSession().flush();
 			target = "success";
 			alertMessage = "Executed successfully";
 		}
@@ -137,7 +137,6 @@ public class AfterGenericMasterAction extends DispatchAction {
 
 			target = ERROR;
 			   LOGGER.error(ex.getMessage());
-			   //HibernateUtil.rollbackTransaction();
 			   throw new ApplicationRuntimeException(EXCEPTION + ex.getMessage(),ex);
 		}
 		req.setAttribute("alertMessage", alertMessage);
@@ -152,7 +151,6 @@ public class AfterGenericMasterAction extends DispatchAction {
 		try {
 
 			GenericForm genericForm = (GenericForm) form;
-			GenericMasterDAO genericMasterDAO = new GenericMasterDAO();
 			String className = req.getParameter("className").trim();
 
 			GenericMaster genericMastr = genericMasterDAO.getGenericMaster(
@@ -174,13 +172,10 @@ public class AfterGenericMasterAction extends DispatchAction {
 			genericMasterDAO.update(genericMastr);
 			removeFromCache(className);
 			req.getSession().removeAttribute("Id");
-			HibernateUtil.getCurrentSession().flush();
 			target = "success";
 			alertMessage = "Executed successfully";
 		} catch (Exception ex) {
-				target = ERROR;
 			   LOGGER.error(ex.getMessage());
-			   //HibernateUtil.rollbackTransaction();
 			   throw new ApplicationRuntimeException(EXCEPTION + ex.getMessage(),ex);
 		}
 		req.setAttribute("alertMessage", alertMessage);
@@ -196,14 +191,12 @@ public class AfterGenericMasterAction extends DispatchAction {
 		try {
 
 			GenericForm genericForm = (GenericForm) form;
-			GenericMasterDAO genericMasterDAO = new GenericMasterDAO();
 			String className = req.getParameter("className").trim();
 			GenericMaster genericMaster = genericMasterDAO.getGenericMaster(
 					(Integer.valueOf(genericForm.getId())).intValue(), className);
 			genericMasterDAO.remove(genericMaster);
 			removeFromCache(className);
 			req.getSession().removeAttribute("Id");
-			HibernateUtil.getCurrentSession().flush();
 			target = "success";
 			alertMessage = "Executed deleting successfully";
 		} catch (ConstraintViolationException ex) {
@@ -211,12 +204,8 @@ public class AfterGenericMasterAction extends DispatchAction {
 			target = ERROR;
 			alertMessage = "This data can't be deleted as it is being used";
 			LOGGER.error(ex.getMessage());
-			//HibernateUtil.rollbackTransaction();
 		} catch (Exception ex) {
-			target = ERROR;
-			alertMessage = "This can't be deleted";
 			LOGGER.error(ex.getMessage());
-			//HibernateUtil.rollbackTransaction();
 			throw new ApplicationRuntimeException(EXCEPTION + ex.getMessage(),ex);
 		}
 		req.setAttribute("alertMessage", alertMessage);
@@ -231,7 +220,6 @@ public class AfterGenericMasterAction extends DispatchAction {
 					.toString();
 			masterDataCache.removeFromCache(tagName);
 		} catch (ApplicationRuntimeException e) {
-			// Exception Handled
 			LOGGER.error(e.getMessage());
 			throw new ApplicationRuntimeException(EXCEPTION + e.getMessage(),e);
 		}

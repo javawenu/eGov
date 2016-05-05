@@ -1,4 +1,4 @@
-/*******************************************************************************
+/*
  * eGov suite of products aim to improve the internal efficiency,transparency,
  *    accountability and the service delivery of the government  organizations.
  *
@@ -24,19 +24,19 @@
  *     In addition to the terms of the GPL license to be adhered to in using this
  *     program, the following additional terms are to be complied with:
  *
- *      1) All versions of this program, verbatim or modified must carry this
- *         Legal Notice.
+ *         1) All versions of this program, verbatim or modified must carry this
+ *            Legal Notice.
  *
- *      2) Any misrepresentation of the origin of the material is prohibited. It
- *         is required that all modified versions of this material be marked in
- *         reasonable ways as different from the original version.
+ *         2) Any misrepresentation of the origin of the material is prohibited. It
+ *            is required that all modified versions of this material be marked in
+ *            reasonable ways as different from the original version.
  *
- *      3) This license does not grant any rights to any user of the program
- *         with regards to rights under trademark law for use of the trade names
- *         or trademarks of eGovernments Foundation.
+ *         3) This license does not grant any rights to any user of the program
+ *            with regards to rights under trademark law for use of the trade names
+ *            or trademarks of eGovernments Foundation.
  *
- *   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org
- ******************************************************************************/
+ *   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
+ */
 package org.egov.ptis.client.util;
 
 import org.apache.commons.lang3.RandomStringUtils;
@@ -132,12 +132,15 @@ import org.egov.ptis.wtms.PropertyWiseConsumptions;
 import org.egov.ptis.wtms.WaterChargesIntegrationService;
 import org.hibernate.Query;
 import org.hibernate.SQLQuery;
+import org.hibernate.Session;
 import org.hibernate.criterion.CriteriaSpecification;
 import org.joda.time.DateTime;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.io.StringReader;
@@ -212,6 +215,10 @@ public class PropertyTaxUtil {
     private ModuleService moduleDao;
     @Autowired
     private RebatePeriodService rebatePeriodService;
+
+    @PersistenceContext
+    private EntityManager entityManager;
+
     private final SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
 
     public void setPersistenceService(final PersistenceService persistenceService) {
@@ -580,7 +587,7 @@ public class PropertyTaxUtil {
         BigDecimal amount = BigDecimal.ZERO;
 
         final List<String> demandReasonExcludeList = Arrays.asList(DEMANDRSN_CODE_PENALTY_FINES,
-                PropertyTaxConstants.DEMANDRSN_CODE_ADVANCE);
+                DEMANDRSN_CODE_ADVANCE);
 
         for (final EgDemandDetails dmdDet : egDemand.getEgDemandDetails()) {
 
@@ -1022,8 +1029,7 @@ public class PropertyTaxUtil {
         LOGGER.debug("Entered into getLatestCollRcptDateForProp, consumerCode=" + consumerCode);
 
         final Map<String, Date> penaltyDates = new HashMap<String, Date>();
-        final List<Object> rcptHeaderList = HibernateUtil
-                .getCurrentSession()
+        final List<Object> rcptHeaderList = entityManager.unwrap(Session.class)
                 .createQuery(
                         "select substr(rd.description, length(rd.description)-6, length(rd.description)), max(rh.createdDate) "
                                 + "from org.egov.erpcollection.models.ReceiptHeader rh "
@@ -1282,7 +1288,7 @@ public class PropertyTaxUtil {
      * throws ParseException { String query = ""; List result = null; Integer
      * days = 21; Date noticeDate = null; String indexNumber =
      * property.getBasicProperty().getUpicNo(); if (isNoticeGenerated(property))
-     * { result = HibernateUtil .getCurrentSession() .createQuery(
+     * { result = session .createQuery(
      * "select to_char(n.noticeDate, 'dd/mm/yyyy') from PtNotice n " +
      * "where n.basicProperty = :basicProp " + "and n.noticeDate is not null " +
      * "and n.noticeDate >= :propCreatedDate") .setEntity("basicProp",
@@ -1365,8 +1371,8 @@ public class PropertyTaxUtil {
                 demandDetailAndReason.put(DEMANDRSN_CODE_PENALTY_FINES, egDmndDtls);
             else if (dmndRsnMstr.getCode().equalsIgnoreCase(DEMANDRSN_CODE_CHQ_BOUNCE_PENALTY))
                 demandDetailAndReason.put(DEMANDRSN_CODE_CHQ_BOUNCE_PENALTY, egDmndDtls);
-            else if (dmndRsnMstr.getCode().equalsIgnoreCase(PropertyTaxConstants.DEMANDRSN_CODE_ADVANCE))
-                demandDetailAndReason.put(PropertyTaxConstants.DEMANDRSN_CODE_ADVANCE, egDmndDtls);
+            else if (dmndRsnMstr.getCode().equalsIgnoreCase(DEMANDRSN_CODE_ADVANCE))
+                demandDetailAndReason.put(DEMANDRSN_CODE_ADVANCE, egDmndDtls);
         }
 
         return demandDetailAndReason;
@@ -1379,8 +1385,7 @@ public class PropertyTaxUtil {
      * @return
      */
     public Date getEarliestModificationDate(final String propertyId) {
-        final List result = HibernateUtil
-                .getCurrentSession()
+        final List result = entityManager.unwrap(Session.class)
                 .createQuery(
                         "select to_char(min(pd.effective_date), 'dd/mm/yyyy') "
                                 + "from PropertyImpl p inner join p.propertyDetail pd "
@@ -1466,7 +1471,7 @@ public class PropertyTaxUtil {
         Installment installment = null;
 
         final List<String> demandReasonExcludeList = Arrays.asList(DEMANDRSN_CODE_PENALTY_FINES,
-                PropertyTaxConstants.DEMANDRSN_CODE_ADVANCE);
+                DEMANDRSN_CODE_ADVANCE);
 
         final String query = "select ptd from Ptdemand ptd " + "inner join fetch ptd.egDemandDetails dd "
                 + "inner join fetch dd.egDemandReason dr " + "inner join fetch dr.egDemandReasonMaster drm "
@@ -1474,7 +1479,7 @@ public class PropertyTaxUtil {
                 + "where bp.active = true " + "and (p.status = 'A' or p.status = 'I') " + "and p = :property "
                 + "and ptd.egInstallmentMaster = :installment";
 
-        final Ptdemand ptDemand = (Ptdemand) HibernateUtil.getCurrentSession().createQuery(query)
+        final Ptdemand ptDemand = (Ptdemand) entityManager.unwrap(Session.class).createQuery(query)
                 .setEntity("property", property).setEntity("installment", currentInstallment).list().get(0);
 
         for (final EgDemandDetails dmdDet : ptDemand.getEgDemandDetails()) {
@@ -1529,7 +1534,7 @@ public class PropertyTaxUtil {
         Map<String,Installment> currYearInstMap = getInstallmentsForCurrYear(new Date());
 
         final List<String> demandReasonExcludeList = Arrays.asList(DEMANDRSN_CODE_PENALTY_FINES,
-                PropertyTaxConstants.DEMANDRSN_CODE_ADVANCE);
+                DEMANDRSN_CODE_ADVANCE);
 
         final String query = "select ptd from Ptdemand ptd " + "inner join fetch ptd.egDemandDetails dd "
                 + "inner join fetch dd.egDemandReason dr " + "inner join fetch dr.egDemandReasonMaster drm "
@@ -1537,7 +1542,7 @@ public class PropertyTaxUtil {
                 + "where bp.active = true " + "and (p.status = 'A' or p.status = 'I' or p.status = 'W') "
                 + "and p = :property " + "and ptd.egInstallmentMaster = :installment";
 
-        final Ptdemand ptDemand = (Ptdemand) HibernateUtil.getCurrentSession().createQuery(query)
+        final Ptdemand ptDemand = (Ptdemand) entityManager.unwrap(Session.class).createQuery(query)
                 .setEntity("property", property).setEntity("installment", currentInstallment).list().get(0);
 
         for (final EgDemandDetails dmdDet : ptDemand.getEgDemandDetails()) {
@@ -1585,7 +1590,7 @@ public class PropertyTaxUtil {
                 + "where bp.upicNo = ? and bp.active = true " + "and (p.remarks = null or p.remarks <> ?) "
                 + "order by p.createdDate";
 
-        final List<Property> allProperties = HibernateUtil.getCurrentSession().createQuery(query)
+        final List<Property> allProperties = entityManager.unwrap(Session.class).createQuery(query)
                 .setString(0, basicProperty.getUpicNo()).setString(1, PropertyTaxConstants.STR_MIGRATED_REMARKS).list();
 
         new ArrayList<Property>();
@@ -1817,10 +1822,7 @@ public class PropertyTaxUtil {
     }
 
     public String logoBasePath() {
-        final HttpServletRequest request = ServletActionContext.getRequest();
-        final String url = WebUtils.extractRequestDomainURL(request, false);
-        final String imagePath = url.concat(PropertyTaxConstants.IMAGES_BASE_PATH).concat(ReportUtil.fetchLogo());
-        return imagePath;
+        return ReportUtil.logoBasePath();
     }
 
     public DepreciationMaster getDepreciationByDate(final Date depreciationDate) {
@@ -2276,7 +2278,7 @@ public class PropertyTaxUtil {
     }
 
     public Map<String, BigDecimal> prepareDemandDetForWorkflowProperty(final Property property,
-            final Installment currentInstallment) {
+            final Installment dmdInstallment, Installment dmdDetInstallment) {
         LOGGER.debug("Entered into prepareDemandDetForWorkflowProperty, property=" + property);
 
         Map<String, BigDecimal> DCBDetails = new HashMap<String, BigDecimal>();
@@ -2286,7 +2288,7 @@ public class PropertyTaxUtil {
         BigDecimal totalCurrentCollection = BigDecimal.ZERO;
 
         final List<String> demandReasonExcludeList = Arrays.asList(DEMANDRSN_CODE_PENALTY_FINES,
-                PropertyTaxConstants.DEMANDRSN_CODE_ADVANCE);
+                DEMANDRSN_CODE_ADVANCE);
 
         final String query = "select ptd from Ptdemand ptd " + "inner join fetch ptd.egDemandDetails dd "
                 + "inner join fetch dd.egDemandReason dr " + "inner join fetch dr.egDemandReasonMaster drm "
@@ -2294,8 +2296,8 @@ public class PropertyTaxUtil {
                 + "where bp.active = true " + "and (p.status = 'W' or p.status = 'I' or p.status = 'A') "
                 + "and p = :property " + "and ptd.egInstallmentMaster = :installment";
 
-        final Ptdemand ptDemand = (Ptdemand) HibernateUtil.getCurrentSession().createQuery(query)
-                .setEntity("property", property).setEntity("installment", currentInstallment).list().get(0);
+        final Ptdemand ptDemand = (Ptdemand) entityManager.unwrap(Session.class).createQuery(query)
+                .setEntity("property", property).setEntity("installment", dmdInstallment).list().get(0);
 
         for (final EgDemandDetails dmdDet : ptDemand.getEgDemandDetails()) {
 
@@ -2303,7 +2305,7 @@ public class PropertyTaxUtil {
 
             if (!demandReasonExcludeList.contains(demandReason)) {
                 installment = dmdDet.getEgDemandReason().getEgInstallmentMaster();
-                if (installment.equals(currentInstallment)) {
+                if (installment.equals(dmdDetInstallment)) {
                     totalCurrentDemand = totalCurrentDemand.add(dmdDet.getAmount());
                     totalCurrentCollection = totalCurrentCollection.add(dmdDet.getAmtCollected());
                     DCBDetails.put(dmdDet.getEgDemandReason().getEgDemandReasonMaster().getReasonMaster(),
@@ -2516,6 +2518,78 @@ public class PropertyTaxUtil {
         dateBefore6Installments.setMonth(currInstToDate.getMonth() + 1);
         dateBefore6Installments.setYear(currInstToDate.getYear() - 3);
         return dateBefore6Installments;
+    }
+    
+    /**
+     * Returns map containing tax amount for demand reasons other than Penalty and Advance
+     * @param property
+     * @param effectiveInstallment
+     * @param demandInstallment
+     * @return Map<String, BigDecimal>
+     */
+    public Map<String, BigDecimal> getTaxDetailsForInstallment(Property property, Installment effectiveInstallment, Installment demandInstallment){
+    	Map<String, BigDecimal> taxDetailsMap = new HashMap<String, BigDecimal>();
+    	final String query = "select ptd from Ptdemand ptd " + "inner join fetch ptd.egDemandDetails dd "
+                + "inner join fetch dd.egDemandReason dr " + "inner join fetch dr.egDemandReasonMaster drm "
+                + "inner join fetch ptd.egptProperty p " + "inner join fetch p.basicProperty bp "
+                + "where bp.active = true " + "and (p.status = 'A' or p.status = 'I' or p.status = 'W') "
+                + "and p = :property " + "and ptd.egInstallmentMaster = :demandInstallment ";
+
+        Ptdemand ptDemand = (Ptdemand) entityManager.unwrap(Session.class).createQuery(query)
+                .setEntity("property", property).setEntity("demandInstallment", demandInstallment).list().get(0);
+
+        for (final EgDemandDetails dmdDet : ptDemand.getEgDemandDetails()) {
+        	if(dmdDet.getInstallmentStartDate().equals(effectiveInstallment.getFromDate())){
+	        	if(!dmdDet.getEgDemandReason().getEgDemandReasonMaster().getCode().equalsIgnoreCase(DEMANDRSN_CODE_PENALTY_FINES) 
+	        			&& !dmdDet.getEgDemandReason().getEgDemandReasonMaster().getCode().equalsIgnoreCase(DEMANDRSN_CODE_ADVANCE)){
+	        		taxDetailsMap.put(dmdDet.getEgDemandReason().getEgDemandReasonMaster().getReasonMaster(), dmdDet.getAmount());
+	        	}
+        	}
+        }
+    	return taxDetailsMap;
+    }
+ 
+    /**
+     * Returns a list of Installments for tax calculation, based on the effective date
+     * @param effectiveDate
+     * @return List of Installments
+     */
+    public List<Installment> getInstallmentsListByEffectiveDate(Date effectiveDate) {
+    	Installment effectiveInstallment = getPTInstallmentForDate(effectiveDate);
+    	String query = "";
+    	List<Installment> installmentList = new ArrayList<Installment>();
+    	Map<String, Installment> installmentMap = getInstallmentsForCurrYear(new Date());
+    	Installment installmentFirstHalf = installmentMap.get(PropertyTaxConstants.CURRENTYEAR_FIRST_HALF);
+        Installment installmentSecondHalf = installmentMap.get(PropertyTaxConstants.CURRENTYEAR_SECOND_HALF);
+        
+        /*
+         * If effective date is before the current financial year, fetch all installments from the effective installment 
+         * till the 2nd half of current financial year.
+         */
+        if(!effectiveInstallment.equals(installmentFirstHalf) && !effectiveInstallment.equals(installmentSecondHalf)
+        		&& (effectiveDate.before(installmentFirstHalf.getFromDate()))){
+        	query = "select inst from Installment inst where inst.module.name = '"+PTMODULENAME+"' and inst.fromDate between :startdate and :enddate order by inst.fromDate";
+        	installmentList = entityManager.unwrap(Session.class).createQuery(query).setParameter("startdate", effectiveInstallment.getFromDate())
+        					.setParameter("enddate", installmentSecondHalf.getFromDate()).list();
+        } else if(effectiveInstallment.equals(installmentFirstHalf)){
+        	//If effective date is in 1st half of current financial year, fetch both installments
+        	installmentList.add(installmentFirstHalf);
+        	installmentList.add(installmentSecondHalf);
+        } else if(effectiveInstallment.equals(installmentSecondHalf)){
+        	//If effective date is in 2nd half of current financial year, fetch only 2nd half installment
+        	installmentList.add(installmentSecondHalf);
+        } else if(effectiveDate.after(installmentSecondHalf.getToDate())){
+        	/*
+        	 * This use case is applicable for Demolition done in 2nd half of current financial year. 
+        	 * In such case, we must fetch the 2 installments of the next financial year and calculate vacant land tax for them.
+        	 * Here, the effective date will be the starting date of the next financial year
+        	 */
+        	query = "select inst from Installment inst where inst.module.name = '"+PTMODULENAME+"' "
+        			+" and exists (select inst2.finYearRange from Installment inst2 where inst.finYearRange = inst2.finYearRange "
+        			+ "and inst2.module.name = '"+PTMODULENAME+"' and inst2.fromDate = :startdate ) order by inst.fromDate";
+        	installmentList = entityManager.unwrap(Session.class).createQuery(query).setParameter("startdate", effectiveInstallment.getFromDate()).list();
+        }
+    	return installmentList;
     }
     
 }

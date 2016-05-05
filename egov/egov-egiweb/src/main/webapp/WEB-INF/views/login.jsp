@@ -38,6 +38,7 @@
   ~
   ~   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
   --%>
+
 <%@page import="org.apache.commons.lang3.StringUtils"%>
 <%
 	String ipAddress = request.getRemoteAddr();
@@ -64,7 +65,7 @@
 		<link rel="icon" href="/egi/resources/global/images/favicon.png" sizes="32x32">
 		<link rel="stylesheet" href="/egi/resources/global/css/bootstrap/bootstrap.css">
 		<link rel="stylesheet" href="/egi/resources/global/css/font-icons/entypo/css/entypo.css">
-		<link rel="stylesheet" href="/egi/resources/global/css/font-icons/font-awesome-4.3.0/css/font-awesome.min.css">
+		<link rel="stylesheet" href="/egi/resources/global/css/font-icons/font-awesome/css/font-awesome.min.css">
 		<link rel="stylesheet" href="/egi/resources/global/css/egov/custom.css?rnd=${applicationScope.buildno}">
 		<script src="/egi/resources/global/js/jquery/jquery.js" type="text/javascript"></script>
 		

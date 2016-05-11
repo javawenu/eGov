@@ -37,25 +37,14 @@
 
   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
  */
+
 package org.egov.stms.masters.repository;
 
-import java.util.Date;
-import java.util.List;
-
-import org.egov.stms.masters.entity.DonationMaster;
-import org.egov.stms.masters.entity.enums.PropertyType;
+import org.egov.stms.masters.entity.FeesMaster;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface DonationMasterRepository extends JpaRepository<DonationMaster, Long> {
+public interface FeesMasterRepository extends JpaRepository<FeesMaster, Long> {
 
-    List<DonationMaster> findAllByPropertyType(PropertyType propertyType);
-    
-  // TODO : noofcloset removed as part of entity change - need to read from donationdetail
-    DonationMaster findByPropertyTypeAndFromDateAndActive(PropertyType propertyType,
-            Date fromDate, boolean active);
-
-    DonationMaster findByPropertyTypeAndActive(PropertyType propertyType,
-            boolean active);
- }
+}

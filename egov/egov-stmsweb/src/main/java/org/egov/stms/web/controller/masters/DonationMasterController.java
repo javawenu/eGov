@@ -86,8 +86,9 @@ public class DonationMasterController {
         }
 
         DonationMaster donationMasterExist = new DonationMaster();
-        donationMasterExist = donationMasterService.findByPropertyTypeAndNoOfClosetsAndFromDateAndActive
-                (donationMaster.getPropertyType(), donationMaster.getNoOfClosets(), donationMaster.getFromDate(), true);
+     // TODO : noofclosets removed as part of entity change - need to read from donationdetail
+        donationMasterExist = donationMasterService.findByPropertyTypeAndFromDateAndActive
+                (donationMaster.getPropertyType(), donationMaster.getFromDate(), true);
         if (donationMasterExist != null) {
             donationMasterExist.setActive(false);
             donationMasterExist.setToDate(donationMaster.getFromDate());
@@ -97,8 +98,9 @@ public class DonationMasterController {
             donationMasterService.create(donationMaster);
         } else {
             DonationMaster donationMasterOld = null;
-            donationMasterOld = donationMasterService.findByPropertyTypeAndNoOfClosetsAndActive(donationMaster.getPropertyType(),
-                    donationMaster.getNoOfClosets(), true);
+         // TODO : amount removed as part of entity change - need to read from donationdetail
+            donationMasterOld = donationMasterService.findByPropertyTypeAndActive(donationMaster.getPropertyType(),
+             true);
             if (donationMasterOld != null) {
                 donationMasterOld.setActive(false);
                 donationMasterOld.setToDate(new DateTime(donationMaster.getFromDate()).minusDays(1).toDate());

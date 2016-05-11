@@ -40,57 +40,61 @@
 package org.egov.stms.masters.entity;
 
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Entity;
-import javax.persistence.EnumType;
-import javax.persistence.Enumerated;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.OrderBy;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
-import javax.persistence.Temporal;
-import javax.persistence.TemporalType;
 import javax.validation.constraints.NotNull;
 
 import org.egov.infra.persistence.entity.AbstractAuditable;
-import org.egov.stms.masters.entity.enums.PropertyType;
+import org.egov.wtms.masters.entity.ApplicationType;
+import org.hibernate.validator.constraints.Length;
+import org.hibernate.validator.constraints.SafeHtml;
 
 @Entity
-@Table(name = "egswtax_donation_master")
-@SequenceGenerator(name = DonationMaster.SEQ_DONATIONMASTER, sequenceName = DonationMaster.SEQ_DONATIONMASTER, allocationSize = 1)
-public class DonationMaster extends AbstractAuditable {
+@Table(name = "egswtax_fees_master")
+@SequenceGenerator(name = FeesMaster.SEQ_FEESMASTER, sequenceName = FeesMaster.SEQ_FEESMASTER, allocationSize = 1)
+public class FeesMaster extends AbstractAuditable {
 
-    private static final long serialVersionUID = 7892490025155232973L;
+    /**
+     *
+     */
+    private static final long serialVersionUID = 7459014810380075949L;
 
-    public static final String SEQ_DONATIONMASTER = "SEQ_EGSWTAX_DONATION_MASTER";
+    public static final String SEQ_FEESMASTER = "SEQ_EGSWTAX_FEES_MASTER";
 
     @Id
-    @GeneratedValue(generator = SEQ_DONATIONMASTER, strategy = GenerationType.SEQUENCE)
+    @GeneratedValue(generator = SEQ_FEESMASTER, strategy = GenerationType.SEQUENCE)
     private Long id;
 
+    @ManyToOne(fetch = FetchType.LAZY)
     @NotNull
-    @Enumerated(EnumType.STRING)
-    private PropertyType propertyType;
+    @JoinColumn(name = "applicationtype", nullable = false)
+    private ApplicationType applicationType;
 
     @NotNull
-    @Temporal(value = TemporalType.DATE)
-    private Date fromDate;
+    @SafeHtml
+    @Length(max = 64)
+    private String description;
 
-    @Temporal(value = TemporalType.DATE)
-    private Date toDate;
-
-    private boolean active;
+    @NotNull
+    @SafeHtml
+    @Length(max = 12)
+    private String code;
 
     @OrderBy("id desc")
-    @OneToMany(mappedBy = "donation", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private List<DonationDetailMaster> donationDetail = new ArrayList<DonationDetailMaster>(0);
+    @OneToMany(mappedBy = "fees", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<FeesDetailMaster> feesDetail = new ArrayList<FeesDetailMaster>(0);
 
     @Override
     public Long getId() {
@@ -102,44 +106,35 @@ public class DonationMaster extends AbstractAuditable {
         this.id = id;
     }
 
-    public PropertyType getPropertyType() {
-        return propertyType;
+    public ApplicationType getApplicationType() {
+        return applicationType;
     }
 
-    public void setPropertyType(final PropertyType propertyType) {
-        this.propertyType = propertyType;
+    public void setApplicationType(final ApplicationType applicationType) {
+        this.applicationType = applicationType;
     }
 
-    public Date getFromDate() {
-        return fromDate;
+    public String getDescription() {
+        return description;
     }
 
-    public void setFromDate(final Date fromDate) {
-        this.fromDate = fromDate;
+    public void setDescription(final String description) {
+        this.description = description;
     }
 
-    public Date getToDate() {
-        return toDate;
+    public String getCode() {
+        return code;
     }
 
-    public void setToDate(final Date toDate) {
-        this.toDate = toDate;
+    public void setCode(final String code) {
+        this.code = code;
     }
 
-    public boolean isActive() {
-        return active;
+    public List<FeesDetailMaster> getFeesDetail() {
+        return feesDetail;
     }
 
-    public void setActive(final boolean active) {
-        this.active = active;
+    public void setFeesDetail(final List<FeesDetailMaster> feesDetail) {
+        this.feesDetail = feesDetail;
     }
-
-    public List<DonationDetailMaster> getDonationDetail() {
-        return donationDetail;
-    }
-
-    public void setDonationDetail(final List<DonationDetailMaster> donationDetail) {
-        this.donationDetail = donationDetail;
-    }
-
 }

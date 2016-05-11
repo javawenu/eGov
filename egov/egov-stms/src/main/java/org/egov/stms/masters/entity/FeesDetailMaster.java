@@ -37,60 +37,56 @@
 
   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
  */
+
 package org.egov.stms.masters.entity;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-
-import javax.persistence.CascadeType;
 import javax.persistence.Entity;
-import javax.persistence.EnumType;
-import javax.persistence.Enumerated;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
-import javax.persistence.OneToMany;
-import javax.persistence.OrderBy;
+import javax.persistence.ManyToOne;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
-import javax.persistence.Temporal;
-import javax.persistence.TemporalType;
 import javax.validation.constraints.NotNull;
 
 import org.egov.infra.persistence.entity.AbstractAuditable;
-import org.egov.stms.masters.entity.enums.PropertyType;
+import org.hibernate.validator.constraints.Length;
+import org.hibernate.validator.constraints.SafeHtml;
 
 @Entity
-@Table(name = "egswtax_donation_master")
-@SequenceGenerator(name = DonationMaster.SEQ_DONATIONMASTER, sequenceName = DonationMaster.SEQ_DONATIONMASTER, allocationSize = 1)
-public class DonationMaster extends AbstractAuditable {
+@Table(name = "egswtax_feesdetail_master")
+@SequenceGenerator(name = FeesDetailMaster.SEQ_FEESDETAILMASTER, sequenceName = FeesDetailMaster.SEQ_FEESDETAILMASTER, allocationSize = 1)
+public class FeesDetailMaster extends AbstractAuditable {
 
-    private static final long serialVersionUID = 7892490025155232973L;
+    /**
+     *
+     */
+    private static final long serialVersionUID = -8684164217549324091L;
 
-    public static final String SEQ_DONATIONMASTER = "SEQ_EGSWTAX_DONATION_MASTER";
+    public static final String SEQ_FEESDETAILMASTER = "SEQ_EGSWTAX_FEESDETAIL_MASTER";
 
     @Id
-    @GeneratedValue(generator = SEQ_DONATIONMASTER, strategy = GenerationType.SEQUENCE)
+    @GeneratedValue(generator = SEQ_FEESDETAILMASTER, strategy = GenerationType.SEQUENCE)
     private Long id;
 
     @NotNull
-    @Enumerated(EnumType.STRING)
-    private PropertyType propertyType;
+    @SafeHtml
+    @Length(max = 64)
+    private String description;
 
     @NotNull
-    @Temporal(value = TemporalType.DATE)
-    private Date fromDate;
+    @SafeHtml
+    @Length(max = 12)
+    private String code;
 
-    @Temporal(value = TemporalType.DATE)
-    private Date toDate;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @NotNull
+    private FeesMaster fees;
 
-    private boolean active;
+    private boolean isMandatory;
 
-    @OrderBy("id desc")
-    @OneToMany(mappedBy = "donation", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private List<DonationDetailMaster> donationDetail = new ArrayList<DonationDetailMaster>(0);
+    private boolean isActive;
 
     @Override
     public Long getId() {
@@ -102,44 +98,44 @@ public class DonationMaster extends AbstractAuditable {
         this.id = id;
     }
 
-    public PropertyType getPropertyType() {
-        return propertyType;
+    public String getDescription() {
+        return description;
     }
 
-    public void setPropertyType(final PropertyType propertyType) {
-        this.propertyType = propertyType;
+    public void setDescription(final String description) {
+        this.description = description;
     }
 
-    public Date getFromDate() {
-        return fromDate;
+    public String getCode() {
+        return code;
     }
 
-    public void setFromDate(final Date fromDate) {
-        this.fromDate = fromDate;
+    public void setCode(final String code) {
+        this.code = code;
     }
 
-    public Date getToDate() {
-        return toDate;
+    public FeesMaster getFees() {
+        return fees;
     }
 
-    public void setToDate(final Date toDate) {
-        this.toDate = toDate;
+    public void setFees(final FeesMaster fees) {
+        this.fees = fees;
+    }
+
+    public boolean isMandatory() {
+        return isMandatory;
+    }
+
+    public void setMandatory(final boolean isMandatory) {
+        this.isMandatory = isMandatory;
     }
 
     public boolean isActive() {
-        return active;
+        return isActive;
     }
 
-    public void setActive(final boolean active) {
-        this.active = active;
-    }
-
-    public List<DonationDetailMaster> getDonationDetail() {
-        return donationDetail;
-    }
-
-    public void setDonationDetail(final List<DonationDetailMaster> donationDetail) {
-        this.donationDetail = donationDetail;
+    public void setActive(final boolean isActive) {
+        this.isActive = isActive;
     }
 
 }

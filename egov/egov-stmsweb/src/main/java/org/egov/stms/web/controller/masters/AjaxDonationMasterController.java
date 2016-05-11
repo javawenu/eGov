@@ -62,10 +62,13 @@ public class AjaxDonationMasterController {
     public @ResponseBody double geWaterRatesByAllCombinatons(@RequestParam("propertyType") final PropertyType propertyType,
             @RequestParam("noOfClosets") Integer noOfClosets, @RequestParam("fromDate") Date fromDate) {
         DonationMaster donationMasterMaster = null;
+     // TODO : noofcloset removed as part of entity change - need to read from donationdetail
         donationMasterMaster = donationMasterService
-                .findByPropertyTypeAndNoOfClosetsAndFromDateAndActive(propertyType, noOfClosets, fromDate, true);
+                .findByPropertyTypeAndFromDateAndActive(propertyType, fromDate, true);
+     // TODO : amount removed as part of entity change - need to read from donationdetail
         if (donationMasterMaster != null)
-            return donationMasterMaster.getAmount();
+            return 0;  
+            //return donationMasterMaster.getAmount();
         else
             return 0;
     }

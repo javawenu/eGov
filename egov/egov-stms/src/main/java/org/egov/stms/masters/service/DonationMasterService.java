@@ -74,8 +74,9 @@ public class DonationMasterService {
         donationMasterRepository.save(donationMaster);
     }
 
+    // TODO : noofcloset removed as part of entity change - need to read from donationdetail
     public List<DonationMaster> findAll() {
-        return donationMasterRepository.findAll(new Sort(Sort.Direction.DESC, "propertyType","noOfClosets" ,"fromDate"));
+        return donationMasterRepository.findAll(new Sort(Sort.Direction.DESC, "propertyType","fromDate"));
     }
 
     public List<DonationMaster> findAllByPropertyType(final PropertyType propertyType) {
@@ -85,14 +86,15 @@ public class DonationMasterService {
     public DonationMaster load(final Long id) {
         return donationMasterRepository.getOne(id);
     }
-
-    public DonationMaster findByPropertyTypeAndNoOfClosetsAndFromDateAndActive(final PropertyType propertyType,final Integer noOfClosets,
+    
+ // TODO : noofcloset removed as part of entity change - need to read from donationdetail
+    public DonationMaster findByPropertyTypeAndFromDateAndActive(final PropertyType propertyType,
             final Date fromDate, final boolean active) {
-        return donationMasterRepository.findByPropertyTypeAndNoOfClosetsAndFromDateAndActive(propertyType,noOfClosets, fromDate, active);
+        return donationMasterRepository.findByPropertyTypeAndFromDateAndActive(propertyType, fromDate, active);
     }
 
-    public DonationMaster findByPropertyTypeAndNoOfClosetsAndActive(final PropertyType propertyType,
-            final Integer noOfClosets,final boolean active) {
-        return donationMasterRepository.findByPropertyTypeAndNoOfClosetsAndActive(propertyType, noOfClosets,active);
+    public DonationMaster findByPropertyTypeAndActive(final PropertyType propertyType,
+            final boolean active) {
+        return donationMasterRepository.findByPropertyTypeAndActive(propertyType, active);
     }
 }

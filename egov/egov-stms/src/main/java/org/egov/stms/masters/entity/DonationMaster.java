@@ -88,7 +88,6 @@ public class DonationMaster extends AbstractAuditable {
 
     private boolean active;
 
-    @OrderBy("id desc")
     @OneToMany(mappedBy = "donation", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<DonationDetailMaster> donationDetail = new ArrayList<DonationDetailMaster>(0);
 

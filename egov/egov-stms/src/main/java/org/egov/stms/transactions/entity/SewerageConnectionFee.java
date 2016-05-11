@@ -43,7 +43,6 @@ import javax.validation.constraints.NotNull;
 
 import org.egov.infra.persistence.entity.AbstractAuditable;
 import org.egov.stms.masters.entity.FeesDetailMaster;
-import org.egov.wtms.masters.entity.ApplicationType;
 
 @Entity
 @Table(name = "egswtax_connectionfee")
@@ -66,10 +65,10 @@ public class SewerageConnectionFee extends AbstractAuditable {
     @JoinColumn(name = "feesdetail", nullable = false)
     private FeesDetailMaster feesDetail;
 
-    @ManyToOne(fetch = FetchType.LAZY)
     @NotNull
-    @JoinColumn(name = "applicationtype", nullable = false)
-    private ApplicationType applicationType;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "applicationdetail", nullable = false)
+    private SewerageApplicationDetails applicationDetails;
 
     private double amount;
 
@@ -91,12 +90,13 @@ public class SewerageConnectionFee extends AbstractAuditable {
         this.feesDetail = feesDetail;
     }
 
-    public ApplicationType getApplicationType() {
-        return applicationType;
+    
+    public SewerageApplicationDetails getApplicationDetails() {
+        return applicationDetails;
     }
 
-    public void setApplicationType(final ApplicationType applicationType) {
-        this.applicationType = applicationType;
+    public void setApplicationDetails(SewerageApplicationDetails applicationDetails) {
+        this.applicationDetails = applicationDetails;
     }
 
     public double getAmount() {

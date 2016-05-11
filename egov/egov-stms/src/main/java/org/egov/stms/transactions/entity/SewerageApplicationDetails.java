@@ -138,6 +138,11 @@ public class SewerageApplicationDetails extends StateAware {
     @OneToOne(mappedBy = "applicationDetails", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private SewerageFieldInspectionDetails fieldInspectionDetails;
     
+    @OrderBy("id desc")
+    @OneToMany(mappedBy = "applicationDetails", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<SewerageConnectionFee> connectionFees = new ArrayList<SewerageConnectionFee>(0);
+
+    
     @Transient
     private Long approvalDepartment;
 
@@ -294,6 +299,14 @@ public class SewerageApplicationDetails extends StateAware {
         return String.format("Sewerage Application Number %s with application date %s.",
                 applicationNumber != null ? applicationNumber : connection.getDhscNumber(),
                 applicationDate != null ? formatter.format(applicationDate) : formatter.format(new Date()));
+    }
+
+    public List<SewerageConnectionFee> getConnectionFees() {
+        return connectionFees;
+    }
+
+    public void setConnectionFees(List<SewerageConnectionFee> connectionFees) {
+        this.connectionFees = connectionFees;
     }
 
 }

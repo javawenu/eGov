@@ -52,7 +52,7 @@
 			</div>
 			<div class="panel-body">
 				<c:choose>
-					<c:when test="${sewerageApplicationDetails.connection.propertyType == 'RESIDENTIAL'}">
+					<c:when test="${sewerageApplicationDetails.connection.connectionDetail.propertyType == 'RESIDENTIAL'}">
 						<div class="row add-border">
 							<div class="col-xs-3 add-margin">
 								<spring:message code="lbl.propertytype"/>
@@ -64,11 +64,11 @@
 								<spring:message code="lbl.noofclosets"/>
 							</div>
 							<div class="col-xs-3 add-margin view-content">
-								<c:out value="${sewerageApplicationDetails.connection.noOfClosetsResidential}"/>
+								<c:out value="${sewerageApplicationDetails.connection.connectionDetail.noOfClosetsResidential}"/>
 							</div>
 						</div>
 					</c:when>
-					<c:when test="${sewerageApplicationDetails.connection.propertyType == 'NON_RESIDENTIAL'}">
+					<c:when test="${sewerageApplicationDetails.connection.connectionDetail.propertyType == 'NON_RESIDENTIAL'}">
 						<div class="row add-border">
 							<div class="col-xs-3 add-margin">
 								<spring:message code="lbl.propertytype"/>
@@ -80,11 +80,11 @@
 								<spring:message code="lbl.noofclosets"/>
 							</div>
 							<div class="col-xs-3 add-margin view-content">
-								<c:out value="${sewerageApplicationDetails.connection.noOfClosetsNonResidential}"/>
+								<c:out value="${sewerageApplicationDetails.connection.connectionDetail.noOfClosetsNonResidential}"/>
 							</div>
 						</div>
 					</c:when>
-					<c:when test="${sewerageApplicationDetails.connection.propertyType == 'MIXED'}">
+					<c:when test="${sewerageApplicationDetails.connection.connectionDetail.propertyType == 'MIXED'}">
 						<div class="row add-border">
 							<div class="col-xs-3 add-margin">
 								<spring:message code="lbl.propertytype"/>
@@ -107,7 +107,7 @@
 								<spring:message code="lbl.noofclosets"/>
 							</div>
 							<div class="col-xs-3 add-margin view-content">
-								<c:out value="${sewerageApplicationDetails.connection.noOfClosetsResidential}"/>
+								<c:out value="${sewerageApplicationDetails.connection.connectionDetail.noOfClosetsResidential}"/>
 							</div>
 						</div>
 						<div class="row add-border">
@@ -120,12 +120,12 @@
 								<spring:message code="lbl.noofclosets"/>
 							</div>
 							<div class="col-xs-3 add-margin view-content">
-								<c:out value="${sewerageApplicationDetails.connection.noOfClosetsNonResidential}"/>
+								<c:out value="${sewerageApplicationDetails.connection.connectionDetail.noOfClosetsNonResidential}"/>
 							</div>
 						</div>
 					</c:when>
 				</c:choose>
-				<div class="row">
+		<%-- 		<div class="row">
 					<div class="col-xs-3 add-margin"><spring:message code="lbl.donationcharge"/></div>  
 					<div class="col-xs-3 add-margin view-content">
 						<c:choose>
@@ -144,7 +144,7 @@
 						<c:otherwise>0.0</c:otherwise>
 					</c:choose>
 					</div>
-				</div>
+				</div> --%>
 			</div>
 			<c:if test="${sewerageApplicationDetails.fileStore != null}">
 				<div class="panel-footer"><spring:message

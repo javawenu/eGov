@@ -65,7 +65,7 @@
 		<div class="row add-border">
 			<div class="col-xs-3 add-margin"><spring:message code="lbl.ptassesmentnumber"/></div>
 			<div class="col-xs-3 add-margin view-content" id='propertyIdentifier'>
-				<c:out value="${sewerageApplicationDetails.connection.propertyIdentifier}" />
+				<c:out value="${sewerageApplicationDetails.connection.connectionDetail.propertyIdentifier}" />
 			</div>
 			<div class="col-xs-3 add-margin"><spring:message code="lbl.dhsc.number"/></div>
 			<div class="col-xs-3 add-margin view-content">

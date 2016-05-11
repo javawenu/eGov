@@ -50,7 +50,7 @@
     <label class="col-sm-3 control-label text-right"><spring:message
 			code="lbl.propertytype" /><span class="mandatory"></span></label>
 	<div class="col-sm-3 add-margin">
-		<form:select path="connection.propertyType" data-first-option="false" id="propertyType"
+		<form:select path="connection.connectionDetail.propertyType" data-first-option="false" id="propertyType"
 			cssClass="form-control" required="required" >
 			<form:option value="">
 				<spring:message code="lbl.select" />
@@ -59,21 +59,21 @@
 		        <option value="${entry}">${entry}</option>
 		    </c:forEach>
 		</form:select>		
-		<form:errors path="connection.propertyType" cssClass="add-margin error-msg" />					
+		<form:errors path="connection.connectionDetail.propertyType" cssClass="add-margin error-msg" />					
 	</div>
 </div>
 <div class="form-group">
 	<label class="col-sm-3 control-label text-right" hidden="true" id="lblResidential"><spring:message
 			code="lbl.residential" /><span class="mandatory"></span></label> 
 	<div class="col-sm-3 add-margin" hidden="true" id="valResidential">
-		<form:input class="form-control patternvalidation" data-pattern="number" maxlength="6" id="noOfClosetsResidential" path="connection.noOfClosetsResidential" required="required" />
-		<form:errors path="connection.noOfClosetsResidential" cssClass="add-margin error-msg" />		
+		<form:input class="form-control patternvalidation" data-pattern="number" maxlength="6" id="noOfClosetsResidential" path="connection.connectionDetail.noOfClosetsResidential" required="required" />
+		<form:errors path="connection.connectionDetail.noOfClosetsResidential" cssClass="add-margin error-msg" />		
 	</div>
 	<label class="col-sm-2 control-label text-right" hidden="true" id="lblNonResidential"><spring:message
 			code="lbl.nonresidential" /><span class="mandatory"></label> 
 		<div class="col-sm-3 add-margin" hidden="true" id="valNonResidential">
-			<form:input class="form-control patternvalidation" data-pattern="number" maxlength="3" id="noOfClosetsNonResidential" path="connection.noOfClosetsNonResidential" required="required" />
-			<form:errors path="connection.noOfClosetsNonResidential" cssClass="add-margin error-msg" />		
+			<form:input class="form-control patternvalidation" data-pattern="number" maxlength="3" id="noOfClosetsNonResidential" path="connection.connectionDetail.noOfClosetsNonResidential" required="required" />
+			<form:errors path="connection.connectionDetail.noOfClosetsNonResidential" cssClass="add-margin error-msg" />		
 		</div>
 </div>
 <c:if test="${sewerageApplicationDetails.fileStore != null}">
@@ -84,5 +84,5 @@
 	</div>
 </c:if>
 <script type="text/javascript">
-	$propType = "${sewerageApplicationDetails.connection.propertyType }";
+	$propType = "${sewerageApplicationDetails.connection.connectionDetail.propertyType }";
 </script>

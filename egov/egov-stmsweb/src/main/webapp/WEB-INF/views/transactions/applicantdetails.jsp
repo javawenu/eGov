@@ -47,13 +47,13 @@
 		<div class="input-group">
 			<c:choose>
 				<c:when test="${mode != null && mode.equals('edit')}">
-					<form:input id="propertyIdentifier" path="connection.propertyIdentifier" class="form-control patternvalidation" data-pattern="number" disabled="true" />
+					<form:input id="propertyIdentifier" path="connection.connectionDetail.propertyIdentifier" class="form-control patternvalidation" data-pattern="number" disabled="true" />
 					<span class="input-group-addon"> <i class="fa fa-search specific"></i></span>
 				</c:when>
 				<c:otherwise>
-					<form:input id="propertyIdentifier" path="connection.propertyIdentifier" class="form-control patternvalidation" data-pattern="number" maxlength="15" min="3" required="required" />
+					<form:input id="propertyIdentifier" path="connection.connectionDetail.propertyIdentifier" class="form-control patternvalidation" data-pattern="number" maxlength="15" min="3" required="required" />
 					<span class="input-group-addon"> <i class="fa fa-search specific"></i></span>
-					<form:errors path="connection.propertyIdentifier" id="propertyIdentifierError" cssClass="add-margin error-msg" />
+					<form:errors path="connection.connectionDetail.propertyIdentifier" id="propertyIdentifierError" cssClass="add-margin error-msg" />
 				</c:otherwise>
 			</c:choose>
 		</div>

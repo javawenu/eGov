@@ -50,7 +50,7 @@
 			cssClass="form-horizontal form-groups-bordered"
 			enctype="multipart/form-data">
 			<form:hidden path="applicationType" id="applicationType" value="${sewerageApplicationDetails.applicationType.id}"/>
-			<form:hidden path="connection.connectionStatus" id="connection.connectionStatus" value="${sewerageApplicationDetails.connection.connectionStatus}"/>
+			<form:hidden path="connection.status" id="connection.status" value="${sewerageApplicationDetails.connection.status}"/>
 			  
 			<form:hidden id="mode" path=""  value="${mode}"/>
 			<input type="hidden" name="allowIfPTDueExists" id="allowIfPTDueExists" value="${allowIfPTDueExists}"> 

@@ -115,7 +115,7 @@
 		</c:if>
 		
 		<c:if test="${(sewerageApplicationDetails.status.code =='CLOSERINITIATED'  ||   sewerageApplicationDetails.status.code =='CLOSERINPROGRESS'||sewerageApplicationDetails.status.code =='CLOSERSANCTIONED') }">
-			<jsp:include page="closerForm-details.jsp"></jsp:include>
+		<%-- 	<jsp:include page="closerForm-details.jsp"></jsp:include> --%>
 			<%-- <jsp:include page="closuredocumentdetails-view.jsp"></jsp:include> --%>
 		</c:if>
 			

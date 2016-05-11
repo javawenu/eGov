@@ -75,7 +75,7 @@ import org.hibernate.validator.constraints.SafeHtml;
 @SequenceGenerator(name = SewerageApplicationDetails.SEQ_APPLICATIONDETAILS, sequenceName = SewerageApplicationDetails.SEQ_APPLICATIONDETAILS, allocationSize = 1)
 public class SewerageApplicationDetails extends StateAware {
 
-    private static final long serialVersionUID = -4105356948403217527L;
+    private static final long serialVersionUID = 734228413287149091L;
 
     public static final String SEQ_APPLICATIONDETAILS = "SEQ_EGSWTAX_APPLICATIONDETAILS";
 
@@ -128,15 +128,15 @@ public class SewerageApplicationDetails extends StateAware {
     @JoinColumn(name = "filestoreid")
     private FileStoreMapper fileStore;
 
-    private double donationCharges;
+    private boolean isActive;
 
     @OrderBy("id desc")
     @OneToMany(mappedBy = "applicationDetails", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<SewerageConnectionEstimationDetails> estimationDetails = new ArrayList<SewerageConnectionEstimationDetails>(0);
 
     @OrderBy("id desc")
-    @OneToOne(mappedBy = "applicationDetails", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private SewerageFieldInspectionDetails fieldInspectionDetails;
+    @OneToMany(mappedBy = "applicationDetails", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<SewerageFieldInspectionDetails> fieldInspectionDetails = new ArrayList<SewerageFieldInspectionDetails>(0);
     
     @OrderBy("id desc")
     @OneToMany(mappedBy = "applicationDetails", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
@@ -247,14 +247,6 @@ public class SewerageApplicationDetails extends StateAware {
         this.fileStore = fileStore;
     }
 
-    public double getDonationCharges() {
-        return donationCharges;
-    }
-
-    public void setDonationCharges(final double donationCharges) {
-        this.donationCharges = donationCharges;
-    }
-
     public List<SewerageConnectionEstimationDetails> getEstimationDetails() {
         return estimationDetails;
     }
@@ -263,14 +255,7 @@ public class SewerageApplicationDetails extends StateAware {
         this.estimationDetails = estimationDetails;
     }
 
-    public SewerageFieldInspectionDetails getFieldInspectionDetails() {
-        return fieldInspectionDetails;
-    }
-
-    public void setFieldInspectionDetails(final SewerageFieldInspectionDetails fieldInspectionDetails) {
-        this.fieldInspectionDetails = fieldInspectionDetails;
-    }
-    
+     
     public Long getApprovalDepartment() {
         return approvalDepartment;
     }
@@ -307,6 +292,22 @@ public class SewerageApplicationDetails extends StateAware {
 
     public void setConnectionFees(List<SewerageConnectionFee> connectionFees) {
         this.connectionFees = connectionFees;
+    }
+
+    public boolean isActive() {
+        return isActive;
+    }
+
+    public void setActive(boolean isActive) {
+        this.isActive = isActive;
+    }
+
+    public List<SewerageFieldInspectionDetails> getFieldInspectionDetails() {
+        return fieldInspectionDetails;
+    }
+
+    public void setFieldInspectionDetails(List<SewerageFieldInspectionDetails> fieldInspectionDetails) {
+        this.fieldInspectionDetails = fieldInspectionDetails;
     }
 
 }

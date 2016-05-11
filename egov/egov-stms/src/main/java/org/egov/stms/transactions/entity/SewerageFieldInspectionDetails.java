@@ -39,6 +39,8 @@
  ******************************************************************************/
 package org.egov.stms.transactions.entity;
 
+import java.util.Date;
+
 import javax.persistence.CascadeType;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
@@ -49,6 +51,8 @@ import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
+import javax.persistence.Temporal;
+import javax.persistence.TemporalType;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 
@@ -78,11 +82,11 @@ public class SewerageFieldInspectionDetails extends AbstractAuditable {
     private double pipeSize;
 
     private Integer noOfScrews;
-
-    @NotNull
-    @Min(value = 1)
-    private double estimationCharges;
-
+    private boolean isActive;
+    
+    @Temporal(value = TemporalType.DATE)
+    private Date inspectionDate;
+    
     @ManyToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JoinColumn(name = "filestoreid")
     private FileStoreMapper fileStore;
@@ -129,12 +133,20 @@ public class SewerageFieldInspectionDetails extends AbstractAuditable {
         this.noOfScrews = noOfScrews;
     }
 
-    public double getEstimationCharges() {
-        return estimationCharges;
+    public boolean isActive() {
+        return isActive;
     }
 
-    public void setEstimationCharges(final double estimationCharges) {
-        this.estimationCharges = estimationCharges;
+    public void setActive(boolean isActive) {
+        this.isActive = isActive;
+    }
+
+    public Date getInspectionDate() {
+        return inspectionDate;
+    }
+
+    public void setInspectionDate(Date inspectionDate) {
+        this.inspectionDate = inspectionDate;
     }
 
     public FileStoreMapper getFileStore() {

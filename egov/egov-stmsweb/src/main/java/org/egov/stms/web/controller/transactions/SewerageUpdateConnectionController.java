@@ -210,9 +210,13 @@ public class SewerageUpdateConnectionController extends GenericWorkFlowControlle
                 Iterator<FileStoreMapper> fsIterator = null;
                 if (fileStoreSet != null && !fileStoreSet.isEmpty())
                     fsIterator = fileStoreSet.iterator();
-                if (fsIterator != null && fsIterator.hasNext())
+            
+                
+                //TODO: GET active/latest inspection detail and attach documents.
+                
+                /*   if (fsIterator != null && fsIterator.hasNext())
                     sewerageApplicationDetails.getFieldInspectionDetails().setFileStore(fsIterator.next());
-
+              */
             } else if (workFlowAction.equalsIgnoreCase(SewerageTaxConstants.WFLOW_ACTION_STEP_REJECT)) {
                 sewerageApplicationDetailsService.getCurrentSession().evict(sewerageApplicationDetails);
                 sewerageApplicationDetails = sewerageApplicationDetailsService.findBy(sewerageApplicationDetails.getId());

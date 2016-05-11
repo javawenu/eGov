@@ -122,10 +122,11 @@ public class SewerageEstimationNoticeController {
             reportParams.put("district", session.getAttribute("districtName"));
             reportParams.put("estimationDate",
                     formatter.format(sewerageApplicationDetails.getApplicationDate()));
-            reportParams.put("estimationCharges", sewerageApplicationDetails.getFieldInspectionDetails().getEstimationCharges());
+            //TODO: GET FEE DETAILS FROM CONNECTIONFEE and update here.
+           /* reportParams.put("estimationCharges", sewerageApplicationDetails.getFieldInspectionDetails().getEstimationCharges());
             reportParams.put("donationCharges", sewerageApplicationDetails.getDonationCharges());
             reportParams.put("totalCharges", sewerageApplicationDetails.getDonationCharges()
-                    + sewerageApplicationDetails.getFieldInspectionDetails().getEstimationCharges());
+                    + sewerageApplicationDetails.getFieldInspectionDetails().getEstimationCharges());*/
             reportParams.put("applicationDate", formatter.format(sewerageApplicationDetails.getApplicationDate()));
             reportParams.put("applicantName", ownerName);
             reportParams.put("address", assessmentDetails.getPropertyAddress());

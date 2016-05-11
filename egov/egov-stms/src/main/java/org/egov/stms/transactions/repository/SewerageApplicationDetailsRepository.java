@@ -47,33 +47,34 @@ public interface SewerageApplicationDetailsRepository extends JpaRepository<Sewe
 
     SewerageApplicationDetails findByApplicationNumber(String applicationNumber);
 
-    SewerageApplicationDetails findByApplicationNumberAndConnection_ConnectionStatus(String applicationNumber,
+    SewerageApplicationDetails findByApplicationNumberAndConnection_Status(String applicationNumber,
             SewerageConnectionStatus connectionStatus);
 
     List<SewerageApplicationDetails> findAllByApplicationDateOrderByApplicationNumberAsc(Date applicationDate);
 
-    List<SewerageApplicationDetails> findAllByApplicationDateAndConnection_ConnectionStatusOrderByApplicationNumberAsc(
+    List<SewerageApplicationDetails> findAllByApplicationDateAndConnection_StatusOrderByApplicationNumberAsc(
             Date applicationDate, SewerageConnectionStatus connectionStatus);
 
     List<SewerageApplicationDetails> findAllByApplicationTypeOrderByApplicationNumberAsc(SewerageApplicationType applicationType);
 
-    List<SewerageApplicationDetails> findAllByApplicationTypeAndConnection_ConnectionStatusOrderByApplicationNumberAsc(
+    List<SewerageApplicationDetails> findAllByApplicationTypeAndConnection_StatusOrderByApplicationNumberAsc(
             SewerageApplicationType applicationType, SewerageConnectionStatus connectionStatus);
 
-    SewerageApplicationDetails findByConnection_DhscNumberAndConnection_ConnectionStatus(String dhscNumber,
+    SewerageApplicationDetails findByConnection_DhscNumberAndConnection_Status(String dhscNumber,
             SewerageConnectionStatus connectionStatus);
 
     SewerageApplicationDetails findByConnection_DhscNumber(String dhscNumber);
 
     SewerageApplicationDetails findByConnection(SewerageConnection sewerageConnection);
 
-    SewerageApplicationDetails findByConnectionAndConnection_ConnectionStatus(SewerageConnection sewerageConnection,
+    SewerageApplicationDetails findByConnectionAndConnection_Status(SewerageConnection sewerageConnection,
             SewerageConnectionStatus connectionStatus);
 
-    SewerageApplicationDetails findByConnection_PropertyIdentifierAndConnection_ConnectionStatus(String propertyIdentifier,
-            SewerageConnectionStatus connectionStatus);
+    //TODO : commented as part of design changes. PropertyIdentifier moved to connectiondetail
+   /* SewerageApplicationDetails findByConnection_PropertyIdentifierAndConnection_Status(String propertyIdentifier,
+            SewerageConnectionStatus connectionStatus);*/
     
-    @Query("select scd from SewerageApplicationDetails scd where scd.connection.connectionStatus not in ('INACTIVE') and scd.connection.propertyIdentifier =:propertyIdentifier")
+    @Query("select scd from SewerageApplicationDetails scd where scd.connection.status not in ('INACTIVE') and scd.connection.connectionDetail.propertyIdentifier =:propertyIdentifier")
     SewerageApplicationDetails getSewerageConnectionDetailsByPropertyID(
             @Param("propertyIdentifier") String propertyIdentifier);
 

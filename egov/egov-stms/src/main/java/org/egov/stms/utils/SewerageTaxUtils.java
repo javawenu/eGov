@@ -235,7 +235,7 @@ public class SewerageTaxUtils {
                 for (final Role userrole : currentUser.getRoles())
                     if (userrole.getName().equals(SewerageTaxConstants.ROLE_SUPERUSER)) {
                         final Position positionuser = getZonalLevelClerkForLoggedInUser(
-                                sewerageApplicationDetails.getConnection().getPropertyIdentifier());
+                                sewerageApplicationDetails.getConnection().getConnectionDetail().getPropertyIdentifier());
                         approverPosition = positionuser.getId();
                         break;
                     }
@@ -271,7 +271,7 @@ public class SewerageTaxUtils {
                 for (final Role userrole : currentUser.getRoles())
                     if (userrole.getName().equals(SewerageTaxConstants.ROLE_SUPERUSER)) {
                         final Position positionuser = getZonalLevelClerkForLoggedInUser(
-                                sewerageApplicationDetails.getConnection().getPropertyIdentifier());
+                                sewerageApplicationDetails.getConnection().getConnectionDetail().getPropertyIdentifier());
                         approverPosition = positionuser.getId();
                         break;
                     }

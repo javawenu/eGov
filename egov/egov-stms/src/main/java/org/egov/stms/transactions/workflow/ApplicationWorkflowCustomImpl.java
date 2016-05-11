@@ -122,7 +122,7 @@ public abstract class ApplicationWorkflowCustomImpl implements ApplicationWorkfl
                 for (final Role userrole : currentUser.getRoles())
                     if (userrole.getName().equals(SewerageTaxConstants.ROLE_SUPERUSER)) {
                         Position positionuser = sewerageTaxUtils.getZonalLevelClerkForLoggedInUser(
-                                sewerageApplicationDetails.getConnection().getPropertyIdentifier());
+                                sewerageApplicationDetails.getConnection().getConnectionDetail().getPropertyIdentifier());
                         if (positionuser != null)
                             wfInitiator = assignmentService.getPrimaryAssignmentForPositionAndDate(positionuser.getId(),
                                     new Date());
@@ -134,7 +134,7 @@ public abstract class ApplicationWorkflowCustomImpl implements ApplicationWorkfl
         }
         if (SewerageTaxConstants.WFLOW_ACTION_STEP_REJECT.equalsIgnoreCase(workFlowAction)) {
             if (wfInitiator.equals(userAssignment)) {
-                sewerageApplicationDetails.getConnection().setConnectionStatus(SewerageConnectionStatus.INACTIVE);
+                sewerageApplicationDetails.getConnection().setStatus(SewerageConnectionStatus.INACTIVE);
 
                 sewerageApplicationDetails.setStatus(sewerageTaxUtils.getStatusByCodeAndModuleType(
                         SewerageTaxConstants.APPLICATION_STATUS_CANCELLED, SewerageTaxConstants.MODULETYPE));
@@ -164,7 +164,7 @@ public abstract class ApplicationWorkflowCustomImpl implements ApplicationWorkfl
                 wfmatrix = sewerageApplicationWorkflowService.getWfMatrix(sewerageApplicationDetails.getStateType(), null,
                         null, additionalRule, sewerageApplicationDetails.getCurrentState().getValue(), null);
                 final AssessmentDetails assessmentDetailsFullFlag = sewerageTaxUtils.getAssessmentDetailsForFlag(
-                        sewerageApplicationDetails.getConnection().getPropertyIdentifier(),
+                        sewerageApplicationDetails.getConnection().getConnectionDetail().getPropertyIdentifier(),
                         PropertyExternalService.FLAG_FULL_DETAILS);
                 sewerageApplicationDetails.setStatus(sewerageTaxUtils.getStatusByCodeAndModuleType(
                         SewerageTaxConstants.APPLICATION_STATUS_SANCTIONED, SewerageTaxConstants.MODULETYPE));

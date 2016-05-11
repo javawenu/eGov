@@ -57,7 +57,6 @@ import org.egov.stms.transactions.entity.SewerageApplicationDetails;
 import org.egov.stms.transactions.service.SewerageApplicationDetailsService;
 import org.egov.stms.utils.SewerageTaxUtils;
 import org.egov.stms.utils.constants.SewerageTaxConstants;
-import org.egov.wtms.utils.PropertyExtnUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -99,7 +98,7 @@ public class SewerageEstimationNoticeController {
         if (sewerageApplicationDetails != null) {
             final SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy");
             final AssessmentDetails assessmentDetails = sewerageTaxUtils.getAssessmentDetailsForFlag(
-                    sewerageApplicationDetails.getConnection().getPropertyIdentifier(),
+                    sewerageApplicationDetails.getConnection().getConnectionDetail().getPropertyIdentifier(),
                     PropertyExternalService.FLAG_FULL_DETAILS);
             String doorNo[] = null;
             if (null != assessmentDetails.getPropertyAddress())

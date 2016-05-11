@@ -149,7 +149,7 @@ public class SewerageConnectionController extends GenericWorkFlowController {
         sewerageApplicationDetails.setApplicationType(applicationType);
         sewerageApplicationDetails.setApplicationDate(new Date());
         final SewerageConnection connection = new SewerageConnection();
-        connection.setConnectionStatus(SewerageConnectionStatus.INPROGRESS);
+        connection.setStatus(SewerageConnectionStatus.INPROGRESS);
         sewerageApplicationDetails.setConnection(connection);
 
         model.addAttribute("allowIfPTDueExists", sewerageTaxUtils.isNewConnectionAllowedIfPTDuePresent());
@@ -317,7 +317,7 @@ public class SewerageConnectionController extends GenericWorkFlowController {
     }
 
     private void setCommonDetails(final SewerageApplicationDetails sewerageApplicationDetails, final ModelMap modelMap) {
-        String assessmentNumber = sewerageApplicationDetails.getConnection().getPropertyIdentifier();
+        String assessmentNumber = sewerageApplicationDetails.getConnection().getConnectionDetail().getPropertyIdentifier();
         final BasicProperty basicProperty = basicPropertyDAO.getBasicPropertyByPropertyID(assessmentNumber);
         modelMap.addAttribute("propertyAddress", basicProperty.getAddress().toString());
 
@@ -349,15 +349,15 @@ public class SewerageConnectionController extends GenericWorkFlowController {
 
     private void validatePropertyID(final SewerageApplicationDetails sewerageApplicationDetails, final BindingResult errors) {
         if (sewerageApplicationDetails.getConnection() != null
-                && sewerageApplicationDetails.getConnection().getPropertyIdentifier() != null
-                && !sewerageApplicationDetails.getConnection().getPropertyIdentifier().equals("")) {
+                && sewerageApplicationDetails.getConnection().getConnectionDetail().getPropertyIdentifier() != null
+                && !sewerageApplicationDetails.getConnection().getConnectionDetail().getPropertyIdentifier().equals("")) {
             String errorMessage = sewerageApplicationDetailsService.checkValidPropertyAssessmentNumber(sewerageApplicationDetails
-                    .getConnection().getPropertyIdentifier());
+                    .getConnection().getConnectionDetail().getPropertyIdentifier());
             if (errorMessage != null && !errorMessage.equals(""))
                 errors.rejectValue("connection.propertyIdentifier", errorMessage, errorMessage);
             else {
                 errorMessage = sewerageApplicationDetailsService.checkConnectionPresentForProperty(sewerageApplicationDetails
-                        .getConnection().getPropertyIdentifier());
+                        .getConnection().getConnectionDetail().getPropertyIdentifier());
                 if (errorMessage != null && !errorMessage.equals(""))
                     errors.rejectValue("connection.propertyIdentifier", errorMessage, errorMessage);
             }

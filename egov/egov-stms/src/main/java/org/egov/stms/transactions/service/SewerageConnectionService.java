@@ -86,7 +86,9 @@ public class SewerageConnectionService {
     }
 
     public List<SewerageConnection> findByPropertyIdentifier(final String propertyIdentifier) {
-        return sewerageConnectionRepository.findByPropertyIdentifier(propertyIdentifier);
+        //TODO : commented as part of design change. propertyIdentifier moved to connectiondetail
+        //return sewerageConnectionRepository.findByPropertyIdentifier(propertyIdentifier);
+        return null;
     }
 
     public BigDecimal getTotalAmount(final SewerageConnection sewerageConnection) {

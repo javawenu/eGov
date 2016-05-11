@@ -49,7 +49,7 @@ import org.springframework.stereotype.Repository;
 public interface SewerageConnectionRepository extends JpaRepository<SewerageConnection, Long> {
 
     SewerageConnection findByDhscNumber(String dhscNumber);
-
-    List<SewerageConnection> findByPropertyIdentifier(String propertyIdentifier);
+    // TODO : commented as part of design change. propertyIdentifier moved to connectiondetail
+    //List<SewerageConnection> findByPropertyIdentifier(String propertyIdentifier);
 
 }

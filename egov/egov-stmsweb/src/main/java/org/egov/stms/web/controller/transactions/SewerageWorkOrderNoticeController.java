@@ -111,7 +111,7 @@ public class SewerageWorkOrderNoticeController {
             final HttpSession session) {
         if (null != sewerageApplicationDetails) {
             final AssessmentDetails assessmentDetails = sewerageTaxUtils.getAssessmentDetailsForFlag(
-                    sewerageApplicationDetails.getConnection().getPropertyIdentifier(),
+                    sewerageApplicationDetails.getConnection().getConnectionDetail().getPropertyIdentifier(),
                     PropertyExternalService.FLAG_FULL_DETAILS);
             final SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy");
             final String doorno[] = assessmentDetails.getPropertyAddress().split(",");

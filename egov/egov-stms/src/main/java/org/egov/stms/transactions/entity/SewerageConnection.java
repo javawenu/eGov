@@ -55,7 +55,6 @@ import javax.validation.constraints.NotNull;
 
 import org.egov.demand.model.EgDemand;
 import org.egov.infra.persistence.entity.AbstractAuditable;
-import org.egov.stms.masters.entity.enums.PropertyType;
 import org.egov.stms.masters.entity.enums.SewerageConnectionStatus;
 import org.hibernate.validator.constraints.Length;
 import org.hibernate.validator.constraints.SafeHtml;
@@ -79,23 +78,13 @@ public class SewerageConnection extends AbstractAuditable {
     private String dhscNumber;
 
     @NotNull
-    @SafeHtml
-    @Length(min = 3, max = 50)
-    private String propertyIdentifier;
-
-    @NotNull
     @Enumerated(EnumType.STRING)
-    private PropertyType propertyType;
+    private SewerageConnectionStatus status;
 
-    @Column(name = "noofclosets_residential")
-    private Integer noOfClosetsResidential;
-
-    @Column(name = "noofclosets_nonresidential")
-    private Integer noOfClosetsNonResidential;
-
+    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @NotNull
-    @Enumerated(EnumType.STRING)
-    private SewerageConnectionStatus connectionStatus;
+    @JoinColumn(name = "connectiondetail", nullable = false)
+    private SewarageConnectionDetail connectionDetail;
 
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @JoinColumn(name = "demand")
@@ -113,7 +102,7 @@ public class SewerageConnection extends AbstractAuditable {
     @OrderBy("id desc")
     @OneToMany(mappedBy = "connection", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<SewerageApplicationDetails> applicationDetails = new ArrayList<SewerageApplicationDetails>(0);
-    
+
     @Override
     public Long getId() {
         return id;
@@ -130,46 +119,6 @@ public class SewerageConnection extends AbstractAuditable {
 
     public void setDhscNumber(final String dhscNumber) {
         this.dhscNumber = dhscNumber;
-    }
-
-    public String getPropertyIdentifier() {
-        return propertyIdentifier;
-    }
-
-    public void setPropertyIdentifier(final String propertyIdentifier) {
-        this.propertyIdentifier = propertyIdentifier;
-    }
-
-    public PropertyType getPropertyType() {
-        return propertyType;
-    }
-
-    public void setPropertyType(final PropertyType propertyType) {
-        this.propertyType = propertyType;
-    }
-
-    public Integer getNoOfClosetsResidential() {
-        return noOfClosetsResidential;
-    }
-
-    public void setNoOfClosetsResidential(final Integer noOfClosetsResidential) {
-        this.noOfClosetsResidential = noOfClosetsResidential;
-    }
-
-    public Integer getNoOfClosetsNonResidential() {
-        return noOfClosetsNonResidential;
-    }
-
-    public void setNoOfClosetsNonResidential(final Integer noOfClosetsNonResidential) {
-        this.noOfClosetsNonResidential = noOfClosetsNonResidential;
-    }
-
-    public SewerageConnectionStatus getConnectionStatus() {
-        return connectionStatus;
-    }
-
-    public void setConnectionStatus(final SewerageConnectionStatus connectionStatus) {
-        this.connectionStatus = connectionStatus;
     }
 
     public EgDemand getDemand() {
@@ -208,8 +157,24 @@ public class SewerageConnection extends AbstractAuditable {
         return applicationDetails;
     }
 
-    public void setApplicationDetails(List<SewerageApplicationDetails> applicationDetails) {
+    public void setApplicationDetails(final List<SewerageApplicationDetails> applicationDetails) {
         this.applicationDetails = applicationDetails;
+    }
+
+    public SewerageConnectionStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(final SewerageConnectionStatus status) {
+        this.status = status;
+    }
+
+    public SewarageConnectionDetail getConnectionDetail() {
+        return connectionDetail;
+    }
+
+    public void setConnectionDetail(final SewarageConnectionDetail connectionDetail) {
+        this.connectionDetail = connectionDetail;
     }
 
 }

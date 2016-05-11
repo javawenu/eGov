@@ -30,52 +30,52 @@
  */
 package org.egov.stms.transactions.entity;
 
-import java.util.Date;
-
+import javax.persistence.Column;
 import javax.persistence.Entity;
-import javax.persistence.FetchType;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
-import javax.persistence.Temporal;
-import javax.persistence.TemporalType;
 import javax.validation.constraints.NotNull;
 
 import org.egov.infra.persistence.entity.AbstractAuditable;
+import org.egov.stms.masters.entity.enums.PropertyType;
+import org.hibernate.validator.constraints.Length;
+import org.hibernate.validator.constraints.SafeHtml;
 
 @Entity
-@Table(name = "egswtax_connection_history")
-@SequenceGenerator(name = SewerageConnectionHistory.SEQ_CONNECTION_HISTORY, sequenceName = SewerageConnectionHistory.SEQ_CONNECTION_HISTORY, allocationSize = 1)
-public class SewerageConnectionHistory extends AbstractAuditable {
+@Table(name = "egswtax_connectiondetail")
+@SequenceGenerator(name = SewarageConnectionDetail.SEQ_CONNECTIONDETAIL, sequenceName = SewarageConnectionDetail.SEQ_CONNECTIONDETAIL, allocationSize = 1)
+public class SewarageConnectionDetail extends AbstractAuditable {
 
-    private static long serialVersionUID = -582076078407295165L;
+    /**
+     *
+     */
+    private static final long serialVersionUID = 7110813528744799052L;
 
-    public static final String SEQ_CONNECTION_HISTORY = "SEQ_EGSWTAX_CONNECTION_HISTORY";
+    public static final String SEQ_CONNECTIONDETAIL = "SEQ_EGSWTAX_CONNECTIONDETAIL";
 
     @Id
-    @GeneratedValue(generator = SEQ_CONNECTION_HISTORY, strategy = GenerationType.SEQUENCE)
+    @GeneratedValue(generator = SEQ_CONNECTIONDETAIL, strategy = GenerationType.SEQUENCE)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
     @NotNull
-    private SewerageConnection connection;
+    @SafeHtml
+    @Length(min = 3, max = 50)
+    private String propertyIdentifier;
 
-    @ManyToOne(fetch = FetchType.LAZY)
     @NotNull
-    @JoinColumn(name = "connectiondetail", nullable = false)
-    private SewarageConnectionDetail connectionDetail;
+    @Enumerated(EnumType.STRING)
+    private PropertyType propertyType;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @NotNull
-    @JoinColumn(name = "applicationdetails", nullable = false)
-    private SewerageApplicationDetails applicationDetails;
+    @Column(name = "noofclosets_residential")
+    private Integer noOfClosetsResidential;
 
-    @Temporal(value = TemporalType.DATE)
-    private Date executionDate;
+    @Column(name = "noofclosets_nonresidential")
+    private Integer noOfClosetsNonResidential;
 
     @Override
     public Long getId() {
@@ -87,43 +87,36 @@ public class SewerageConnectionHistory extends AbstractAuditable {
         this.id = id;
     }
 
-    public SewerageConnection getConnection() {
-        return connection;
+    public String getPropertyIdentifier() {
+        return propertyIdentifier;
     }
 
-    public void setConnection(final SewerageConnection connection) {
-        this.connection = connection;
+    public void setPropertyIdentifier(final String propertyIdentifier) {
+        this.propertyIdentifier = propertyIdentifier;
     }
 
-    public SewerageApplicationDetails getApplicationDetails() {
-        return applicationDetails;
+    public PropertyType getPropertyType() {
+        return propertyType;
     }
 
-    public void setApplicationDetails(final SewerageApplicationDetails applicationDetails) {
-        this.applicationDetails = applicationDetails;
+    public void setPropertyType(final PropertyType propertyType) {
+        this.propertyType = propertyType;
     }
 
-    public static long getSerialversionuid() {
-        return serialVersionUID;
+    public Integer getNoOfClosetsResidential() {
+        return noOfClosetsResidential;
     }
 
-    public static void setSerialversionuid(final long serialversionuid) {
-        serialVersionUID = serialversionuid;
+    public void setNoOfClosetsResidential(final Integer noOfClosetsResidential) {
+        this.noOfClosetsResidential = noOfClosetsResidential;
     }
 
-    public SewarageConnectionDetail getConnectionDetail() {
-        return connectionDetail;
+    public Integer getNoOfClosetsNonResidential() {
+        return noOfClosetsNonResidential;
     }
 
-    public void setConnectionDetail(final SewarageConnectionDetail connectionDetail) {
-        this.connectionDetail = connectionDetail;
+    public void setNoOfClosetsNonResidential(final Integer noOfClosetsNonResidential) {
+        this.noOfClosetsNonResidential = noOfClosetsNonResidential;
     }
 
-    public Date getExecutionDate() {
-        return executionDate;
-    }
-
-    public void setExecutionDate(final Date executionDate) {
-        this.executionDate = executionDate;
-    }
 }

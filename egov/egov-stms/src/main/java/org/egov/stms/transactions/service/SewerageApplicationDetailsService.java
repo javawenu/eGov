@@ -44,6 +44,7 @@ import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.validation.ValidationException;
 
+import org.egov.commons.entity.Source;
 import org.egov.demand.model.EgDemand;
 import org.egov.eis.entity.Assignment;
 import org.egov.eis.service.AssignmentService;
@@ -65,6 +66,7 @@ import org.egov.pims.commons.Position;
 import org.egov.ptis.domain.model.AssessmentDetails;
 import org.egov.ptis.domain.model.OwnerName;
 import org.egov.ptis.domain.service.property.PropertyExternalService;
+import org.egov.stms.elasticSearch.service.SewarageIndexService;
 import org.egov.stms.masters.entity.SewerageApplicationType;
 import org.egov.stms.masters.entity.enums.SewerageConnectionStatus;
 import org.egov.stms.masters.repository.SewerageApplicationTypeRepository;
@@ -129,6 +131,9 @@ public class SewerageApplicationDetailsService {
 
     @Autowired
     private EisCommonService eisCommonService;
+    
+    @Autowired
+    private SewarageIndexService sewarageIndexService;
 
     @Autowired
     public SewerageApplicationDetailsService(final SewerageApplicationDetailsRepository sewerageApplicationDetailsRepository) {
@@ -144,7 +149,7 @@ public class SewerageApplicationDetailsService {
     }
     
     public SewerageApplicationDetails findByApplicationNumberAndConnectionStatus(final String applicationNumber, final SewerageConnectionStatus status) {
-        return sewerageApplicationDetailsRepository.findByApplicationNumberAndConnection_ConnectionStatus(applicationNumber, status);
+        return sewerageApplicationDetailsRepository.findByApplicationNumberAndConnection_Status(applicationNumber, status);
     }
     
     public SewerageApplicationDetails findByApplicationNumberOrConnection_DhscNumber(String applicationNumber) {
@@ -237,20 +242,20 @@ public class SewerageApplicationDetailsService {
         String validationMessage = "";
         final SewerageApplicationDetails sewerageApplicationDetails = getSewerageConnectionDetailsByPropertyIDentifier(propertyID);
         if (sewerageApplicationDetails != null)
-            if (sewerageApplicationDetails.getConnection().getConnectionStatus().toString()
+            if (sewerageApplicationDetails.getConnection().getStatus().toString()
                     .equalsIgnoreCase(SewerageConnectionStatus.ACTIVE.toString()))
                 validationMessage = messageSource.getMessage("err.validate.newconnection.active", new String[] {
                         sewerageApplicationDetails.getConnection().getDhscNumber(), propertyID }, null);
-            else if (sewerageApplicationDetails.getConnection().getConnectionStatus().toString()
+            else if (sewerageApplicationDetails.getConnection().getStatus().toString()
                     .equalsIgnoreCase(SewerageConnectionStatus.INPROGRESS.toString()))
                 validationMessage = messageSource.getMessage("err.validate.newconnection.application.inprocess",
                         new String[] { propertyID, sewerageApplicationDetails.getApplicationNumber() }, null);
-            else if (sewerageApplicationDetails.getConnection().getConnectionStatus().toString()
+            else if (sewerageApplicationDetails.getConnection().getStatus().toString()
                     .equalsIgnoreCase(SewerageConnectionStatus.CLOSED.toString()))
                 validationMessage = messageSource
                         .getMessage("err.validate.newconnection.closed", new String[] {
                                 sewerageApplicationDetails.getConnection().getDhscNumber(), propertyID }, null);
-            else if (sewerageApplicationDetails.getConnection().getConnectionStatus().toString()
+            else if (sewerageApplicationDetails.getConnection().getStatus().toString()
                     .equalsIgnoreCase(SewerageConnectionStatus.INACTIVE.toString()))
                 validationMessage = messageSource.getMessage("err.validate.newconnection.inactive", new String[] {
                         sewerageApplicationDetails.getConnection().getDhscNumber(), propertyID }, null);
@@ -269,8 +274,9 @@ public class SewerageApplicationDetailsService {
     }
 
     public void updateIndexes(final SewerageApplicationDetails sewerageApplicationDetails) {
+    	//TODO : Need to make Rest API call to get assessmentdetails
         final AssessmentDetails assessmentDetails = sewerageTaxUtils.getAssessmentDetailsForFlag(
-                sewerageApplicationDetails.getConnection().getPropertyIdentifier(), PropertyExternalService.FLAG_FULL_DETAILS);
+                sewerageApplicationDetails.getConnection().getConnectionDetail().getPropertyIdentifier(), PropertyExternalService.FLAG_FULL_DETAILS);
         if (LOG.isDebugEnabled())
             LOG.debug(" updating Indexes Started... ");
         if (sewerageApplicationDetails.getConnection().getDhscNumber() != null)
@@ -360,10 +366,12 @@ public class SewerageApplicationDetailsService {
                 applicationIndexService.updateApplicationIndex(applicationIndex);
             }
             
+            sewarageIndexService.createSewarageIndex(sewerageApplicationDetails, assessmentDetails);
+            
          // making connection active only on Sanction
             if (sewerageApplicationDetails.getStatus().getCode().equals(SewerageTaxConstants.APPLICATION_STATUS_SANCTIONED))
-                if (sewerageApplicationDetails.getConnection().getConnectionStatus().equals(SewerageConnectionStatus.INPROGRESS))
-                    sewerageApplicationDetails.getConnection().setConnectionStatus(SewerageConnectionStatus.ACTIVE);
+                if (sewerageApplicationDetails.getConnection().getStatus().equals(SewerageConnectionStatus.INPROGRESS))
+                    sewerageApplicationDetails.getConnection().setStatus(SewerageConnectionStatus.ACTIVE);
         } else {
 
             if (sewerageApplicationDetails.getApplicationDate() == null)
@@ -374,12 +382,14 @@ public class SewerageApplicationDetailsService {
                 
                 //TODO: TEMPORARILY COMMENTED TO FIX COMPILATION ISSUES. CHECK AGAIN.
                 
-                final ApplicationIndexBuilder applicationIndexBuilder = null;/*new ApplicationIndexBuilder(
+               // final ApplicationIndexBuilder applicationIndexBuilder = null;
+                
+                final ApplicationIndexBuilder applicationIndexBuilder= new ApplicationIndexBuilder(
                         SewerageTaxConstants.APPL_INDEX_MODULE_NAME, sewerageApplicationDetails.getApplicationNumber(),
                         sewerageApplicationDetails.getApplicationDate(), sewerageApplicationDetails.getApplicationType().getName(),
                         consumerName.toString(), sewerageApplicationDetails.getStatus().getDescription().toString(),
                         "/stms/application/view/" + sewerageApplicationDetails.getApplicationNumber(),
-                        assessmentDetails.getPropertyAddress(), user.getUsername() + "::" + user.getName())*/;
+                        assessmentDetails.getPropertyAddress(), user.getUsername() + "::" + user.getName(), Source.SYSTEM.toString());
 
                 if (sewerageApplicationDetails.getDisposalDate() != null)
                     applicationIndexBuilder.disposalDate(sewerageApplicationDetails.getDisposalDate());
@@ -395,7 +405,7 @@ public class SewerageApplicationDetailsService {
             }
             if (LOG.isDebugEnabled())
                 LOG.debug("Application Index creation completed...");
-        
+            sewarageIndexService.createSewarageIndex(sewerageApplicationDetails, assessmentDetails);
         }
     }
 

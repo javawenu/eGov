@@ -41,7 +41,7 @@ import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.validation.constraints.NotNull;
 
-import org.egov.infra.persistence.entity.AbstractAuditable;
+import org.egov.infra.persistence.entity.AbstractPersistable;
 import org.egov.stms.masters.entity.enums.PropertyType;
 import org.hibernate.validator.constraints.Length;
 import org.hibernate.validator.constraints.SafeHtml;
@@ -49,7 +49,7 @@ import org.hibernate.validator.constraints.SafeHtml;
 @Entity
 @Table(name = "egswtax_connectiondetail")
 @SequenceGenerator(name = SewerageConnectionDetail.SEQ_CONNECTIONDETAIL, sequenceName = SewerageConnectionDetail.SEQ_CONNECTIONDETAIL, allocationSize = 1)
-public class SewerageConnectionDetail extends AbstractAuditable {
+public class SewerageConnectionDetail extends  AbstractPersistable<Long> { 
 
     /**
      *

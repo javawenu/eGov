@@ -51,12 +51,12 @@ import javax.persistence.Table;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 
-import org.egov.infra.persistence.entity.AbstractAuditable;
+import org.egov.infra.persistence.entity.AbstractPersistable;
 
 @Entity
 @Table(name = "egswtax_donationdetail_master")
 @SequenceGenerator(name = DonationDetailMaster.SEQ_DONATIONDETAILMASTER, sequenceName = DonationDetailMaster.SEQ_DONATIONDETAILMASTER, allocationSize = 1)
-public class DonationDetailMaster extends AbstractAuditable {
+public class DonationDetailMaster extends AbstractPersistable<Long> {
 
     /**
      *

@@ -50,7 +50,7 @@ import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.validation.constraints.NotNull;
 
-import org.egov.infra.persistence.entity.AbstractAuditable;
+import org.egov.infra.persistence.entity.AbstractPersistable;
 import org.egov.wtms.masters.entity.ApplicationType;
 import org.hibernate.validator.constraints.Length;
 import org.hibernate.validator.constraints.SafeHtml;
@@ -58,7 +58,7 @@ import org.hibernate.validator.constraints.SafeHtml;
 @Entity
 @Table(name = "egswtax_document_type_master")
 @SequenceGenerator(name = DocumentTypeMaster.SEQ_DOCUMENTTYPEMASTER, sequenceName = DocumentTypeMaster.SEQ_DOCUMENTTYPEMASTER, allocationSize = 1)
-public class DocumentTypeMaster extends AbstractAuditable {
+public class DocumentTypeMaster extends AbstractPersistable<Long> {
 
     /**
      *
@@ -85,12 +85,10 @@ public class DocumentTypeMaster extends AbstractAuditable {
 
     private boolean isActive;
 
-    @Override
     public Long getId() {
         return id;
     }
 
-    @Override
     public void setId(final Long id) {
         this.id = id;
     }

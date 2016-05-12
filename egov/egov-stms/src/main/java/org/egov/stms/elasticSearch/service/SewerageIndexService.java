@@ -49,7 +49,7 @@ import org.egov.infra.search.elastic.annotation.Indexing;
 import org.egov.infra.utils.EgovThreadLocals;
 import org.egov.ptis.domain.model.AssessmentDetails;
 import org.egov.ptis.domain.model.OwnerName;
-import org.egov.stms.elasticSearch.entity.SewarageSearch;
+import org.egov.stms.elasticSearch.entity.SewerageSearch;
 import org.egov.stms.transactions.entity.SewerageApplicationDetails;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -57,17 +57,17 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @Transactional(readOnly = true)
-public class SewarageIndexService {
+public class SewerageIndexService {
 	
 	@Autowired
 	private CityService cityService;
 	
 	@Indexing(name = Index.SEWARAGE, type = IndexType.SEWARAGESEARCH) 
-	public SewarageSearch createSewarageIndex(final SewerageApplicationDetails sewerageApplicationDetails, final AssessmentDetails assessmentDetails){ 
+	public SewerageSearch createSewarageIndex(final SewerageApplicationDetails sewerageApplicationDetails, final AssessmentDetails assessmentDetails){ 
 		
 		final City cityWebsite = cityService.getCityByURL(EgovThreadLocals.getDomainName());
 		
-		SewarageSearch sewarageSearch = new SewarageSearch(sewerageApplicationDetails.getApplicationNumber(),
+		SewerageSearch sewarageSearch = new SewerageSearch(sewerageApplicationDetails.getApplicationNumber(),
 				 cityWebsite.getName(),cityWebsite.getGrade(), sewerageApplicationDetails.getCreatedDate(), cityWebsite.getDistrictName(), cityWebsite.getRegionName(),
 					cityWebsite.getGrade());
 		

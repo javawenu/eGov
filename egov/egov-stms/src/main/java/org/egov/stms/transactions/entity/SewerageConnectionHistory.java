@@ -67,7 +67,7 @@ public class SewerageConnectionHistory extends AbstractAuditable {
     @ManyToOne(fetch = FetchType.LAZY)
     @NotNull
     @JoinColumn(name = "connectiondetail", nullable = false)
-    private SewarageConnectionDetail connectionDetail;
+    private SewerageConnectionDetail connectionDetail;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @NotNull
@@ -111,11 +111,11 @@ public class SewerageConnectionHistory extends AbstractAuditable {
         serialVersionUID = serialversionuid;
     }
 
-    public SewarageConnectionDetail getConnectionDetail() {
+    public SewerageConnectionDetail getConnectionDetail() {
         return connectionDetail;
     }
 
-    public void setConnectionDetail(final SewarageConnectionDetail connectionDetail) {
+    public void setConnectionDetail(final SewerageConnectionDetail connectionDetail) {
         this.connectionDetail = connectionDetail;
     }
 

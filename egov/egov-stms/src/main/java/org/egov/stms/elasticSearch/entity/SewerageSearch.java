@@ -46,7 +46,7 @@ import org.egov.search.domain.Searchable;
 
 import java.util.Date;
 
-public class SewarageSearch implements Indexable {
+public class SewerageSearch implements Indexable {
 
 	@Override
 	public String getIndexId() {
@@ -143,7 +143,7 @@ public class SewarageSearch implements Indexable {
 
 	
 	
-	public SewarageSearch(final String applicationNumber,
+	public SewerageSearch(final String applicationNumber,
 			final String ulbName, final String ulbCode, final Date createdDate,
 			final String districtName, final String regionName,
 			final String ulbGrade) {

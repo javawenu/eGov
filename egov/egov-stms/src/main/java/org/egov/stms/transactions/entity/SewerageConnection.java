@@ -84,7 +84,7 @@ public class SewerageConnection extends AbstractAuditable {
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @NotNull
     @JoinColumn(name = "connectiondetail", nullable = false)
-    private SewarageConnectionDetail connectionDetail;
+    private SewerageConnectionDetail connectionDetail;
 
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @JoinColumn(name = "demand")
@@ -169,11 +169,11 @@ public class SewerageConnection extends AbstractAuditable {
         this.status = status;
     }
 
-    public SewarageConnectionDetail getConnectionDetail() {
+    public SewerageConnectionDetail getConnectionDetail() {
         return connectionDetail;
     }
 
-    public void setConnectionDetail(final SewarageConnectionDetail connectionDetail) {
+    public void setConnectionDetail(final SewerageConnectionDetail connectionDetail) {
         this.connectionDetail = connectionDetail;
     }
 

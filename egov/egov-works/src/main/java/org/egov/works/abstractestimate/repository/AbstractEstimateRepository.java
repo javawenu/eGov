@@ -48,12 +48,12 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface AbstractEstimateRepository extends JpaRepository<AbstractEstimate, Long> {
 
-    AbstractEstimate findById(final Long id);
-
     List<AbstractEstimate> findByEstimateNumberContainingIgnoreCase(final String estimateNumber);
 
     List<AbstractEstimate> findByEstimateNumberAndEgwStatus_codeEquals(final String estimateNumber, final String statusCode);
 
     AbstractEstimate findByEstimateNumberAndEgwStatus_codeNotLike(final String estimateNumber, final String statusCode);
+    
+    AbstractEstimate findByLineEstimateDetails_EstimateNumberAndEgwStatus_codeEquals(final String estimateNumber, final String statusCode);
 
 }

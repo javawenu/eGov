@@ -39,15 +39,19 @@
  */
 package org.egov.wtms.application.service;
 
+import java.math.BigDecimal;
+import java.util.Date;
+
 public class DataEntryConnectionReport {
 
     private String zone;
+    private String block;
     private String propertyType;
     private String applicationType;
     private String connectionType;
     private String usageType;
     private String category;
-    private double pipeSizeInInch;
+    private String pipeSizeInInch;
     private String hscNo;
     private String assessmentNo;
     private String ulbName;
@@ -56,6 +60,7 @@ public class DataEntryConnectionReport {
     private String houseNumber;
     private String locality;
     private String mobileNumber;
+    private String address;
     private String aadharNumber;
     private Integer noOfPersons;
     private Integer noOfRooms;
@@ -63,8 +68,10 @@ public class DataEntryConnectionReport {
     private double monthlyFee;
     private double waterTaxDue;
     private double propertyTaxDue;
+    private BigDecimal sumpCapacity;
     private String email;
     private String waterSource;
+    private Date connectionDate;
 
     public String getZone() {
         return zone;
@@ -80,6 +87,14 @@ public class DataEntryConnectionReport {
 
     public void setPropertyType(final String propertyType) {
         this.propertyType = propertyType;
+    }
+
+    public String getBlock() {
+        return block;
+    }
+
+    public void setBlock(final String block) {
+        this.block = block;
     }
 
     public String getApplicationType() {
@@ -210,11 +225,11 @@ public class DataEntryConnectionReport {
         this.monthlyFee = monthlyFee;
     }
 
-    public double getPipeSizeInInch() {
+    public String getPipeSizeInInch() {
         return pipeSizeInInch;
     }
 
-    public void setPipeSizeInInch(final double pipeSizeInInch) {
+    public void setPipeSizeInInch(final String pipeSizeInInch) {
         this.pipeSizeInInch = pipeSizeInInch;
     }
 
@@ -241,12 +256,12 @@ public class DataEntryConnectionReport {
     public void setWaterTaxDue(final double waterTaxDue) {
         this.waterTaxDue = waterTaxDue;
     }
-    
+
     public String getEmail() {
         return email;
     }
 
-    public void setEmail(String email) {
+    public void setEmail(final String email) {
         this.email = email;
     }
 
@@ -254,8 +269,32 @@ public class DataEntryConnectionReport {
         return waterSource;
     }
 
-    public void setWaterSource(String waterSource) {
+    public void setWaterSource(final String waterSource) {
         this.waterSource = waterSource;
+    }
+
+    public Date getConnectionDate() {
+        return connectionDate;
+    }
+
+    public BigDecimal getSumpCapacity() {
+        return sumpCapacity;
+    }
+
+    public void setSumpCapacity(final BigDecimal sumpCapacity) {
+        this.sumpCapacity = sumpCapacity;
+    }
+
+    public void setConnectionDate(final Date connectionDate) {
+        this.connectionDate = connectionDate;
+    }
+
+    public String getAddress() {
+        return address;
+    }
+
+    public void setAddress(final String address) {
+        this.address = address;
     }
 
 }

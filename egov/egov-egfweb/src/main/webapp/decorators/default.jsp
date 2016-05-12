@@ -48,16 +48,16 @@
 		<link href="<c:url value='/resources/css/budget.css?rnd=${app_release_no}'/>" rel="stylesheet" type="text/css" />
 		<link href="<c:url value='/resources/css/commonegovnew.css?rnd=${app_release_no}'/>" rel="stylesheet" type="text/css" />
 		<link href="${pageContext.request.contextPath}/resources/css/error.css?rnd=${app_release_no}" rel="stylesheet" type="text/css"></link>
-		<link rel="stylesheet" type="text/css" href="/egi/commonyui/yui2.8/fonts/fonts-min.css"/>
-		<link rel="stylesheet" type="text/css" href="/egi/commonyui/yui2.8/datatable/assets/skins/sam/datatable.css"/>	
-		<link rel="stylesheet" type="text/css" href="/egi/commonyui/yui2.8/assets/skins/sam/autocomplete.css" />	
-		<!-- <script type="text/javascript" src="/egi/commonyui/yui2.8/animation/animation-min.js"></script> -->
-		<script type="text/javascript" src="/egi/commonyui/yui2.8/yuiloader/yuiloader-min.js"></script>
-		<script type="text/javascript" src="/egi/commonyui/yui2.8/yahoo-dom-event/yahoo-dom-event.js"></script>
-		<script type="text/javascript" src="/egi/commonyui/yui2.8/element/element-min.js"></script>
-		<script type="text/javascript" src="/egi/commonyui/yui2.8/connection/connection-min.js"></script>
-		<script type="text/javascript" src="/egi/commonyui/yui2.8/datasource/datasource-min.js"></script>
-		<script type="text/javascript" src="/egi/commonyui/yui2.8/datatable/datatable-min.js"></script>
+		<link rel="stylesheet" type="text/css" href="/EGF/resources/commonyui/yui2.8/fonts/fonts-min.css"/>
+		<link rel="stylesheet" type="text/css" href="/EGF/resources/commonyui/yui2.8/datatable/assets/skins/sam/datatable.css"/>	
+		<link rel="stylesheet" type="text/css" href="/EGF/resources/commonyui/yui2.8/assets/skins/sam/autocomplete.css" />	
+		<!-- <script type="text/javascript" src="/EGF/resources/commonyui/yui2.8/animation/animation-min.js"></script> -->
+		<script type="text/javascript" src="/EGF/resources/commonyui/yui2.8/yuiloader/yuiloader-min.js"></script>
+		<script type="text/javascript" src="/EGF/resources/commonyui/yui2.8/yahoo-dom-event/yahoo-dom-event.js"></script>
+		<script type="text/javascript" src="/EGF/resources/commonyui/yui2.8/element/element-min.js"></script>
+		<script type="text/javascript" src="/EGF/resources/commonyui/yui2.8/connection/connection-min.js"></script>
+		<script type="text/javascript" src="/EGF/resources/commonyui/yui2.8/datasource/datasource-min.js"></script>
+		<script type="text/javascript" src="/EGF/resources/commonyui/yui2.8/datatable/datatable-min.js"></script>
 		<script type="text/javascript" src="/EGF/resources/javascript/autocomplete.js"></script>
 		<script type="text/javascript" src="${pageContext.request.contextPath}/resources/javascript/jsCommonMethods.js?rnd=${app_release_no}"></script>
 		<script type="text/javascript" src="${pageContext.request.contextPath}/resources/javascript/calenderNew.js?rnd=${app_release_no}"></script>
@@ -134,32 +134,24 @@ window.document.onkeydown = function(event) {
 	 </div>
 	  
 	  <script>
-      var i=0;
-	    // jQuery plugin to prevent double submission of forms
-		jQuery.fn.preventDoubleSubmission = function() {
-		jQuery(this).on('submit',function(e){
-         console.log("inside onsubmitt "+(++i));
-		    var $form = jQuery(this);
-		    if ($form.data('submitted') === true) {
-	         console.log("inside already submitted"+(++i));
-  	      // Previously submitted - don't submit again
-		      e.preventDefault();
-		    } else {
-		      // Mark it so that the next submit can be ignored
-              console.log("inside first time submitted"+(++i));
-		      $form.data('submitted', true);
-		    }
-		  });
-		  // Keep chainability
-		  return this;
-		};
 
 		jQuery("form").submit(function( event ) {
 			jQuery('.loader-class').modal('show', {backdrop: 'static'});
 		});
-		
-        console.log("calling prevent default");
-		jQuery('form').preventDoubleSubmission();
+
+		jQuery('form').submit(function() {
+		    if(typeof jQuery.data(this, "disabledOnSubmit") == 'undefined') {
+		      jQuery.data(this, "disabledOnSubmit", { submited: true });
+		      jQuery('input[type=submit], input[type=button]', this).each(function() {
+		    	  jQuery(this).attr("disabled", "disabled");
+		      });
+		      return true;
+		    }
+		    else
+		    {
+		      return false;
+		    }
+		  });
 		
 		jQuery(".datepicker").datepicker({
 			format: "dd/mm/yyyy",

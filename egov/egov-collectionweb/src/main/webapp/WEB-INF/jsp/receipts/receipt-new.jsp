@@ -1297,15 +1297,6 @@ function displayPaytModes(){
        }
 }
 
-function refreshInbox() {
-        var x=opener.top.opener;
-        if(x==null){
-            x=opener.top;
-        }
-        x.document.getElementById('inboxframe').contentWindow.egovInbox.from = 'Inbox';
-	    x.document.getElementById('inboxframe').contentWindow.egovInbox.refresh();
-}
-
 function onBodyLoad()
 {
 	var headertable=document.getElementById('billsheaderinfotable');
@@ -1824,7 +1815,7 @@ function showHideMandataryMark(obj){
 	<title><s:text name="billreceipt.pagetitle"/></title>
 </head>
 <!-- Area for error display -->
-<body onLoad="refreshInbox();"><br>
+<body><br>
 
 
 <div class="errorstyle" id="receipt_error_area" style="display:none;"></div>
@@ -2200,7 +2191,7 @@ function showHideMandataryMark(obj){
 			     	</tr>				
 			</table>
 			 
-			 <div id="loadingMask" style="display:none;overflow:hidden;text-align: center"><img src="/egi/resources/erp2/images/bar_loader.gif"/> <span style="color: red">Please wait....</span></div>
+			 <div id="loadingMask" style="display:none;overflow:hidden;text-align: center"><img src="/collection/resources/images/bar_loader.gif"/> <span style="color: red">Please wait....</span></div>
 			<div align="left" class="mandatorycoll"><s:text name="common.mandatoryfields"/></div>
 			<div class="buttonbottom" align="center">
 			      <label><input align="center" type="submit" class="buttonsubmit" id="button2" value="Pay" onclick="return validate();"/></label>

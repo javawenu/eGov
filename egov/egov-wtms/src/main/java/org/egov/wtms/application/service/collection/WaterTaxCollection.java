@@ -39,13 +39,31 @@
  */
 package org.egov.wtms.application.service.collection;
 
+import static org.egov.wtms.utils.constants.WaterTaxConstants.DMD_STATUS_CHEQUE_BOUNCED;
+
+import java.math.BigDecimal;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+
 import org.apache.log4j.Logger;
 import org.egov.collection.entity.ReceiptDetail;
 import org.egov.collection.integration.models.BillReceiptInfo;
 import org.egov.collection.integration.models.BillReceiptInfoImpl;
 import org.egov.collection.integration.models.ReceiptAccountInfo;
 import org.egov.collection.integration.models.ReceiptAmountInfo;
+import org.egov.collection.integration.models.ReceiptInstrumentInfo;
+import org.egov.commons.CFinancialYear;
 import org.egov.commons.dao.ChartOfAccountsHibernateDAO;
+import org.egov.commons.dao.FinancialYearDAO;
 import org.egov.commons.dao.FunctionHibernateDAO;
 import org.egov.demand.dao.EgBillDao;
 import org.egov.demand.integration.TaxCollection;
@@ -62,31 +80,20 @@ import org.egov.infra.workflow.matrix.entity.WorkFlowMatrix;
 import org.egov.infra.workflow.service.SimpleWorkflowService;
 import org.egov.pims.commons.Position;
 import org.egov.wtms.application.entity.WaterConnectionDetails;
+import org.egov.wtms.application.entity.WaterDemandConnection;
 import org.egov.wtms.application.repository.WaterConnectionDetailsRepository;
 import org.egov.wtms.application.rest.CollectionApportioner;
 import org.egov.wtms.application.service.WaterConnectionDetailsService;
 import org.egov.wtms.application.service.WaterConnectionSmsAndEmailService;
 import org.egov.wtms.application.workflow.ApplicationWorkflowCustomDefaultImpl;
 import org.egov.wtms.masters.entity.enums.ConnectionStatus;
+import org.egov.wtms.masters.entity.enums.ConnectionType;
 import org.egov.wtms.utils.WaterTaxUtils;
 import org.egov.wtms.utils.constants.WaterTaxConstants;
 import org.hibernate.Session;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
-import java.math.BigDecimal;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import static org.egov.wtms.utils.constants.WaterTaxConstants.DMD_STATUS_CHEQUE_BOUNCED;
 
 @Service
 @Transactional(readOnly = true)
@@ -96,6 +103,7 @@ public class WaterTaxCollection extends TaxCollection {
     private EgBillDao egBillDAO;
     @Autowired
     private ModuleService moduleService;
+    
     @Autowired
     private WaterConnectionDetailsService waterConnectionDetailsService;
 
@@ -116,12 +124,16 @@ public class WaterTaxCollection extends TaxCollection {
 
     @PersistenceContext
     private EntityManager entityManager;
+    @Autowired
+    private  FinancialYearDAO financialYearDAO;
 
     @Autowired
     private FunctionHibernateDAO functionDAO;
 
     @Autowired
     private ChartOfAccountsHibernateDAO chartOfAccountsDAO;
+    
+    
 
     public Session getCurrentSession() {
         return entityManager.unwrap(Session.class);
@@ -152,7 +164,7 @@ public class WaterTaxCollection extends TaxCollection {
                 updateWaterTaxIndexes(demand);
             }
             else if (billRcptInfo.getEvent().equals(EVENT_INSTRUMENT_BOUNCED)) {
-                updateCollForChequeBounce(demand, billRcptInfo);
+                updateCollForChequeBounce(demand, billRcptInfo);	
                 updateWaterTaxIndexes(demand);
             }
             if (LOGGER.isDebugEnabled())
@@ -168,10 +180,45 @@ public class WaterTaxCollection extends TaxCollection {
                 + " with BillReceiptInfo - " + billRcptInfo);
         cancelBill(Long.valueOf(billRcptInfo.getBillReferenceNum()));
         demand.setStatus(DMD_STATUS_CHEQUE_BOUNCED);
-        updateDmdDetForRcptCancel(demand, billRcptInfo);
+        updateDmdDetForRcptCancelAndCheckBounce(demand, billRcptInfo);
         LOGGER.debug("reconcileCollForChequeBounce : Updating Collection finished For Demand : " + demand);
     }
-
+    
+    @Transactional
+    private void updateDmdDetForRcptCancelAndCheckBounce(final EgDemand demand, final BillReceiptInfo billRcptInfo) {
+        LOGGER.debug("Entering method updateDmdDetForRcptCancelAndCheckBounce");
+        String installment = "";
+       for (final ReceiptAccountInfo rcptAccInfo : billRcptInfo.getAccountDetails())
+            if (rcptAccInfo.getCrAmount() != null && rcptAccInfo.getCrAmount().compareTo(BigDecimal.ZERO) == 1
+                    && (!rcptAccInfo.getIsRevenueAccount())) {
+                final String[] desc = rcptAccInfo.getDescription().split("-", 2);
+                final String reason = desc[0].trim();
+                final String[] installsplit = desc[1].split("#");
+                installment = installsplit[0].trim();
+                 for (final EgDemandDetails demandDetail : demand.getEgDemandDetails())
+                    if (reason.equalsIgnoreCase(demandDetail.getEgDemandReason().getEgDemandReasonMaster()
+                            .getReasonMaster())
+                            && installment.equalsIgnoreCase(demandDetail.getEgDemandReason().getEgInstallmentMaster()
+                                    .getDescription()) ) {
+                    	 for(ReceiptInstrumentInfo instrumentHeader:billRcptInfo.getInstrumentDetails()){
+                    		if(instrumentHeader!=null){
+                        demandDetail.setAmtCollected(demandDetail.getAmtCollected().subtract(instrumentHeader.getInstrumentAmount()));
+                        if (demand.getAmtCollected() != null && demand.getAmtCollected().compareTo(BigDecimal.ZERO) > 0
+                                && demandDetail.getEgDemandReason().getEgDemandReasonMaster().getIsDemand())
+                            demand.setAmtCollected(demand.getAmtCollected().subtract(instrumentHeader.getInstrumentAmount()));
+                    		}
+                        LOGGER.info("Deducted Collected amount Rs." + rcptAccInfo.getCrAmount() + " for tax : "
+                                + reason + " and installment : " + installment);
+                        break;
+                    }
+                    	 break;
+            }
+                 break;
+           } 
+       
+        updateReceiptStatusWhenCancelled(billRcptInfo.getReceiptNum());
+        LOGGER.debug("Exiting method updateDmdDetForRcptCancelAndCheckBounce");
+    }
     /**
      * @param demand Updates WaterConnectionDetails Object once Collection Is done. send Record move to Commissioner and Send SMS
      * and Email after Collection
@@ -256,12 +303,14 @@ public class WaterTaxCollection extends TaxCollection {
                     final String[] installsplit = desc[1].split("#");
                     final String reason = desc[0].trim();
                     final String instDesc = installsplit[0].trim();
+                    if(!installmentWiseDemandDetailsByReason.isEmpty() && installmentWiseDemandDetailsByReason.get(instDesc) !=null){
                     demandDetail = installmentWiseDemandDetailsByReason.get(instDesc).get(reason);
                     demandDetail.addCollectedWithOnePaisaTolerance(rcptAccInfo.getCrAmount());
                     if (demandDetail.getEgDemandReason().getEgDemandReasonMaster().getIsDemand())
                         demand.addCollected(rcptAccInfo.getCrAmount());
                     persistCollectedReceipts(demandDetail, billRcptInfo.getReceiptNum(), totalAmount,
                             billRcptInfo.getReceiptDate(), demandDetail.getAmtCollected());
+                    }
                     if (LOGGER.isDebugEnabled())
                         LOGGER.debug("Persisted demand and receipt details for tax : " + reason + " installment : "
                                 + instDesc + " with receipt No : " + billRcptInfo.getReceiptNum() + " for Rs. "
@@ -277,7 +326,20 @@ public class WaterTaxCollection extends TaxCollection {
 
     public EgDemand getCurrentDemand(final Long billId) {
         final EgBill egBill = egBillDAO.findById(billId, false);
-        return egBill.getEgDemand();
+        WaterConnectionDetails waterconndet=null;
+        EgDemand demand=null;
+        if(  egBill.getEgDemand()!=null &&  egBill.getEgDemand().getIsHistory()!=null &&
+        		 egBill.getEgDemand().getIsHistory().equals(WaterTaxConstants.DEMANDISHISTORY))
+        	demand= egBill.getEgDemand();
+        else{
+        waterconndet=waterConnectionDetailsService.getWaterConnectionDetailsByDemand(egBill.getEgDemand());
+       for(WaterDemandConnection waterDemand:waterconndet.getWaterDemandConnection())
+       {
+    	   if(waterDemand!=null && waterDemand.getDemand()!=null && waterDemand.getDemand().getIsHistory().equals(WaterTaxConstants.DEMANDISHISTORY))
+    		   demand=  waterDemand.getDemand();
+       }
+        }
+       return  demand;
     }
 
     // Receipt cancellation ,updating bill,demanddetails,demand
@@ -302,7 +364,7 @@ public class WaterTaxCollection extends TaxCollection {
             egBill.setIs_Cancelled("Y");
         }
     }
-
+   
     @Transactional
     private void updateDmdDetForRcptCancel(final EgDemand demand, final BillReceiptInfo billRcptInfo) {
         LOGGER.debug("Entering method updateDmdDetForRcptCancel");
@@ -466,20 +528,32 @@ public class WaterTaxCollection extends TaxCollection {
         final SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy");
         final EgBill egBill = egBillDAO.findById(Long.valueOf(billReceiptInfo.getBillReferenceNum()), false);
         final List<EgBillDetails> billDetails = new ArrayList<EgBillDetails>(egBill.getEgBillDetails());
-
+        final CFinancialYear financialyear = financialYearDAO.getFinancialYearByDate(new Date());
         BigDecimal currentInstallmentAmount = BigDecimal.ZERO;
         BigDecimal arrearAmount = BigDecimal.ZERO;
-
-        for (final EgBillDetails billDet : egBill.getEgBillDetails())
-            if (billDet.getCrAmount() != null && billDet.getCrAmount().compareTo(BigDecimal.ZERO) == 1) {
-                final String[] desc = billDet.getDescription().split("-", 2);
+        final WaterConnectionDetails waterConnectionDetails = waterConnectionDetailsService
+                .getWaterConnectionDetailsByDemand(egBill.getEgDemand());
+        for (final ReceiptAccountInfo rcptAccInfo : billReceiptInfo.getAccountDetails())
+            if (rcptAccInfo.getCrAmount() != null && rcptAccInfo.getCrAmount().compareTo(BigDecimal.ZERO) == 1) {
+            	final String[] desc = rcptAccInfo.getDescription().split("-", 2);
                 final String[] installsplit = desc[1].split("#");
-                if (installsplit[0].trim().equals(installsplit[1].trim()))
-                    currentInstallmentAmount = currentInstallmentAmount.add(billDet.getCrAmount());
+                final String[] installsplit1 = installsplit[0].split("-");
+             if(waterConnectionDetails!=null && (waterConnectionDetails.getConnectionType().equals(ConnectionType.NON_METERED) || 
+            		   waterConnectionDetails.getConnectionStatus().equals(ConnectionStatus.INPROGRESS))){
+                 if (installsplit1[0].trim().equals((financialyear !=null ? financialyear.getFinYearRange().split("-")[0]:null)) )
+                    currentInstallmentAmount = currentInstallmentAmount.add(rcptAccInfo.getCrAmount());
                 else
-                    arrearAmount = arrearAmount.add(billDet.getCrAmount());
-
+                    arrearAmount = arrearAmount.add(rcptAccInfo.getCrAmount());
             }
+               else
+               {
+            	   if(installsplit[0].split("/")[1].split("-")[1].trim().equals(financialyear.getFinYearRange().split("-")[1].trim()))
+            		   currentInstallmentAmount = currentInstallmentAmount.add(rcptAccInfo.getCrAmount());
+                   else
+                       arrearAmount = arrearAmount.add(rcptAccInfo.getCrAmount());
+               }
+            }
+      
 
         for (final EgBillDetails billDet : egBill.getEgBillDetails()) {
             if (billDet.getOrderNo() == 1) {

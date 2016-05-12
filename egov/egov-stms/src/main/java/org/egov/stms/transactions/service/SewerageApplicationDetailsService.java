@@ -66,7 +66,7 @@ import org.egov.pims.commons.Position;
 import org.egov.ptis.domain.model.AssessmentDetails;
 import org.egov.ptis.domain.model.OwnerName;
 import org.egov.ptis.domain.service.property.PropertyExternalService;
-import org.egov.stms.elasticSearch.service.SewarageIndexService;
+import org.egov.stms.elasticSearch.service.SewerageIndexService;
 import org.egov.stms.masters.entity.SewerageApplicationType;
 import org.egov.stms.masters.entity.enums.SewerageConnectionStatus;
 import org.egov.stms.masters.repository.SewerageApplicationTypeRepository;
@@ -133,7 +133,7 @@ public class SewerageApplicationDetailsService {
     private EisCommonService eisCommonService;
     
     @Autowired
-    private SewarageIndexService sewarageIndexService;
+    private SewerageIndexService sewerageIndexService;
 
     @Autowired
     public SewerageApplicationDetailsService(final SewerageApplicationDetailsRepository sewerageApplicationDetailsRepository) {
@@ -366,7 +366,7 @@ public class SewerageApplicationDetailsService {
                 applicationIndexService.updateApplicationIndex(applicationIndex);
             }
             
-            sewarageIndexService.createSewarageIndex(sewerageApplicationDetails, assessmentDetails);
+            sewerageIndexService.createSewarageIndex(sewerageApplicationDetails, assessmentDetails);
             
          // making connection active only on Sanction
             if (sewerageApplicationDetails.getStatus().getCode().equals(SewerageTaxConstants.APPLICATION_STATUS_SANCTIONED))
@@ -405,7 +405,7 @@ public class SewerageApplicationDetailsService {
             }
             if (LOG.isDebugEnabled())
                 LOG.debug("Application Index creation completed...");
-            sewarageIndexService.createSewarageIndex(sewerageApplicationDetails, assessmentDetails);
+            sewerageIndexService.createSewarageIndex(sewerageApplicationDetails, assessmentDetails);
         }
     }
 

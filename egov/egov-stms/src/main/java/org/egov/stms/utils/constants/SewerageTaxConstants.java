@@ -47,6 +47,7 @@ public class SewerageTaxConstants {
     public static final String APPLICATION_NUMBER = "applicationNumber";
     public static final String NEWSEWERAGECONNECTION = "NEWSEWERAGECONNECTION";
     public static final String MODULETYPE = "SEWERAGETAXAPPLICATION";
+    public static final String REVENUE_WARD = "WARD";
 
     // appconfig keys
     public static final String NEWCONNECTIONALLOWEDIFPTDUE = "NEWCONNECTIONALLOWEDIFPTDUE";

@@ -124,4 +124,16 @@
 		<put-attribute name="body"
 			value="/WEB-INF/views/masters/donationMaster-view.jsp" />
 	</definition>
+	<definition name="sewerageTaxSearch-form" extends="base_layout">
+		<put-attribute name="page-title" value="title.sewerageTaxSearch"
+			cascade="true" />
+		<put-attribute name="body"
+			value="/WEB-INF/views/search/sewerageTaxSearch-form.jsp" />
+	</definition>
+	<definition name="viewseweragedetails" extends="base_layout">
+		<put-attribute name="page-title" value="title.sewerage.view"
+			cascade="true" />
+		<put-attribute name="body"
+			value="/WEB-INF/views/transactions/viewseweragedetails.jsp" />
+	</definition>
 </tiles-definitions>

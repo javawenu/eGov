@@ -37,13 +37,45 @@
 # 
 #   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
 #------------------------------------------------------------------------------- -->
+<%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
-<!-- <footer class="main">
-   <spring:message code='lbl.powerby'/>  <a href="http://egovernments.org/" target="_blank">
-   <spring:message code='lbl.egov.foundation'/></a>
-</footer> -->
-<footer class="main">
-    Powered by <a href="http://egovernments.org/" target="_blank">eGovernments Foundation</a>
-</footer>
-<script type="text/javascript" src="<c:url value='/resources/global/js/bootstrap/typeahead.bundle.js' context='/egi'/>"></script>
-<script src="<c:url value='/resources/global/js/jquery/plugins/jquery.inputmask.bundle.min.js' context='/egi'/>"></script>
+<%@ taglib uri="http://www.springframework.org/tags" prefix="spring" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
+<%@ taglib uri="http://www.springframework.org/tags/form" prefix="form" %>
+
+<div id="main">
+<div class="row">
+	<div class="col-md-12">
+		<form:form  id="sewerageViewApplicationDetails" method ="post" class="form-horizontal form-groups-bordered" modelAttribute="sewerageApplicationDetails" >
+		<div class="panel panel-primary" data-collapsed="0">
+			<jsp:include page="commonApplicationDetails-view.jsp"/>
+		</div>
+		<jsp:include page="connectionDetails-view.jsp"></jsp:include>
+		</form:form>
+	</div>					
+</div>					
+</div>
+<div class="row text-center">
+	<div class="add-margin">
+		<button type="submit" class="btn btn-default print" id="printBtn" onclick="printDiv('main')"><spring:message code="lbl.print" /></button>
+		<c:choose>
+			<c:when test="${sewerageApplicationDetails.status == 'ACTIVE' }">
+				<a href="javascript:void(0)" class="btn btn-default inboxload" onclick="self.close()" ><spring:message code="lbl.close" /></a>
+			</c:when>
+			<c:otherwise>
+				<a href="javascript:void(0)" class="btn btn-default" onclick="self.close()"><spring:message code="lbl.close" /></a>
+			</c:otherwise>
+		</c:choose>
+	</div>
+</div>
+
+<script src="<c:url value='/resources/js/transactions/applicationsuccess.js?rnd=${app_release_no}'/>"></script>
+<script type="text/javascript">
+function printDiv(divName) {
+    var printContents = document.getElementById(divName).innerHTML;
+    var originalContents = document.body.innerHTML;
+    document.body.innerHTML = printContents;
+    window.print();
+    document.body.innerHTML = originalContents;
+}
+</script>

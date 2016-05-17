@@ -53,7 +53,6 @@ import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
-import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 
 import org.egov.infra.filestore.entity.FileStoreMapper;
@@ -76,13 +75,22 @@ public class SewerageFieldInspectionDetails extends AbstractAuditable {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "applicationdetails", nullable = false)
     private SewerageApplicationDetails applicationDetails;
-
     private Integer noOfPipes;
-
     private double pipeSize;
-
     private Integer noOfScrews;
     private boolean isActive;
+    
+    @NotNull
+    private Integer screwSize;
+    
+    @NotNull
+    private double pipeLength;
+    
+    @NotNull
+    private double distance;
+    private Integer roadLength;
+    private boolean roadDigging;
+    private String roadOwner;
     
     @Temporal(value = TemporalType.DATE)
     private Date inspectionDate;
@@ -155,6 +163,54 @@ public class SewerageFieldInspectionDetails extends AbstractAuditable {
 
     public void setFileStore(final FileStoreMapper fileStore) {
         this.fileStore = fileStore;
+    }
+
+    public Integer getScrewSize() {
+        return screwSize;
+    }
+
+    public void setScrewSize(Integer screwSize) {
+        this.screwSize = screwSize;
+    }
+
+    public double getPipeLength() {
+        return pipeLength;
+    }
+
+    public void setPipeLength(double pipeLength) {
+        this.pipeLength = pipeLength;
+    }
+
+    public double getDistance() {
+        return distance;
+    }
+
+    public void setDistance(double distance) {
+        this.distance = distance;
+    }
+
+    public Integer getRoadLength() {
+        return roadLength;
+    }
+
+    public void setRoadLength(Integer roadLength) {
+        this.roadLength = roadLength;
+    }
+
+    public boolean isRoadDigging() {
+        return roadDigging;
+    }
+
+    public void setRoadDigging(boolean roadDigging) {
+        this.roadDigging = roadDigging;
+    }
+
+    public String getRoadOwner() {
+        return roadOwner;
+    }
+
+    public void setRoadOwner(String roadOwner) {
+        this.roadOwner = roadOwner;
     }
 
 }

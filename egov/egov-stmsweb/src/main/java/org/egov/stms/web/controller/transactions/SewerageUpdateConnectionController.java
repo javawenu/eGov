@@ -328,6 +328,9 @@ public class SewerageUpdateConnectionController extends GenericWorkFlowControlle
                     .getFieldInspectionDetails()){
                     sewerageFieldInspectionDetails.setApplicationDetails(sewerageApplicationDetails);
                     sewerageFieldInspectionDetails.setInspectionDate(new Date());
+                    sewerageFieldInspectionDetails.setPipeLength(0);
+                    sewerageFieldInspectionDetails.setScrewSize(0);
+                    sewerageFieldInspectionDetails.setDistance(0);
                     sewerageFieldInspectionDetailsList.add(sewerageFieldInspectionDetails);
                 }
 

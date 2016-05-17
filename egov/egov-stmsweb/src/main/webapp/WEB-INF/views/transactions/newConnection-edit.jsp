@@ -52,7 +52,7 @@
 	<input type="hidden" id="sewerageTaxDue" value="${sewerageTaxDue}" name="sewerageTaxDue"/>  
 	<form:hidden path="" id="workFlowAction" name="workFlowAction"/>
 	<form:hidden path="applicationType" id="applicationType" value="${sewerageApplicationDetails.applicationType.id}"/>
-	<form:hidden path="connection.connectionStatus" id="connection.connectionStatus" value="${sewerageApplicationDetails.connection.connectionStatus}"/>
+	<form:hidden path="connection.status" id="connection.status" value="${sewerageApplicationDetails.connection.status}"/>
 	<%-- <div class="panel panel-primary" data-collapsed="0">
 		<div class="panel-heading">
 			<div class="panel-title">

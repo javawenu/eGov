@@ -66,6 +66,7 @@ import org.egov.infra.security.utils.SecurityUtils;
 import org.egov.stms.masters.entity.enums.PropertyType;
 import org.egov.stms.transactions.entity.SewerageApplicationDetails;
 import org.egov.stms.transactions.entity.SewerageConnectionEstimationDetails;
+import org.egov.stms.transactions.entity.SewerageFieldInspectionDetails;
 import org.egov.stms.transactions.service.SewerageApplicationDetailsService;
 import org.egov.stms.utils.SewerageTaxUtils;
 import org.egov.stms.utils.constants.SewerageTaxConstants;
@@ -203,7 +204,7 @@ public class SewerageUpdateConnectionController extends GenericWorkFlowControlle
             if (workFlowAction.equalsIgnoreCase(SewerageTaxConstants.SUBMITWORKFLOWACTION)) {
 
                 populateEstimationDetails(sewerageApplicationDetails);
-
+                populateInspectionDetails(sewerageApplicationDetails);
                 sewerageApplicationDetailsService.save(sewerageApplicationDetails);
 
                 final Set<FileStoreMapper> fileStoreSet = addToFileStore(files);
@@ -246,7 +247,7 @@ public class SewerageUpdateConnectionController extends GenericWorkFlowControlle
                 && request.getParameter("approvalPosition") != null
                 && !request.getParameter("approvalPosition").isEmpty())
             approvalPosition = Long.valueOf(request.getParameter("approvalPosition"));
-
+        
         if (!resultBinder.hasErrors()) {
             try {
                 if (null != workFlowAction)
@@ -318,6 +319,20 @@ public class SewerageUpdateConnectionController extends GenericWorkFlowControlle
 
         sewerageApplicationDetails.getEstimationDetails().clear();
         sewerageApplicationDetails.setEstimationDetails(sewerageConnectionEstimationDetailList);
+    }
+    
+    private void populateInspectionDetails(final SewerageApplicationDetails sewerageApplicationDetails) {
+        final List<SewerageFieldInspectionDetails> sewerageFieldInspectionDetailsList = new ArrayList<SewerageFieldInspectionDetails>();
+        if (!sewerageApplicationDetails.getFieldInspectionDetails().isEmpty())
+            for (final SewerageFieldInspectionDetails sewerageFieldInspectionDetails : sewerageApplicationDetails
+                    .getFieldInspectionDetails()){
+                    sewerageFieldInspectionDetails.setApplicationDetails(sewerageApplicationDetails);
+                    sewerageFieldInspectionDetails.setInspectionDate(new Date());
+                    sewerageFieldInspectionDetailsList.add(sewerageFieldInspectionDetails);
+                }
+
+        sewerageApplicationDetails.getFieldInspectionDetails().clear();
+        sewerageApplicationDetails.setFieldInspectionDetails(sewerageFieldInspectionDetailsList);
     }
 
     private boolean validSewerageConnectioEstimationDetail(

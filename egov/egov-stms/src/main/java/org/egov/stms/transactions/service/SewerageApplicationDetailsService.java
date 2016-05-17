@@ -518,7 +518,7 @@ public class SewerageApplicationDetailsService {
             if (sewerageApplicationDetails.getStatus().getCode().equals(SewerageTaxConstants.APPLICATION_STATUS_CREATED)
                     && sewerageApplicationDetails.getState() != null && workFlowAction.equals("Submit"))
                 sewerageApplicationDetails.setStatus(sewerageTaxUtils.getStatusByCodeAndModuleType(
-                        SewerageTaxConstants.APPLICATION_STATUS_VERIFIED, SewerageTaxConstants.MODULETYPE));
+                        SewerageTaxConstants.APPLICATION_STATUS_FIELDINSPECTED, SewerageTaxConstants.MODULETYPE));
             else if (sewerageApplicationDetails.getStatus().getCode()
                     .equals(SewerageTaxConstants.APPLICATION_STATUS_VERIFIED))
                 sewerageApplicationDetails.setStatus(sewerageTaxUtils.getStatusByCodeAndModuleType(

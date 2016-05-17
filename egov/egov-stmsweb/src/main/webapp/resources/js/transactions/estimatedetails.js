@@ -39,6 +39,8 @@
 #-------------------------------------------------------------------------------*/
 $(document).ready(function()
 {	
+	//addRow();
+	//add_Inspection_Row();
 	if($('#pipelineDistance') != null && $('#pipelineDistance').val() == 0.0)
 		$('#pipelineDistance').val('');	
 	
@@ -163,7 +165,7 @@ $(document).ready(function()
         cell7.className = "text-center";
         var actions = document.createElement("span");
         actions.setAttribute("style","cursor:pointer");
-        actions.innerHTML = '<i class="fa fa-trash" id="delete_row" ></i>';
+       	actions.innerHTML = '<i class="fa fa-trash" id="delete_row" ></i>';
         cell7.appendChild(actions); 
         patternvalidation();
 	}
@@ -218,3 +220,104 @@ function calculateTotalAmount() {
     }
     $('#grandTotal').val(grandTotal);
 }
+
+$("#addInspctRowId").click(function(){	
+	add_Inspection_Row();
+});	
+		
+function add_Inspection_Row() {
+    var table = document.getElementById('inspectionDetails');
+    var rowCount = table.rows.length+1;
+    if((rowCount-2) >= 5) {
+    	bootbox.alert("Maximum of only 5 rows are allowed!!");
+    	return;
+    }
+    
+    var row = table.insertRow(rowCount-1);
+    var counts = rowCount - 1;
+	elementIndex = counts - 1;
+    var newRow = document.createElement("tr");
+	var newCol = document.createElement("td");
+	newRow.appendChild(newCol);
+	 
+    var cell1 = row.insertCell(0);
+    cell1.className="text-center";
+    var slno = document.createElement("span");
+    slno.setAttribute("id","slNoInsp"+counts);
+    slno.innerHTML=counts;
+    cell1.appendChild(slno); 
+    
+    newCol = document.createElement("td");        
+    newRow.appendChild(newCol);
+    var cell2 = row.insertCell(1);
+    cell2.className = "text-right";
+    var pipe = document.createElement("input");
+    pipe.setAttribute("class","form-control table-input text-right patternvalidation");
+    pipe.setAttribute("data-pattern","decimalvalue"); 
+    pipe.type = "text";
+    pipe.setAttribute("maxlength", "8");
+    pipe.setAttribute("name", "fieldInspectionDetails[" + elementIndex + "].noOfPipes");
+    pipe.setAttribute("id", "fieldInspectionDetails"+elementIndex+"noOfPipes");
+    cell2.appendChild(pipe);
+    
+    newCol = document.createElement("td");
+	newRow.appendChild(newCol);
+    var cell3 = row.insertCell(2);
+    cell3.className = "text-right";
+    var pipeSize = document.createElement("input");
+    pipeSize.setAttribute("class","form-control table-input text-right patternvalidation");
+    pipeSize.setAttribute("data-pattern","decimalvalue"); 
+    pipeSize.type = "text";
+    pipeSize.setAttribute("maxlength", "8");
+    pipeSize.setAttribute("name", "fieldInspectionDetails[" + elementIndex + "].pipeSize");
+    pipeSize.setAttribute("id", "fieldInspectionDetails"+elementIndex+"pipeSize");
+    cell3.appendChild(pipeSize);  
+    
+    newCol = document.createElement("td");
+	newRow.appendChild(newCol);
+    var cell4 = row.insertCell(3);
+    cell4.className="text-right";
+    var screw = document.createElement("input");
+    screw.setAttribute("class","form-control table-input text-right patternvalidation");
+    screw.setAttribute("data-pattern","decimalvalue");  
+    screw.type = "text";
+    screw.setAttribute("maxlength", "8");
+    screw.setAttribute("name", "fieldInspectionDetails[" + elementIndex + "].noOfScrews");
+    screw.setAttribute("id", "fieldInspectionDetails"+elementIndex+"noOfScrews");
+    cell4.appendChild(screw);  
+    
+    newCol = document.createElement("td");
+	newRow.appendChild(newCol); 
+    var cell5 = row.insertCell(4);
+    cell5.className = "text-center";
+    var actions = document.createElement("span");
+    actions.setAttribute("style","cursor:pointer");
+   	actions.innerHTML = '<i class="fa fa-trash" id="delete_insp_row" ></i>';
+    cell5.appendChild(actions); 
+    patternvalidation();
+}
+
+$(document).on('click',"#delete_insp_row",function (){
+	var table = document.getElementById('inspectionDetails');
+    var rowCount = table.rows.length;
+	$(this).closest('tr').remove();		
+    var counts = rowCount - 1;
+    var j = 2;
+    var i;
+    for(i=2;i<=counts;i++){ 
+    	var serialNo = '#slNoInsp'+i;
+    	var prevIndex = i-1;
+    	var currentIndex = j-1; 
+    	var noOfPipes = '#fieldInspectionDetails'+prevIndex+'noOfPipes';
+    	var pipeSize = '#fieldInspectionDetails'+prevIndex+'pipeSize'; 
+    	var noOfScrews = '#fieldInspectionDetails'+prevIndex+'noOfScrews';
+    	if($(serialNo) != null && $(serialNo).html() != '' && $(serialNo).html() != undefined ) {
+        	$(serialNo).html(j);
+        	$(serialNo).attr("id", 'slNoInsp'+j); 
+        	$(noOfPipes).attr("id", 'fieldInspectionDetails'+currentIndex+'noOfPipes'); 
+        	$(pipeSize).attr("id", 'fieldInspectionDetails'+currentIndex+'pipeSize'); 
+        	$(noOfScrews).attr("id", 'fieldInspectionDetails'+currentIndex+'noOfScrews'); 
+        	j++;
+    	}
+    }	
+});	

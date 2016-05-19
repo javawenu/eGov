@@ -362,7 +362,7 @@ public class SewerageApplicationDetailsService {
                     applicationIndex.setElapsedDays(elapsedDays);
                 }
                 else
-                    applicationIndex.setApproved(ApprovalStatus.UNKNOWN);
+                    applicationIndex.setApproved(ApprovalStatus.INPROGRESS);
                 applicationIndexService.updateApplicationIndex(applicationIndex);
             }
             
@@ -399,7 +399,7 @@ public class SewerageApplicationDetailsService {
                 applicationIndex = applicationIndexBuilder.build();
                 if(!sewerageApplicationDetails.getStatus().getCode()
                         .equals(SewerageTaxConstants.APPLICATION_STATUS_SANCTIONED)) {
-                    applicationIndex.setApproved(ApprovalStatus.UNKNOWN);
+                    applicationIndex.setApproved(ApprovalStatus.INPROGRESS);
                     applicationIndexService.createApplicationIndex(applicationIndex);
                 }    
             }

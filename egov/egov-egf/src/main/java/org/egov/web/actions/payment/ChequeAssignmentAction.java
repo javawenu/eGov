@@ -39,7 +39,28 @@
  */
 package org.egov.web.actions.payment;
 
-import com.opensymphony.xwork2.validator.annotations.Validation;
+import java.io.InputStream;
+import java.io.Serializable;
+import java.math.BigDecimal;
+import java.sql.SQLException;
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.apache.struts2.convention.annotation.Action;
@@ -69,7 +90,6 @@ import org.egov.infra.validation.exception.ValidationError;
 import org.egov.infra.validation.exception.ValidationException;
 import org.egov.infra.web.struts.annotation.ValidationErrorPage;
 import org.egov.infstr.services.PersistenceService;
-import org.egov.infstr.utils.SequenceGenerator;
 import org.egov.model.instrument.InstrumentHeader;
 import org.egov.model.instrument.InstrumentVoucher;
 import org.egov.model.payment.ChequeAssignment;
@@ -93,31 +113,8 @@ import org.hibernate.exception.SQLGrammarException;
 import org.hibernate.transform.Transformers;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-
-import java.io.InputStream;
-import java.io.Serializable;
-import java.math.BigDecimal;
-import java.sql.SQLException;
-import java.text.DecimalFormat;
-import java.text.NumberFormat;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-
+import com.opensymphony.xwork2.validator.annotations.Validation;
 @ParentPackage("egov")
-@Validation
 @Results({
         @Result(name = "search", location = "chequeAssignment-search.jsp"),
         @Result(name = "view", location = "chequeAssignment-view.jsp"),
@@ -167,7 +164,6 @@ public class ChequeAssignmentAction extends BaseVoucherAction
     private Date chequeDt;
     private boolean chequeNoGenerationAuto;
     private boolean rtgsNoGenerationAuto;
-    private SequenceGenerator sequenceGenerator;
     @Autowired
     @Qualifier("chequeAssignmentHelper")
     private ChequeAssignmentHelper chequeAssignmentHelper;
@@ -225,6 +221,7 @@ public class ChequeAssignmentAction extends BaseVoucherAction
     private boolean reassignSurrenderChq = false;
     // to overriding department Mandatory Condition only for remittance cheque assignment search
     private Boolean deptNonMandatory = false;
+    private Boolean functionNonMandatory = false;
     private Boolean rtgsContractorAssignment = false;
     private String assignmentType = "BillPayment";// SalaryPayment or RemittancePayment
     private List<String> chequeSlNoList = new ArrayList<String>();
@@ -313,6 +310,10 @@ public class ChequeAssignmentAction extends BaseVoucherAction
         if (deptNonMandatory == true)
             mandatoryFields.remove("department");
 
+     // overriding department Mandatory Condition only for cheque assignment search
+        if (functionNonMandatory == true)
+            mandatoryFields.remove("function");
+        
         if (LOGGER.isDebugEnabled())
             LOGGER.debug("Completed prepare.");
     }
@@ -328,6 +329,12 @@ public class ChequeAssignmentAction extends BaseVoucherAction
         // typeOfAccount = FinancialConstants.TYPEOFACCOUNT_PAYMENTS+","+FinancialConstants.TYPEOFACCOUNT_RECEIPTS_PAYMENTS;
         if (LOGGER.isDebugEnabled())
             LOGGER.debug("Completed beforeSearch.");
+        // overriding department Mandatory Condition only for cheque assignment search
+        mandatoryFields.remove("department");
+        mandatoryFields.remove("function");
+
+        deptNonMandatory = true;
+        functionNonMandatory = true;
         return "search";
     }
 
@@ -1259,10 +1266,7 @@ public class ChequeAssignmentAction extends BaseVoucherAction
         } catch (final SQLException e) {
             throw new ApplicationRuntimeException("Error occurred while generating Application Number", e);
         }
-        /*
-         * String seqNo = sequenceGenerator.getNextNumber(SEQ_RTGS_ReferenceNumber, 1L).getFormattedNumber(); seqNo =
-         * ackNumberFormat.format(Integer.parseInt(seqNo)); return seqNo;
-         */
+        
     }
 
     @ValidationErrorPage(value = "searchpensionpayment")
@@ -1662,7 +1666,7 @@ public class ChequeAssignmentAction extends BaseVoucherAction
 
             if (surrender == null)
                 throw new ValidationException(Arrays.asList(new ValidationError("Exception while surrender Cheque ",
-                        "Please select the atleast one Cheque for Surrendering ")));
+                        "Please select atleast one Cheque for Surrendering ")));
             final List<InstrumentHeader> suurenderChequelist = new ArrayList<InstrumentHeader>();
             final List<String> chequeNoList = new ArrayList<String>();
             final List<String> serialNoList = new ArrayList<String>();
@@ -2430,15 +2434,8 @@ public class ChequeAssignmentAction extends BaseVoucherAction
     public void setRtgsSeceltedAccMap(final Map<String, Boolean> rtgsSeceltedAccMap) {
         this.rtgsSeceltedAccMap = rtgsSeceltedAccMap;
     }
-
-    public SequenceGenerator getSequenceGenerator() {
-        return sequenceGenerator;
-    }
-
-    public void setSequenceGenerator(final SequenceGenerator sequenceGenerator) {
-        this.sequenceGenerator = sequenceGenerator;
-    }
-
+ 
+ 
     public List<InstrumentHeader> getInstVoucherDisplayList() {
         return instVoucherDisplayList;
     }
@@ -2548,6 +2545,22 @@ public class ChequeAssignmentAction extends BaseVoucherAction
 
     public void setContainsRTGS(boolean containsRTGS) {
         this.containsRTGS = containsRTGS;
+    }
+
+    public Boolean getFunctionNonMandatory() {
+        return functionNonMandatory;
+    }
+
+    public void setFunctionNonMandatory(Boolean functionNonMandatory) {
+        this.functionNonMandatory = functionNonMandatory;
+    }
+
+    public Boolean getDeptNonMandatory() {
+        return deptNonMandatory;
+    }
+
+    public void setDeptNonMandatory(Boolean deptNonMandatory) {
+        this.deptNonMandatory = deptNonMandatory;
     }
 
 }

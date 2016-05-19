@@ -38,6 +38,22 @@
  *   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
  */
 $(document).ready(function(){
+	
+	$('#waterRatesTbl').dataTable({
+		"sDom": "<'row'<'col-xs-12 hidden col-right'f>r>t<'row'<'col-md-6 hidden col-xs-12'i><'col-md-3 hidden col-xs-6'l><'col-md-3 hidden col-xs-6 text-right'p>>",
+		"autoWidth": false,
+		"destroy":true,
+		/* Disable initial sort */
+		"paging":false,
+        "aaSorting": [],
+		"oLanguage": {
+			"sInfo": ""
+		},
+		"columnDefs": [ {
+			"targets": 7,
+			"orderable": false
+		} ]
+	});
 
 	$('#statusdiv').hide();
 	
@@ -154,7 +170,14 @@ $(document).ready(function(){
 				
 				 var fromDate = $('#formDate').val();
 				 var toDate = $('#toDate').val();
-				 var activeid = ( $("#activeid").is(':checked') ) ? true : false;
+				 var activeDiv = $('#reqAttr').val();
+					if (activeDiv =='false')
+						{
+						var activeid = true;
+						}
+					else{
+						var activeid = ( $("#activeid").is(':checked') ) ? true : false;
+					    }
 			  $.ajax({
 				 
 		            url: '/wtms/ajax-WaterRatescombination',
@@ -176,7 +199,7 @@ $(document).ready(function(){
 		    			
 		    			if(response){
 		    				response=JSON.parse(response);
-		    				bootbox.alert("For the Selected Combination, there is a existing record with the date range between Effective From Date : "+response.fromDate+"and Effective To Date : "+response.toDate);
+		    				bootbox.alert("For the Selected Combination, there is a existing record with the date range between Effective From Date : "+response.fromDate+" and Effective To Date : "+response.toDate);
 		    				return false;
 			    			}
 		    			else{
@@ -217,10 +240,3 @@ function addNew()
 {
 	window.open("/wtms/masters/waterRatesMaster/", "_self");
 }
-
-/*function overwritedonation(res)
-{
-	
-	document.forms[0].submit();
-}*/
-	

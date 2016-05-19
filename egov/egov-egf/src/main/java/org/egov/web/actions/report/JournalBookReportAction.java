@@ -39,10 +39,13 @@
  */
 package org.egov.web.actions.report;
 
-import com.exilant.GLEngine.GeneralLedgerBean;
-import com.exilant.exility.common.TaskFailedException;
-import com.opensymphony.xwork2.validator.annotations.RequiredFieldValidator;
-import com.opensymphony.xwork2.validator.annotations.Validations;
+import java.math.BigDecimal;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.apache.log4j.Logger;
 import org.apache.struts2.convention.annotation.Action;
 import org.apache.struts2.convention.annotation.ParentPackage;
@@ -64,12 +67,10 @@ import org.hibernate.type.StringType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 
-import java.math.BigDecimal;
-import java.text.DateFormat;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.List;
+import com.exilant.GLEngine.GeneralLedgerBean;
+import com.exilant.exility.common.TaskFailedException;
+import com.opensymphony.xwork2.validator.annotations.RequiredFieldValidator;
+import com.opensymphony.xwork2.validator.annotations.Validations;
 
 @ParentPackage("egov")
 @Results({
@@ -106,7 +107,7 @@ public class JournalBookReportAction extends BaseFormAction {
         addDropdownData("fundList",
                 persistenceService.findAllBy(" from Fund where isactive=true and isnotleaf=false order by name"));
         addDropdownData("fundsourceList",
-                persistenceService.findAllBy(" from Fundsource where isactive=true and isnotleaf=false order by name"));
+                persistenceService.findAllBy(" from Fundsource where isactive=true order by name"));
         addDropdownData("departmentList", persistenceService.findAllBy("from Department order by name"));
         addDropdownData("functionList", masterDataCache.get("egi-function"));
 

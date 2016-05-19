@@ -103,6 +103,10 @@ public class SewerageConnection extends AbstractAuditable {
     @OneToMany(mappedBy = "connection", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<SewerageApplicationDetails> applicationDetails = new ArrayList<SewerageApplicationDetails>(0);
 
+    @OrderBy("id desc")
+    @OneToMany(mappedBy = "connection", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<SewerageDemandConnection> demandConnections = new ArrayList<SewerageDemandConnection>(0);
+
     @Override
     public Long getId() {
         return id;
@@ -175,6 +179,14 @@ public class SewerageConnection extends AbstractAuditable {
 
     public void setConnectionDetail(final SewerageConnectionDetail connectionDetail) {
         this.connectionDetail = connectionDetail;
+    }
+
+    public List<SewerageDemandConnection> getDemandConnections() {
+        return demandConnections;
+    }
+
+    public void setDemandConnections(final List<SewerageDemandConnection> demandConnections) {
+        this.demandConnections = demandConnections;
     }
 
 }

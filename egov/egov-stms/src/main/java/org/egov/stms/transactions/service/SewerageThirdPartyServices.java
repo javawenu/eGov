@@ -1,14 +1,16 @@
-package org.egov.stms.web.controller.utils;
+package org.egov.stms.transactions.service;
 
 import javax.servlet.http.HttpServletRequest;
 
 import org.egov.ptis.domain.model.AssessmentDetails;
 import org.egov.stms.transactions.entity.SewerageApplicationDetails;
-import org.springframework.stereotype.Controller;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 
-@Controller
-public class ThirdPartyServices {
+@Service
+@Transactional(readOnly = true)
+public class SewerageThirdPartyServices {
 
 	public AssessmentDetails getPropertyDetails(final SewerageApplicationDetails sewerageApplicationDetails, final String assessmentNumber, final HttpServletRequest request) {
     	RestTemplate restTemplate = new RestTemplate();

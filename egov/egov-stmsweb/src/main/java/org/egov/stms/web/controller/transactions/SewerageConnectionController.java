@@ -67,9 +67,6 @@ import org.egov.infra.filestore.entity.FileStoreMapper;
 import org.egov.infra.filestore.service.FileStoreService;
 import org.egov.infra.security.utils.SecurityUtils;
 import org.egov.infra.utils.EgovThreadLocals;
-import org.egov.ptis.domain.dao.property.BasicPropertyDAO;
-import org.egov.ptis.domain.entity.property.BasicProperty;
-import org.egov.ptis.domain.entity.property.PropertyOwnerInfo;
 import org.egov.ptis.domain.model.AssessmentDetails;
 import org.egov.ptis.domain.model.PropertyTaxDetails;
 import org.egov.ptis.domain.service.property.PropertyExternalService;
@@ -80,10 +77,9 @@ import org.egov.stms.transactions.entity.SewerageApplicationDetails;
 import org.egov.stms.transactions.entity.SewerageConnection;
 import org.egov.stms.transactions.service.SewerageApplicationDetailsService;
 import org.egov.stms.transactions.service.SewerageConnectionService;
+import org.egov.stms.transactions.service.SewerageThirdPartyServices;
 import org.egov.stms.utils.SewerageTaxUtils;
 import org.egov.stms.utils.constants.SewerageTaxConstants;
-import org.egov.stms.web.controller.utils.ThirdPartyServices;
-import org.egov.wtms.utils.PropertyExtnUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -96,7 +92,6 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
@@ -117,26 +112,21 @@ public class SewerageConnectionController extends GenericWorkFlowController {
     private SewerageConnectionService sewerageConnectionService;
 
     @Autowired
-    private PropertyExtnUtils propertyExtnUtils;
-
-    @Autowired
     private SecurityUtils securityUtils;
 
     @Autowired
     protected AssignmentService assignmentService;
 
-    @Autowired
-    protected BasicPropertyDAO basicPropertyDAO;
-
+    
     @Autowired
     private PropertyExternalService propertyExternalService;
 
     @Autowired
     @Qualifier("fileStoreService")
     protected FileStoreService fileStoreService;
-    
-	@Autowired
-	private ThirdPartyServices thirdPartyServices;
+
+    @Autowired
+    private SewerageThirdPartyServices sewerageThirdPartyServices;
 
     @Autowired
     public SewerageConnectionController(final SewerageTaxUtils sewerageTaxUtils,
@@ -215,8 +205,8 @@ public class SewerageConnectionController extends GenericWorkFlowController {
         sewerageTaxUtils.getCurrentUserRole(securityUtils.getCurrentUser());
 
         final SewerageApplicationDetails newSewerageApplicationDetails = sewerageApplicationDetailsService
-                .createNewSewerageConnection(sewerageApplicationDetails, approvalPosition,
-                        approvalComment, sewerageApplicationDetails.getApplicationType().getCode(), workFlowAction);
+                .createNewSewerageConnection(sewerageApplicationDetails, approvalPosition, approvalComment,
+                        sewerageApplicationDetails.getApplicationType().getCode(), workFlowAction);
 
         final Assignment currentUserAssignment = assignmentService.getPrimaryAssignmentForGivenRange(securityUtils
                 .getCurrentUser().getId(), new Date(), new Date());
@@ -266,8 +256,7 @@ public class SewerageConnectionController extends GenericWorkFlowController {
             }
 
         if (applicationNumber != null)
-            sewerageApplicationDetails = sewerageApplicationDetailsService
-                    .findByApplicationNumber(applicationNumber);
+            sewerageApplicationDetails = sewerageApplicationDetailsService.findByApplicationNumber(applicationNumber);
         model.addAttribute("approverName", approverName);
         model.addAttribute("currentUserDesgn", currentUserDesgn);
         model.addAttribute("nextDesign", nextDesign);
@@ -279,8 +268,8 @@ public class SewerageConnectionController extends GenericWorkFlowController {
     }
 
     @RequestMapping(value = "/downloadFile", method = RequestMethod.GET)
-    public void generateEstimationNotice(final HttpServletRequest request,
-            final HttpServletResponse response) throws IOException {
+    public void generateEstimationNotice(final HttpServletRequest request, final HttpServletResponse response)
+            throws IOException {
         final SewerageApplicationDetails sewerageApplicationDetails = sewerageApplicationDetailsService
                 .findByApplicationNumber(request.getParameter("applicationNumber"));
         ServletContext context = request.getServletContext();
@@ -302,8 +291,8 @@ public class SewerageConnectionController extends GenericWorkFlowController {
 
         // set headers for the response
         String headerKey = "Content-Disposition";
-        String headerValue = String.format("attachment; filename=\"%s\"",
-                sewerageApplicationDetails.getFileStore().getFileName());
+        String headerValue = String.format("attachment; filename=\"%s\"", sewerageApplicationDetails.getFileStore()
+                .getFileName());
         response.setHeader(headerKey, headerValue);
 
         // get output stream of the response
@@ -321,32 +310,38 @@ public class SewerageConnectionController extends GenericWorkFlowController {
         outStream.close();
     }
 
-    private void setCommonDetails(final SewerageApplicationDetails sewerageApplicationDetails, final ModelMap modelMap, final HttpServletRequest request) {
-        String assessmentNumber = sewerageApplicationDetails.getConnection().getConnectionDetail().getPropertyIdentifier();
-        
-        AssessmentDetails propertyOwnerDetails = thirdPartyServices.getPropertyDetails(sewerageApplicationDetails, assessmentNumber, request);
-        if(propertyOwnerDetails != null) {
-      	  modelMap.addAttribute("propertyOwnerDetails", propertyOwnerDetails);
+    private void setCommonDetails(final SewerageApplicationDetails sewerageApplicationDetails, final ModelMap modelMap,
+            final HttpServletRequest request) {
+        String assessmentNumber = sewerageApplicationDetails.getConnection().getConnectionDetail()
+                .getPropertyIdentifier();
+
+        AssessmentDetails propertyOwnerDetails = sewerageThirdPartyServices.getPropertyDetails(sewerageApplicationDetails,
+                assessmentNumber, request);
+        if (propertyOwnerDetails != null) {
+            modelMap.addAttribute("propertyOwnerDetails", propertyOwnerDetails);
         }
         final PropertyTaxDetails propertyTaxDetails = propertyExternalService.getPropertyTaxDetails(assessmentNumber);
         modelMap.addAttribute("propertyTax", propertyTaxDetails.getTotalTaxAmt());
 
-        final BigDecimal sewerageTaxDue = sewerageConnectionService.getTotalAmount(sewerageApplicationDetails.getConnection());
+        final BigDecimal sewerageTaxDue = sewerageConnectionService.getTotalAmount(sewerageApplicationDetails
+                .getConnection());
         modelMap.addAttribute("sewerageTaxDue", sewerageTaxDue);
     }
 
-    
-    private void validatePropertyID(final SewerageApplicationDetails sewerageApplicationDetails, final BindingResult errors) {
+    private void validatePropertyID(final SewerageApplicationDetails sewerageApplicationDetails,
+            final BindingResult errors) {
         if (sewerageApplicationDetails.getConnection() != null
                 && sewerageApplicationDetails.getConnection().getConnectionDetail().getPropertyIdentifier() != null
                 && !sewerageApplicationDetails.getConnection().getConnectionDetail().getPropertyIdentifier().equals("")) {
-            String errorMessage = sewerageApplicationDetailsService.checkValidPropertyAssessmentNumber(sewerageApplicationDetails
-                    .getConnection().getConnectionDetail().getPropertyIdentifier());
+            String errorMessage = sewerageApplicationDetailsService
+                    .checkValidPropertyAssessmentNumber(sewerageApplicationDetails.getConnection()
+                            .getConnectionDetail().getPropertyIdentifier());
             if (errorMessage != null && !errorMessage.equals(""))
                 errors.rejectValue("connection.propertyIdentifier", errorMessage, errorMessage);
             else {
-                errorMessage = sewerageApplicationDetailsService.checkConnectionPresentForProperty(sewerageApplicationDetails
-                        .getConnection().getConnectionDetail().getPropertyIdentifier());
+                errorMessage = sewerageApplicationDetailsService
+                        .checkConnectionPresentForProperty(sewerageApplicationDetails.getConnection()
+                                .getConnectionDetail().getPropertyIdentifier());
                 if (errorMessage != null && !errorMessage.equals(""))
                     errors.rejectValue("connection.propertyIdentifier", errorMessage, errorMessage);
             }

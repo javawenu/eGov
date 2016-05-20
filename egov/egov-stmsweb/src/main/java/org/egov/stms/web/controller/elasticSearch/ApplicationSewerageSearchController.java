@@ -44,11 +44,9 @@ import static java.util.Arrays.asList;
 import static org.egov.ptis.constants.PropertyTaxConstants.REVENUE_HIERARCHY_TYPE;
 
 import java.math.BigDecimal;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -60,33 +58,22 @@ import org.egov.infra.admin.master.entity.City;
 import org.egov.infra.admin.master.service.BoundaryService;
 import org.egov.infra.admin.master.service.CityService;
 import org.egov.infra.utils.EgovThreadLocals;
-import org.egov.ptis.domain.dao.property.BasicPropertyDAO;
-import org.egov.ptis.domain.entity.property.BasicProperty;
-import org.egov.ptis.domain.entity.property.BasicPropertyImpl;
-import org.egov.ptis.domain.entity.property.PropertyOwnerInfo;
 import org.egov.ptis.domain.model.AssessmentDetails;
-import org.egov.ptis.domain.model.OwnerName;
-import org.egov.ptis.domain.service.property.PropertyExternalService;
 import org.egov.search.domain.Document;
 import org.egov.search.domain.Page;
 import org.egov.search.domain.SearchResult;
 import org.egov.search.domain.Sort;
 import org.egov.search.service.SearchService;
-import org.egov.stms.elasticSearch.entity.SewerageSearchResult;
 import org.egov.stms.elasticSearch.entity.SewerageConnSearchRequest;
+import org.egov.stms.elasticSearch.entity.SewerageSearchResult;
 import org.egov.stms.transactions.entity.SewerageApplicationDetails;
-import org.egov.stms.transactions.entity.SewerageFieldInspectionDetails;
 import org.egov.stms.transactions.service.SewerageApplicationDetailsService;
 import org.egov.stms.transactions.service.SewerageConnectionService;
-import org.egov.stms.utils.SewerageTaxUtils;
-import org.egov.stms.utils.constants.SewerageSearchConstants;
+import org.egov.stms.transactions.service.SewerageThirdPartyServices;
+import org.egov.stms.utils.SewerageActionDropDownUtil;
 import org.egov.stms.utils.constants.SewerageTaxConstants;
-import org.egov.stms.web.controller.utils.SewerageActionDropDownUtil;
-import org.egov.stms.web.controller.utils.ThirdPartyServices;
 import org.elasticsearch.search.sort.SortOrder;
-import org.mockito.internal.progress.IOngoingStubbing;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpRequest;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.ui.ModelMap;
@@ -95,92 +82,88 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.client.RestTemplate;
 import org.springframework.web.servlet.ModelAndView;
 
 @Controller
 @RequestMapping(value = "/existing/sewerage")
 public class ApplicationSewerageSearchController {
-	private  static final String SERVER_URI = "http://localhost:9880";
-	@Autowired
-	private SearchService searchService;
-	@Autowired
-	private CityService cityService;
-	@Autowired
-	private SewerageApplicationDetailsService sewerageApplicationDetailsService;
-	@Autowired
-	private BoundaryService boundaryService;
+    private static final String SERVER_URI = "http://localhost:9880";
+    @Autowired
+    private SearchService searchService;
+    @Autowired
+    private CityService cityService;
+    @Autowired
+    private SewerageApplicationDetailsService sewerageApplicationDetailsService;
+    @Autowired
+    private BoundaryService boundaryService;
 
-	@Autowired
-	private SewerageTaxUtils sewerageTaxUtils;
+    @Autowired
+    private SewerageConnectionService sewerageConnectionService;
 
-	@Autowired
-	protected BasicPropertyDAO basicPropertyDAO;
-
-	@Autowired
-	private SewerageConnectionService sewerageConnectionService;
-	
-	@Autowired
-	private ThirdPartyServices thirdPartyServices;
-
+    @Autowired
+    private SewerageThirdPartyServices sewerageThirdPartyServices;
 
     private static final Logger LOGGER = Logger.getLogger(ApplicationSewerageSearchController.class);
-
 
     @ModelAttribute
     public SewerageConnSearchRequest searchRequest() {
         return new SewerageConnSearchRequest();
     }
-    
+
     @RequestMapping(method = RequestMethod.GET)
     public String newSearchForm(final Model model) {
-        return "sewerageTaxSearch-form"; 
+        return "sewerageTaxSearch-form";
     }
-    
+
     public @ModelAttribute("revenueWards") List<Boundary> revenueWardList() {
-        return boundaryService.getActiveBoundariesByBndryTypeNameAndHierarchyTypeName(SewerageTaxConstants.REVENUE_WARD,
-                REVENUE_HIERARCHY_TYPE);
+        return boundaryService.getActiveBoundariesByBndryTypeNameAndHierarchyTypeName(
+                SewerageTaxConstants.REVENUE_WARD, REVENUE_HIERARCHY_TYPE);
     }
-    @RequestMapping(value = "/view/{consumernumber}/{assessmentnumber}",method = RequestMethod.GET)
-    public ModelAndView view(@PathVariable final String consumernumber,@PathVariable final String assessmentnumber,final Model model, final ModelMap modelMap,@ModelAttribute SewerageApplicationDetails sewerageApplicationDetails, final HttpServletRequest request) {
-    	
+
+    @RequestMapping(value = "/view/{consumernumber}/{assessmentnumber}", method = RequestMethod.GET)
+    public ModelAndView view(@PathVariable final String consumernumber, @PathVariable final String assessmentnumber,
+            final Model model, final ModelMap modelMap,
+            @ModelAttribute SewerageApplicationDetails sewerageApplicationDetails, final HttpServletRequest request) {
+
         if (consumernumber != null)
             sewerageApplicationDetails = sewerageApplicationDetailsService.findByApplicationNumber(consumernumber);
-        AssessmentDetails propertyOwnerDetails = thirdPartyServices.getPropertyDetails(sewerageApplicationDetails, assessmentnumber, request);
-        if(propertyOwnerDetails != null) {
-      	  modelMap.addAttribute("propertyOwnerDetails", propertyOwnerDetails);
+        AssessmentDetails propertyOwnerDetails = sewerageThirdPartyServices.getPropertyDetails(sewerageApplicationDetails,
+                assessmentnumber, request);
+        if (propertyOwnerDetails != null) {
+            modelMap.addAttribute("propertyOwnerDetails", propertyOwnerDetails);
         }
-          final BigDecimal sewerageTaxDue = sewerageConnectionService.getTotalAmount(sewerageApplicationDetails.getConnection());
-          modelMap.addAttribute("sewerageTaxDue", sewerageTaxDue);
+        final BigDecimal sewerageTaxDue = sewerageConnectionService.getTotalAmount(sewerageApplicationDetails
+                .getConnection());
+        modelMap.addAttribute("sewerageTaxDue", sewerageTaxDue);
         return new ModelAndView("viewseweragedetails", "sewerageApplicationDetails", sewerageApplicationDetails);
     }
 
     @SuppressWarnings("unchecked")
-	@RequestMapping(method = RequestMethod.POST)
+    @RequestMapping(method = RequestMethod.POST)
     @ResponseBody
     public List<SewerageSearchResult> searchApplication(@ModelAttribute final SewerageConnSearchRequest searchRequest) {
         final City cityWebsite = cityService.getCityByURL(EgovThreadLocals.getDomainName());
-        searchRequest.setUlbName(cityWebsite.getName());   
-        final Sort sort = Sort.by().field(SewerageSearchConstants.CLAUSES_APPLICATION_DATE, SortOrder.DESC); 
+        searchRequest.setUlbName(cityWebsite.getName());
+        final Sort sort = Sort.by().field(SewerageTaxConstants.CLAUSES_APPLICATION_DATE, SortOrder.DESC);
         final SearchResult searchResult = searchService.search(asList(Index.SEWARAGE.toString()),
                 asList(IndexType.SEWARAGESEARCH.toString()), searchRequest.searchQuery(),
                 searchRequest.searchFilters(), sort, Page.NULL);
 
         List<SewerageSearchResult> searchResultFomatted = new ArrayList<SewerageSearchResult>(0);
 
-		for (final Document document : searchResult.getDocuments()) {
+        for (final Document document : searchResult.getDocuments()) {
 
-			Map<String, String> searchableObjects = (Map<String, String>) document.getResource().get("searchable");
-			if (searchableObjects != null) {
-				SewerageSearchResult searchActions = SewerageActionDropDownUtil
-						.getSearchResultWithActions(searchableObjects.get("status"));
-				if (searchActions != null) {
-					searchActions.setDocument(document);
-					searchResultFomatted.add(searchActions);
-				}
-			}
-		}
+            Map<String, String> searchableObjects = (Map<String, String>) document.getResource().get("searchable");
+            if (searchableObjects != null) {
+                SewerageSearchResult searchActions = SewerageActionDropDownUtil
+                        .getSearchResultWithActions(searchableObjects.get("status"));
+                if (searchActions != null) {
+                    searchActions.setDocument(document);
+                    searchResultFomatted.add(searchActions);
+                }
+            }
+        }
         return searchResultFomatted;
     }
-    
+
 }

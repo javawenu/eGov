@@ -47,7 +47,7 @@ import java.util.List;
 
 import org.egov.search.domain.Filter;
 import org.egov.search.domain.Filters;
-import org.egov.stms.utils.constants.SewerageSearchConstants;
+import org.egov.stms.utils.constants.SewerageTaxConstants;
 import org.jboss.logging.Logger;
 
 public class SewerageConnSearchRequest {
@@ -123,13 +123,13 @@ public class SewerageConnSearchRequest {
 
     public Filters searchFilters() { 
         final List<Filter> andFilters = new ArrayList<>(0);
-        andFilters.add(termsStringFilter(SewerageSearchConstants.SEARCHABLE_DHSCNO, dhscNumber));
-        andFilters.add(termsStringFilter(SewerageSearchConstants.CLAUSES_CITYNAME, ulbName));
-        andFilters.add(queryStringFilter(SewerageSearchConstants.SEARCHABLE_CONSUMER_NAME, applicantName));
-        andFilters.add(queryStringFilter(SewerageSearchConstants.CLAUSES_MOBILENO , mobileNumber));
-        andFilters.add(termsStringFilter(SewerageSearchConstants.CLAUSES_DOORNO, doorNumber));
-        andFilters.add(termsStringFilter(SewerageSearchConstants.CLAUSES_REVWARD_NAME, revenueWard));
-        andFilters.add(queryStringFilter(SewerageSearchConstants.CLAUSES_APPLICATION_DATE,applicationDate));
+        andFilters.add(termsStringFilter(SewerageTaxConstants.SEARCHABLE_DHSCNO, dhscNumber));
+        andFilters.add(termsStringFilter(SewerageTaxConstants.CLAUSES_CITYNAME, ulbName));
+        andFilters.add(queryStringFilter(SewerageTaxConstants.SEARCHABLE_CONSUMER_NAME, applicantName));
+        andFilters.add(queryStringFilter(SewerageTaxConstants.CLAUSES_MOBILENO , mobileNumber));
+        andFilters.add(termsStringFilter(SewerageTaxConstants.CLAUSES_DOORNO, doorNumber));
+        andFilters.add(termsStringFilter(SewerageTaxConstants.CLAUSES_REVWARD_NAME, revenueWard));
+        andFilters.add(queryStringFilter(SewerageTaxConstants.CLAUSES_APPLICATION_DATE,applicationDate));
         if (logger.isDebugEnabled())
             logger.debug("finished filters");
         return Filters.withAndFilters(andFilters);

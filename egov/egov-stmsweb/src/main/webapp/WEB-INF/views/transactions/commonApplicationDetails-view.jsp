@@ -77,36 +77,40 @@
 				</c:choose>
 			</div>
 		</div>
+		<c:forEach items="${propertyOwnerDetails.ownerNames}" var="owner">
 		<div class="row add-border">
 			<div class="col-xs-3 add-margin"><spring:message code="lbl.mobileNo"/></div>
-			<div class="col-xs-3 add-margin view-content" id="mobileNumber"><c:out value="${mobileNumber}"/></div>
+			<div class="col-xs-3 add-margin view-content" id="mobileNumber"><c:out value="${owner.mobileNumber}"/></div>
 			<div class="col-xs-3 add-margin"><spring:message code="lbl.email"/> </div>
-			<div class="col-xs-3 add-margin view-content" id="email" ><c:out value="${emailAddress}"/></div>
+			<div class="col-xs-3 add-margin view-content" id="email" ><c:out value="${owner.emailId}"/></div>
 		</div>
 		<div class="row add-border">
 			<div class="col-xs-3 add-margin"><spring:message code="lbl.applicantname"/></div>
-			<div class="col-xs-3 add-margin view-content" id="applicantname"><c:out value="${applicantName}"/></div>
+			<div class="col-xs-3 add-margin view-content" id="applicantname"><c:out value="${owner.ownerName}"/></div>
 			<div class="col-xs-3 add-margin"><spring:message code="lbl.locality" /></div>
-			<div class="col-xs-3 add-margin view-content" id="locality"><c:out value="${locality}"/></div>
+			<div class="col-xs-3 add-margin view-content" id="locality"><c:out value="${propertyOwnerDetails.boundaryDetails.localityName}"/></div>
 		</div>
 		<div class="row add-border">
 			<div class="col-xs-3 add-margin"><spring:message code="lbl.address" /></div>
 			<div class="col-xs-3 add-margin view-content" id="propertyaddress" >
-				<c:out value="${propertyAddress}"/>
+				<c:out value="${propertyOwnerDetails.propertyAddress}"/>
 			</div>
 			<div class="col-xs-3 add-margin"><spring:message code="lbl.zonewardblock"/></div>
 			<div class="col-xs-3 add-margin view-content" id="zonewardblock">
-				<c:out value="${zoneWardBlockDetails}"/>
+				<c:out value="${propertyOwnerDetails.boundaryDetails.zoneName}"/>
+				<c:out value="${propertyOwnerDetails.boundaryDetails.wardName}"/>
+				<c:out value="${propertyOwnerDetails.boundaryDetails.blockName}"/>
 			</div>
 		</div>
 		<div class="row add-border">
 			<div class="col-xs-3 add-margin"><spring:message code="lbl.aadhar"/></div>
 			<div class="col-xs-3 add-margin view-content" id="aadhaar">
-				<c:out value="${aadhaarNumber}"/>
+				<c:out value="${owner.aadhaarNumber}"/>
 			</div>
 			<div class="col-xs-3 add-margin"></div>
 			<div class="col-xs-3 add-margin view-content"></div>
 		</div>
+		</c:forEach>
 		<div class="row">
 			<div class="col-xs-3 add-margin"><spring:message code="lbl.properttax"/></div>
 			<div class="col-xs-3 add-margin view-content" id="propertytaxdue">

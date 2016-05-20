@@ -41,48 +41,52 @@
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://www.springframework.org/tags" prefix="spring" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
-<%@ taglib uri="http://www.springframework.org/tags/form" prefix="form" %>
-
-<div id="main">
-<div class="row">
-	<div class="col-md-12">
-		<form:form  id="sewerageViewApplicationDetails" method ="post" class="form-horizontal form-groups-bordered" modelAttribute="sewerageApplicationDetails" >
-		<div class="panel panel-primary" data-collapsed="0">
-			<jsp:include page="commonApplicationDetails-view.jsp"/>
-		</div>
-		<jsp:include page="connectionDetails-view.jsp"></jsp:include>
-		<div class="panel panel-primary" data-collapsed="0">
-			<jsp:include page="fieldInspectionDetails.jsp"/>
-		</div>
-		<div class="panel panel-primary" data-collapsed="0">
-			<jsp:include page="seweragechargesdetails.jsp"/>
-		</div>
+	<div class="panel-body">
+		<div class="panel-heading">
+				<div class="panel-title">
+					<spring:message code="lbl.fieldinspection.details"/>
+				</div>
+			</div>
 		
-		</form:form>
-	</div>					
-</div>					
-</div>
-<div class="row text-center">
-	<div class="add-margin">
-		<button type="submit" class="btn btn-default print" id="printBtn" onclick="printDiv('main')"><spring:message code="lbl.print" /></button>
-		<c:choose>
-			<c:when test="${sewerageApplicationDetails.status == 'ACTIVE' }">
-				<a href="javascript:void(0)" class="btn btn-default inboxload" onclick="self.close()" ><spring:message code="lbl.close" /></a>
-			</c:when>
-			<c:otherwise>
-				<a href="javascript:void(0)" class="btn btn-default" onclick="self.close()"><spring:message code="lbl.close" /></a>
-			</c:otherwise>
-		</c:choose>
+				<table class="table table-striped table-bordered" id="fieldInspectionDetails">
+					<thead>
+					      <tr>
+							<th class="text-center"><spring:message code="lbl.noofpipes" /></th>
+							<th class="text-center"><spring:message code="lbl.pipesize.inches" /></th>
+							<th class="text-center"><spring:message code="lbl.pipelength" /></th>
+							<th class="text-center"><spring:message code="lbl.noOfScrews" /></th>
+							<th class="text-center"><spring:message code="lbl.roaddigging" /></th>
+							<th class="text-center"><spring:message code="lbl.roadlength" /></th>
+							<th class="text-center"><spring:message code="lbl.distance" /></th>
+							<th class="text-center"><spring:message code="lbl.roadowner" /></th>
+					      </tr>
+				         </thead>
+					<tbody>
+						
+								<c:forEach items="${sewerageApplicationDetails.fieldInspectionDetails}" var="fid"
+									varStatus="counter">
+							      <tr class="">
+									<%-- <td class="text-center"><span id="slNo1">${counter.index+1}</span></td> --%>
+									<td class="text-center"><c:out value="${fid.noOfPipes}" /></td>
+									<td class="text-right"><c:out value="${fid.pipeSize}" /></td>
+									<td class="text-right"><c:out value="${fid.pipeLength}"/></td>
+									<td class="text-right"><c:out value="${fid.noOfScrews}"/></td>
+									<c:choose> 
+									  <c:when test="${fid.roadDigging}">
+									    <td class="text-right"><c:out value="Yes"/></td>
+									  </c:when>
+									  <c:otherwise>
+									    <td class="text-right"><c:out value="No"/></td>
+									  </c:otherwise>
+									</c:choose>
+									<td class="text-right"><c:out value="${fid.roadLength}"/></td>
+									<td class="text-right"><c:out value="${fid.distance}"/></td>
+									<td class="text-right"><c:out value="${fid.roadOwner}"/></td>
+									
+							      </tr>
+					       		</c:forEach>
+					</tbody>
+				</table>
+		
 	</div>
-</div>
 
-<script src="<c:url value='/resources/js/transactions/applicationview.js?rnd=${app_release_no}'/>"></script>
-<script type="text/javascript">
-function printDiv(divName) {
-    var printContents = document.getElementById(divName).innerHTML;
-    var originalContents = document.body.innerHTML;
-    document.body.innerHTML = printContents;
-    window.print();
-    document.body.innerHTML = originalContents;
-}
-</script>

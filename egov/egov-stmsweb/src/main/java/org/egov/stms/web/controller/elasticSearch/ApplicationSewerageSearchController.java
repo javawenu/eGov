@@ -44,9 +44,13 @@ import static java.util.Arrays.asList;
 import static org.egov.ptis.constants.PropertyTaxConstants.REVENUE_HIERARCHY_TYPE;
 
 import java.math.BigDecimal;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+
+import javax.servlet.http.HttpServletRequest;
 
 import org.apache.log4j.Logger;
 import org.egov.config.search.Index;
@@ -58,8 +62,10 @@ import org.egov.infra.admin.master.service.CityService;
 import org.egov.infra.utils.EgovThreadLocals;
 import org.egov.ptis.domain.dao.property.BasicPropertyDAO;
 import org.egov.ptis.domain.entity.property.BasicProperty;
+import org.egov.ptis.domain.entity.property.BasicPropertyImpl;
 import org.egov.ptis.domain.entity.property.PropertyOwnerInfo;
 import org.egov.ptis.domain.model.AssessmentDetails;
+import org.egov.ptis.domain.model.OwnerName;
 import org.egov.ptis.domain.service.property.PropertyExternalService;
 import org.egov.search.domain.Document;
 import org.egov.search.domain.Page;
@@ -69,13 +75,18 @@ import org.egov.search.service.SearchService;
 import org.egov.stms.elasticSearch.entity.SewerageSearchResult;
 import org.egov.stms.elasticSearch.entity.SewerageConnSearchRequest;
 import org.egov.stms.transactions.entity.SewerageApplicationDetails;
+import org.egov.stms.transactions.entity.SewerageFieldInspectionDetails;
 import org.egov.stms.transactions.service.SewerageApplicationDetailsService;
 import org.egov.stms.transactions.service.SewerageConnectionService;
 import org.egov.stms.utils.SewerageTaxUtils;
+import org.egov.stms.utils.constants.SewerageSearchConstants;
 import org.egov.stms.utils.constants.SewerageTaxConstants;
 import org.egov.stms.web.controller.utils.SewerageActionDropDownUtil;
+import org.egov.stms.web.controller.utils.ThirdPartyServices;
 import org.elasticsearch.search.sort.SortOrder;
+import org.mockito.internal.progress.IOngoingStubbing;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpRequest;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.ui.ModelMap;
@@ -84,12 +95,13 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.client.RestTemplate;
 import org.springframework.web.servlet.ModelAndView;
 
 @Controller
 @RequestMapping(value = "/existing/sewerage")
 public class ApplicationSewerageSearchController {
-
+	private  static final String SERVER_URI = "http://localhost:9880";
 	@Autowired
 	private SearchService searchService;
 	@Autowired
@@ -107,6 +119,9 @@ public class ApplicationSewerageSearchController {
 
 	@Autowired
 	private SewerageConnectionService sewerageConnectionService;
+	
+	@Autowired
+	private ThirdPartyServices thirdPartyServices;
 
 
     private static final Logger LOGGER = Logger.getLogger(ApplicationSewerageSearchController.class);
@@ -126,13 +141,17 @@ public class ApplicationSewerageSearchController {
         return boundaryService.getActiveBoundariesByBndryTypeNameAndHierarchyTypeName(SewerageTaxConstants.REVENUE_WARD,
                 REVENUE_HIERARCHY_TYPE);
     }
-    @RequestMapping(value = "/view/{consumernumber}",method = RequestMethod.GET)
-    public ModelAndView view(@PathVariable final String consumernumber,final Model model, final ModelMap modelMap,@ModelAttribute SewerageApplicationDetails sewerageApplicationDetails) {
-
+    @RequestMapping(value = "/view/{consumernumber}/{assessmentnumber}",method = RequestMethod.GET)
+    public ModelAndView view(@PathVariable final String consumernumber,@PathVariable final String assessmentnumber,final Model model, final ModelMap modelMap,@ModelAttribute SewerageApplicationDetails sewerageApplicationDetails, final HttpServletRequest request) {
+    	
         if (consumernumber != null)
-            sewerageApplicationDetails = sewerageApplicationDetailsService
-                    .findByApplicationNumber(consumernumber);
-        setCommonDetails(sewerageApplicationDetails, modelMap);
+            sewerageApplicationDetails = sewerageApplicationDetailsService.findByApplicationNumber(consumernumber);
+        AssessmentDetails propertyOwnerDetails = thirdPartyServices.getPropertyDetails(sewerageApplicationDetails, assessmentnumber, request);
+        if(propertyOwnerDetails != null) {
+      	  modelMap.addAttribute("propertyOwnerDetails", propertyOwnerDetails);
+        }
+          final BigDecimal sewerageTaxDue = sewerageConnectionService.getTotalAmount(sewerageApplicationDetails.getConnection());
+          modelMap.addAttribute("sewerageTaxDue", sewerageTaxDue);
         return new ModelAndView("viewseweragedetails", "sewerageApplicationDetails", sewerageApplicationDetails);
     }
 
@@ -142,7 +161,7 @@ public class ApplicationSewerageSearchController {
     public List<SewerageSearchResult> searchApplication(@ModelAttribute final SewerageConnSearchRequest searchRequest) {
         final City cityWebsite = cityService.getCityByURL(EgovThreadLocals.getDomainName());
         searchRequest.setUlbName(cityWebsite.getName());   
-        final Sort sort = Sort.by().field("clauses.applicationdate", SortOrder.DESC); //TODO: MOVE THIS CONSTANT TO COMMON FILE.
+        final Sort sort = Sort.by().field(SewerageSearchConstants.CLAUSES_APPLICATION_DATE, SortOrder.DESC); 
         final SearchResult searchResult = searchService.search(asList(Index.SEWARAGE.toString()),
                 asList(IndexType.SEWARAGESEARCH.toString()), searchRequest.searchQuery(),
                 searchRequest.searchFilters(), sort, Page.NULL);
@@ -163,42 +182,5 @@ public class ApplicationSewerageSearchController {
 		}
         return searchResultFomatted;
     }
-    
-    
-    
-    private void setCommonDetails(final SewerageApplicationDetails sewerageApplicationDetails, final ModelMap modelMap) {
-        String assessmentNumber = sewerageApplicationDetails.getConnection().getConnectionDetail().getPropertyIdentifier();
-        final BasicProperty basicProperty = basicPropertyDAO.getBasicPropertyByPropertyID(assessmentNumber);
-       //TODO: DO NOT INJECT  	basicPropertyDAO HERE. USE REST API TO GET BASIC PROPERTY INFORMATION.
-      if(basicProperty!=null) {
-        modelMap.addAttribute("propertyAddress", basicProperty.getAddress().toString());
-
-        final PropertyOwnerInfo propertyOwnerInfo = basicProperty.getPropertyOwnerInfo().get(0);
-        modelMap.addAttribute("mobileNumber", propertyOwnerInfo.getOwner().getMobileNumber());
-        modelMap.addAttribute("emailAddress", propertyOwnerInfo.getOwner().getEmailId());
-        modelMap.addAttribute("applicantName", propertyOwnerInfo.getOwner().getName());
-        modelMap.addAttribute("aadhaarNumber", propertyOwnerInfo.getOwner().getAadhaarNumber());
-      }
-        final AssessmentDetails assessmentDetails = sewerageTaxUtils.getAssessmentDetailsForFlag(assessmentNumber,
-                PropertyExternalService.FLAG_FULL_DETAILS);
-        if(assessmentDetails!=null){
-        modelMap.addAttribute("locality", assessmentDetails.getBoundaryDetails().getLocalityName());
-        modelMap.addAttribute("zoneWardBlockDetails", getZoneWardBlockDetails(assessmentDetails));
-        }
-
-        final BigDecimal sewerageTaxDue = sewerageConnectionService.getTotalAmount(sewerageApplicationDetails.getConnection());
-        modelMap.addAttribute("sewerageTaxDue", sewerageTaxDue);
-    }
-
-    private String getZoneWardBlockDetails(final AssessmentDetails assessmentDetails) {
-        final StringBuffer zoneWardBlockName = new StringBuffer();
-        if(assessmentDetails!=null){
-        zoneWardBlockName.append(assessmentDetails.getBoundaryDetails().getZoneName()).append("/");
-        zoneWardBlockName.append(assessmentDetails.getBoundaryDetails().getWardName()).append("/");
-        zoneWardBlockName.append(assessmentDetails.getBoundaryDetails().getBlockName());
-        }
-        return zoneWardBlockName.toString();
-    }
-    
     
 }

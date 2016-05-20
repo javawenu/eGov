@@ -41,48 +41,32 @@
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://www.springframework.org/tags" prefix="spring" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
-<%@ taglib uri="http://www.springframework.org/tags/form" prefix="form" %>
-
-<div id="main">
-<div class="row">
-	<div class="col-md-12">
-		<form:form  id="sewerageViewApplicationDetails" method ="post" class="form-horizontal form-groups-bordered" modelAttribute="sewerageApplicationDetails" >
-		<div class="panel panel-primary" data-collapsed="0">
-			<jsp:include page="commonApplicationDetails-view.jsp"/>
-		</div>
-		<jsp:include page="connectionDetails-view.jsp"></jsp:include>
-		<div class="panel panel-primary" data-collapsed="0">
-			<jsp:include page="fieldInspectionDetails.jsp"/>
-		</div>
-		<div class="panel panel-primary" data-collapsed="0">
-			<jsp:include page="seweragechargesdetails.jsp"/>
-		</div>
+	<div class="panel-body">
+		<div class="panel-heading">
+				<div class="panel-title">
+					<spring:message code="title.seweragecharges"/>
+				</div>
+			</div>
 		
-		</form:form>
-	</div>					
-</div>					
-</div>
-<div class="row text-center">
-	<div class="add-margin">
-		<button type="submit" class="btn btn-default print" id="printBtn" onclick="printDiv('main')"><spring:message code="lbl.print" /></button>
-		<c:choose>
-			<c:when test="${sewerageApplicationDetails.status == 'ACTIVE' }">
-				<a href="javascript:void(0)" class="btn btn-default inboxload" onclick="self.close()" ><spring:message code="lbl.close" /></a>
-			</c:when>
-			<c:otherwise>
-				<a href="javascript:void(0)" class="btn btn-default" onclick="self.close()"><spring:message code="lbl.close" /></a>
-			</c:otherwise>
-		</c:choose>
+				<table class="table table-striped table-bordered" id="connectionFees">
+					<thead>
+					      <tr>
+							<th class="text-center"><spring:message code="lbl.feesdescription" /></th>
+							<th class="text-center"><spring:message code="lbl.feestype" /></th>
+							<th class="text-center"><spring:message code="lbl.amount" /></th>
+					      </tr>
+				         </thead>
+					<tbody>
+						
+								<c:forEach items="${sewerageApplicationDetails.connectionFees}" var="fees"
+									varStatus="counter">
+							      <tr class="">
+									<td class="text-center"><c:out value="${fees.feesDetail.description}" /></td>
+									<td class="text-right"><c:out value="${fees.amount}"/></td>
+							      </tr>
+					       		</c:forEach>
+					</tbody>
+				</table>
+		
 	</div>
-</div>
 
-<script src="<c:url value='/resources/js/transactions/applicationview.js?rnd=${app_release_no}'/>"></script>
-<script type="text/javascript">
-function printDiv(divName) {
-    var printContents = document.getElementById(divName).innerHTML;
-    var originalContents = document.body.innerHTML;
-    document.body.innerHTML = printContents;
-    window.print();
-    document.body.innerHTML = originalContents;
-}
-</script>

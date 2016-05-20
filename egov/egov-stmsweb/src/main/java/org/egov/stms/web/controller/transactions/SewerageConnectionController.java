@@ -82,6 +82,7 @@ import org.egov.stms.transactions.service.SewerageApplicationDetailsService;
 import org.egov.stms.transactions.service.SewerageConnectionService;
 import org.egov.stms.utils.SewerageTaxUtils;
 import org.egov.stms.utils.constants.SewerageTaxConstants;
+import org.egov.stms.web.controller.utils.ThirdPartyServices;
 import org.egov.wtms.utils.PropertyExtnUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -95,6 +96,7 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
@@ -132,6 +134,9 @@ public class SewerageConnectionController extends GenericWorkFlowController {
     @Autowired
     @Qualifier("fileStoreService")
     protected FileStoreService fileStoreService;
+    
+	@Autowired
+	private ThirdPartyServices thirdPartyServices;
 
     @Autowired
     public SewerageConnectionController(final SewerageTaxUtils sewerageTaxUtils,
@@ -269,7 +274,7 @@ public class SewerageConnectionController extends GenericWorkFlowController {
 
         model.addAttribute("cityName", EgovThreadLocals.getCityName());
         model.addAttribute("mode", "ack");
-        setCommonDetails(sewerageApplicationDetails, modelMap);
+        setCommonDetails(sewerageApplicationDetails, modelMap, request);
         return new ModelAndView("application-success", "sewerageApplicationDetails", sewerageApplicationDetails);
     }
 
@@ -316,22 +321,13 @@ public class SewerageConnectionController extends GenericWorkFlowController {
         outStream.close();
     }
 
-    private void setCommonDetails(final SewerageApplicationDetails sewerageApplicationDetails, final ModelMap modelMap) {
+    private void setCommonDetails(final SewerageApplicationDetails sewerageApplicationDetails, final ModelMap modelMap, final HttpServletRequest request) {
         String assessmentNumber = sewerageApplicationDetails.getConnection().getConnectionDetail().getPropertyIdentifier();
-        final BasicProperty basicProperty = basicPropertyDAO.getBasicPropertyByPropertyID(assessmentNumber);
-        modelMap.addAttribute("propertyAddress", basicProperty.getAddress().toString());
-
-        final PropertyOwnerInfo propertyOwnerInfo = basicProperty.getPropertyOwnerInfo().get(0);
-        modelMap.addAttribute("mobileNumber", propertyOwnerInfo.getOwner().getMobileNumber());
-        modelMap.addAttribute("emailAddress", propertyOwnerInfo.getOwner().getEmailId());
-        modelMap.addAttribute("applicantName", propertyOwnerInfo.getOwner().getName());
-        modelMap.addAttribute("aadhaarNumber", propertyOwnerInfo.getOwner().getAadhaarNumber());
-
-        final AssessmentDetails assessmentDetails = sewerageTaxUtils.getAssessmentDetailsForFlag(assessmentNumber,
-                PropertyExternalService.FLAG_FULL_DETAILS);
-        modelMap.addAttribute("locality", assessmentDetails.getBoundaryDetails().getLocalityName());
-        modelMap.addAttribute("zoneWardBlockDetails", getZoneWardBlockDetails(assessmentDetails));
-
+        
+        AssessmentDetails propertyOwnerDetails = thirdPartyServices.getPropertyDetails(sewerageApplicationDetails, assessmentNumber, request);
+        if(propertyOwnerDetails != null) {
+      	  modelMap.addAttribute("propertyOwnerDetails", propertyOwnerDetails);
+        }
         final PropertyTaxDetails propertyTaxDetails = propertyExternalService.getPropertyTaxDetails(assessmentNumber);
         modelMap.addAttribute("propertyTax", propertyTaxDetails.getTotalTaxAmt());
 
@@ -339,14 +335,7 @@ public class SewerageConnectionController extends GenericWorkFlowController {
         modelMap.addAttribute("sewerageTaxDue", sewerageTaxDue);
     }
 
-    private String getZoneWardBlockDetails(final AssessmentDetails assessmentDetails) {
-        final StringBuffer sb = new StringBuffer();
-        sb.append(assessmentDetails.getBoundaryDetails().getZoneName()).append("/");
-        sb.append(assessmentDetails.getBoundaryDetails().getWardName()).append("/");
-        sb.append(assessmentDetails.getBoundaryDetails().getBlockName());
-        return sb.toString();
-    }
-
+    
     private void validatePropertyID(final SewerageApplicationDetails sewerageApplicationDetails, final BindingResult errors) {
         if (sewerageApplicationDetails.getConnection() != null
                 && sewerageApplicationDetails.getConnection().getConnectionDetail().getPropertyIdentifier() != null

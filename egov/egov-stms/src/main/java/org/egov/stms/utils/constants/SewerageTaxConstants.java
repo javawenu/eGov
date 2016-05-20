@@ -66,7 +66,7 @@ public class SewerageTaxConstants {
     
     public static final String APPLICATION_STATUS_INSPECTIONFEEPAID = "INSPECTIONFEEPAID";
     public static final String APPLICATION_STATUS_INITIALAPPROVED = "INITIALAPPROVED";
-    public static final String APPLICATION_STATUS_FIELDINSPECTED = "FIELDINSPECTED";
+    public static final String APPLICATION_STATUS_FIELDINSPECTED = "FIELD INSPECTED";
     public static final String APPLICATION_STATUS_REJECTED = "REJECTED";
 
     public static final String CLERKDESIGNATIONFORCSCOPERATOR = "CLERKDESIGNATIONFORCSCOPERATOR";
@@ -108,4 +108,6 @@ public class SewerageTaxConstants {
     public static final String WF_WORKORDER_BUTTON = "Generate Work Order";
 
     public static final String PREVIEWWORKFLOWACTION = "Preview";
+	
+    
 }

@@ -76,13 +76,14 @@ $(".btn-primary").click(function(event){
 
 
 $(document).on('change', 'select.actiondropdown', function() {
+	var ptassessmentno= tableContainer.fnGetData($(this).parent().parent(), 1);
 	if($(this).find(":selected").index()>0){
-		callurl($(this).val(), $(this).data('consumer-no'));
+		callurl($(this).val(), $(this).data('consumer-no'),ptassessmentno);
 	}
 });
 
-function callurl(url, consumernumber){
-	var url = url+ consumernumber;
+function callurl(url, consumernumber, ptassessmentno){
+	var url = url + "/" + consumernumber + "/" + ptassessmentno;
 	$('#sewerageSearchRequestForm').attr('method', 'get');
 	$('#sewerageSearchRequestForm').attr('action', url);
 	window.open(url,'window','scrollbars=yes,resizable=yes,height=700,width=800,status=yes');
@@ -124,6 +125,7 @@ function submitButton() {
 	searchable : true,
 	data : searchResult,
 	columns : [{title : 'consumer number', data : "document.resource.searchable.consumernumber", "visible": false},
+	           {title : 'pt assesmentno', data : "document.resource.clauses.ptassesmentno", "visible": false},
 	           {title : 'Applicant Name',data : 'document.resource.searchable.consumername'},
 	           {title : 'S.H.S.C Number',class : 'row-detail',data : 'document.resource.searchable.dhscnumber'},               
 	           {title : 'Property type',data : 'document.resource.clauses.propertytype'},

@@ -34,7 +34,7 @@ public class BeanResolver {
 			for(String s:keySet )
 			{
 				tempBean=beansOfType.get(s);
-				if(tempBean.getClass().isAnnotationPresent(org.egov.infra.utils.autonumber.Override.class))
+				if(tempBean.getClass().isAnnotationPresent(org.egov.infra.utils.autonumber.OverrideImpl.class))
 				{
 				autonumberBean=tempBean;
 				break;

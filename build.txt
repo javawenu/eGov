@@ -1,0 +1,8 @@
+Hi Egov Team ,
+
+I am new to java programming.
+Since long time i am struggling to build this huge application. And i would like to know the coding standards and some logics. To build this application and i followed the description whatever u have given but i am not able to build it.
+Could please give detail description for how to build the application.
+
+Mail Id : javawenu@gmail.com , javavenu@outlook.com
+Contact No : 9848226207

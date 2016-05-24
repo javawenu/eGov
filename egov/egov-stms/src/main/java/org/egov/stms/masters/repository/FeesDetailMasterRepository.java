@@ -46,4 +46,6 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface FeesDetailMasterRepository extends JpaRepository<FeesDetailMaster, Long> {
 
+    FeesDetailMaster findByCodeAndIsActive(String code, boolean active);
+
 }

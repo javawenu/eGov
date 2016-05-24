@@ -122,4 +122,6 @@ public class SewerageTaxConstants {
     public static final String  CLAUSES_DOORNO             = "clauses.doorno";
     public static final String     CLAUSES_REVWARD_NAME            = "clauses.revwardname";
     public static final String CLAUSES_APPLICATION_DATE    = "clauses.applicationdate";
+    
+    public static final String FEE_INSPECTIONCHARGE    =  "INSPECTIONCHARGE";
 }

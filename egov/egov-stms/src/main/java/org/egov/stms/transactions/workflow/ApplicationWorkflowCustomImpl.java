@@ -56,7 +56,6 @@ import org.egov.ptis.domain.model.AssessmentDetails;
 import org.egov.ptis.domain.service.property.PropertyExternalService;
 import org.egov.stms.masters.entity.enums.SewerageConnectionStatus;
 import org.egov.stms.transactions.entity.SewerageApplicationDetails;
-import org.egov.stms.transactions.service.SewerageApplicationDetailsService;
 import org.egov.stms.utils.SewerageTaxUtils;
 import org.egov.stms.utils.constants.SewerageTaxConstants;
 import org.elasticsearch.common.joda.time.DateTime;
@@ -91,10 +90,10 @@ public abstract class ApplicationWorkflowCustomImpl implements ApplicationWorkfl
 
     @Autowired
     private SimpleWorkflowService<SewerageApplicationDetails> sewerageApplicationWorkflowService;
-
+/*
     @Autowired
     private SewerageApplicationDetailsService sewerageApplicationDetailsService;
-
+*/
     @Autowired
     public ApplicationWorkflowCustomImpl() {
 
@@ -168,7 +167,7 @@ public abstract class ApplicationWorkflowCustomImpl implements ApplicationWorkfl
                         PropertyExternalService.FLAG_FULL_DETAILS);
                 sewerageApplicationDetails.setStatus(sewerageTaxUtils.getStatusByCodeAndModuleType(
                         SewerageTaxConstants.APPLICATION_STATUS_SANCTIONED, SewerageTaxConstants.MODULETYPE));
-                sewerageApplicationDetailsService.updateIndexes(sewerageApplicationDetails);
+                //sewerageApplicationDetailsService.updateIndexes(sewerageApplicationDetails);
                 if (wfmatrix.getNextAction().equalsIgnoreCase("END"))
                     sewerageApplicationDetails.transition(true).end().withSenderName(user.getUsername() + "::" + user.getName())
                             .withComments(approvalComent).withDateInfo(currentDate.toDate()).withNatureOfTask(natureOfwork);

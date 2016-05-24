@@ -80,6 +80,7 @@ import org.hibernate.Session;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.ResourceBundleMessageSource;
 import org.springframework.stereotype.Service;
@@ -130,6 +131,14 @@ public class SewerageApplicationDetailsService {
     private SewerageTaxNumberGenerator sewerageTaxNumberGenerator;
 
     @Autowired
+    private SewerageDemandService sewerageDemandService;
+    
+    @Autowired
+    @Qualifier("applicationWorkflowCustomDefaultImpl")
+    private ApplicationWorkflowCustomDefaultImpl applicationWorkflowCustomDefaultImpl;
+    
+    
+    @Autowired
     private EisCommonService eisCommonService;
     
     @Autowired
@@ -168,20 +177,30 @@ public class SewerageApplicationDetailsService {
                 .findByCode(SewerageTaxConstants.NEWSEWERAGECONNECTION);
         Date disposalDate = getDisposalDate(sewerageApplicationDetails, applicationType.getProcessingTime());
         sewerageApplicationDetails.setDisposalDate(disposalDate);
-
+/*
         final SewerageApplicationDetails savedSewerageApplicationDetails = sewerageApplicationDetailsRepository
-                .save(sewerageApplicationDetails);
+                .save(sewerageApplicationDetails);*/
 
-        final ApplicationWorkflowCustomDefaultImpl applicationWorkflowCustomDefaultImpl = getInitialisedWorkFlowBean();
+      
+        
+      //  final ApplicationWorkflowCustomDefaultImpl applicationWorkflowCustomDefaultImpl = getInitialisedWorkFlowBean();
         if (LOG.isDebugEnabled())
             LOG.debug("applicationWorkflowCustomDefaultImpl initialization is done");
 
-        applicationWorkflowCustomDefaultImpl.createCommonWorkflowTransition(savedSewerageApplicationDetails,
-                approvalPosition, approvalComent, additionalRule, workFlowAction);
+        if (sewerageApplicationDetails != null && sewerageApplicationDetails.getConnection().getDemand() == null) {
+            EgDemand demand =  sewerageDemandService.createDemandOnNewConnection(sewerageApplicationDetails.getConnectionFees(),
+                    sewerageApplicationDetails);
+            if(demand!=null)
+                sewerageApplicationDetails.getConnection().setDemand(demand);
+        }
+        sewerageApplicationDetailsRepository.save(sewerageApplicationDetails);
         
-        updateIndexes(savedSewerageApplicationDetails);
+        applicationWorkflowCustomDefaultImpl.createCommonWorkflowTransition(sewerageApplicationDetails,
+                approvalPosition, approvalComent, additionalRule, workFlowAction);
+   
+        updateIndexes(sewerageApplicationDetails);
 
-        return savedSewerageApplicationDetails;
+        return sewerageApplicationDetails;
     }
 
     @Transactional
@@ -262,16 +281,16 @@ public class SewerageApplicationDetailsService {
         return validationMessage;
     }
 
-    /**
+/*    *//**
      * @return Initialise Bean ApplicationWorkflowCustomDefaultImpl
-     */
+     *//*
     public ApplicationWorkflowCustomDefaultImpl getInitialisedWorkFlowBean() {
         ApplicationWorkflowCustomDefaultImpl applicationWorkflowCustomDefaultImpl = null;
         if (null != context)
             applicationWorkflowCustomDefaultImpl = (ApplicationWorkflowCustomDefaultImpl) context
                     .getBean("seweargeApplicationWorkflowCustomDefaultImpl");
         return applicationWorkflowCustomDefaultImpl;
-    }
+    }*/
 
     public void updateIndexes(final SewerageApplicationDetails sewerageApplicationDetails) {
     	//TODO : Need to make Rest API call to get assessmentdetails
@@ -499,7 +518,7 @@ public class SewerageApplicationDetailsService {
 
         SewerageApplicationDetails updatedSewerageApplicationDetails = sewerageApplicationDetailsRepository
                 .save(sewerageApplicationDetails);
-        final ApplicationWorkflowCustomDefaultImpl applicationWorkflowCustomDefaultImpl = getInitialisedWorkFlowBean();
+    //    final ApplicationWorkflowCustomDefaultImpl applicationWorkflowCustomDefaultImpl = getInitialisedWorkFlowBean();
         if (LOG.isDebugEnabled())
             LOG.debug("applicationWorkflowCustomDefaultImpl initialization is done");
 

@@ -73,8 +73,11 @@ import org.egov.ptis.domain.service.property.PropertyExternalService;
 import org.egov.stms.masters.entity.SewerageApplicationType;
 import org.egov.stms.masters.entity.enums.PropertyType;
 import org.egov.stms.masters.entity.enums.SewerageConnectionStatus;
+import org.egov.stms.masters.service.FeesDetailMasterService;
+import org.egov.stms.masters.service.SewerageApplicationTypeService;
 import org.egov.stms.transactions.entity.SewerageApplicationDetails;
 import org.egov.stms.transactions.entity.SewerageConnection;
+import org.egov.stms.transactions.entity.SewerageConnectionFee;
 import org.egov.stms.transactions.service.SewerageApplicationDetailsService;
 import org.egov.stms.transactions.service.SewerageConnectionService;
 import org.egov.stms.transactions.service.SewerageThirdPartyServices;
@@ -112,6 +115,9 @@ public class SewerageConnectionController extends GenericWorkFlowController {
     private SewerageConnectionService sewerageConnectionService;
 
     @Autowired
+    private SewerageApplicationTypeService sewerageApplicationTypeService;
+    
+    @Autowired
     private SecurityUtils securityUtils;
 
     @Autowired
@@ -120,7 +126,10 @@ public class SewerageConnectionController extends GenericWorkFlowController {
     
     @Autowired
     private PropertyExternalService propertyExternalService;
-
+    
+    @Autowired
+    private FeesDetailMasterService feesDetailMasterService;
+    
     @Autowired
     @Qualifier("fileStoreService")
     protected FileStoreService fileStoreService;
@@ -139,8 +148,7 @@ public class SewerageConnectionController extends GenericWorkFlowController {
     public String showNewApplicationForm(@ModelAttribute final SewerageApplicationDetails sewerageApplicationDetails,
             final Model model, final HttpServletRequest request) {
         LOG.debug("Inside showNewApplicationForm method");
-        final SewerageApplicationType applicationType = new SewerageApplicationType();
-        applicationType.setId(1L);
+        final SewerageApplicationType applicationType = sewerageApplicationTypeService.findByCode(SewerageTaxConstants.NEWSEWERAGECONNECTION);
         sewerageApplicationDetails.setApplicationType(applicationType);
         sewerageApplicationDetails.setApplicationDate(new Date());
         final SewerageConnection connection = new SewerageConnection();
@@ -203,7 +211,13 @@ public class SewerageConnectionController extends GenericWorkFlowController {
         if (request.getParameter("approvalPosition") != null && !request.getParameter("approvalPosition").isEmpty())
             approvalPosition = Long.valueOf(request.getParameter("approvalPosition"));
         sewerageTaxUtils.getCurrentUserRole(securityUtils.getCurrentUser());
-
+//TODO: TEMPORARILY ADDED FEE AS 500.
+        SewerageConnectionFee connectionFees= new SewerageConnectionFee();
+        connectionFees.setAmount(500);
+        connectionFees.setFeesDetail(feesDetailMasterService.findByCodeAndIsActive(SewerageTaxConstants.FEE_INSPECTIONCHARGE, true));
+        connectionFees.setApplicationDetails(sewerageApplicationDetails);
+        sewerageApplicationDetails.addConnectionFees(connectionFees);
+        
         final SewerageApplicationDetails newSewerageApplicationDetails = sewerageApplicationDetailsService
                 .createNewSewerageConnection(sewerageApplicationDetails, approvalPosition, approvalComment,
                         sewerageApplicationDetails.getApplicationType().getCode(), workFlowAction);

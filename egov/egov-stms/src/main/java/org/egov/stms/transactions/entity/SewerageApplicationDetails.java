@@ -293,7 +293,12 @@ public class SewerageApplicationDetails extends StateAware {
     public void setConnectionFees(List<SewerageConnectionFee> connectionFees) {
         this.connectionFees = connectionFees;
     }
+    public void addConnectionFees(SewerageConnectionFee connectionFees) {
+        this.connectionFees.add(connectionFees);
+    }
 
+    
+    
     public boolean isActive() {
         return isActive;
     }

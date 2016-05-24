@@ -52,5 +52,5 @@
          <constructor-arg index="0" ref="SewerageApplicationDetailsPersistenceService"/>
     </bean>
     
-    <bean id="seweargeApplicationWorkflowCustomDefaultImpl" class="org.egov.stms.transactions.workflow.ApplicationWorkflowCustomDefaultImpl" scope="prototype" />
+    <bean id="applicationWorkflowCustomDefaultImpl" class="org.egov.stms.transactions.workflow.ApplicationWorkflowCustomDefaultImpl" scope="prototype" />
 </beans>

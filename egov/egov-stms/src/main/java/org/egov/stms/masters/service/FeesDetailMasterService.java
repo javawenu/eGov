@@ -39,6 +39,9 @@
  */
 package org.egov.stms.masters.service;
 
+import org.egov.stms.masters.entity.FeesDetailMaster;
+import org.egov.stms.masters.repository.FeesDetailMasterRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -46,4 +49,15 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly = true)
 public class FeesDetailMasterService {
 
+      private  final  FeesDetailMasterRepository feesDetailMasterRepository;
+
+      @Autowired
+      public FeesDetailMasterService(final FeesDetailMasterRepository feesDetailMasterRepository) {
+          this.feesDetailMasterRepository = feesDetailMasterRepository;
+      }
+      
+      public FeesDetailMaster findByCodeAndIsActive(final String  code,
+              final boolean active) {
+          return feesDetailMasterRepository.findByCodeAndIsActive(code, active);
+      }
 }

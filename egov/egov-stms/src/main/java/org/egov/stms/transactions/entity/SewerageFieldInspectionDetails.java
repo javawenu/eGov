@@ -39,9 +39,6 @@
  ******************************************************************************/
 package org.egov.stms.transactions.entity;
 
-import java.util.Date;
-
-import javax.persistence.CascadeType;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
@@ -51,11 +48,8 @@ import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
-import javax.persistence.Temporal;
-import javax.persistence.TemporalType;
 import javax.validation.constraints.NotNull;
 
-import org.egov.infra.filestore.entity.FileStoreMapper;
 import org.egov.infra.persistence.entity.AbstractAuditable;
 
 @Entity
@@ -73,31 +67,24 @@ public class SewerageFieldInspectionDetails extends AbstractAuditable {
 
     @NotNull
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "applicationdetails", nullable = false)
-    private SewerageApplicationDetails applicationDetails;
+    @JoinColumn(name = "fieldinspection", nullable = false)
+    private SewerageFieldInspection fieldInspection;
+
     private Integer noOfPipes;
-    private double pipeSize;
+    private Integer pipeSize;
     private Integer noOfScrews;
-    private boolean isActive;
-    
+
     @NotNull
     private Integer screwSize;
-    
+
     @NotNull
     private double pipeLength;
-    
+
     @NotNull
     private double distance;
     private Integer roadLength;
     private boolean roadDigging;
     private String roadOwner;
-    
-    @Temporal(value = TemporalType.DATE)
-    private Date inspectionDate;
-    
-    @ManyToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    @JoinColumn(name = "filestoreid")
-    private FileStoreMapper fileStore;
 
     @Override
     public Long getId() {
@@ -109,14 +96,6 @@ public class SewerageFieldInspectionDetails extends AbstractAuditable {
         this.id = id;
     }
 
-    public SewerageApplicationDetails getApplicationDetails() {
-        return applicationDetails;
-    }
-
-    public void setApplicationDetails(final SewerageApplicationDetails applicationDetails) {
-        this.applicationDetails = applicationDetails;
-    }
-
     public Integer getNoOfPipes() {
         return noOfPipes;
     }
@@ -125,11 +104,11 @@ public class SewerageFieldInspectionDetails extends AbstractAuditable {
         this.noOfPipes = noOfPipes;
     }
 
-    public double getPipeSize() {
+    public Integer getPipeSize() {
         return pipeSize;
     }
 
-    public void setPipeSize(final double pipeSize) {
+    public void setPipeSize(final Integer pipeSize) {
         this.pipeSize = pipeSize;
     }
 
@@ -141,35 +120,11 @@ public class SewerageFieldInspectionDetails extends AbstractAuditable {
         this.noOfScrews = noOfScrews;
     }
 
-    public boolean isActive() {
-        return isActive;
-    }
-
-    public void setActive(boolean isActive) {
-        this.isActive = isActive;
-    }
-
-    public Date getInspectionDate() {
-        return inspectionDate;
-    }
-
-    public void setInspectionDate(Date inspectionDate) {
-        this.inspectionDate = inspectionDate;
-    }
-
-    public FileStoreMapper getFileStore() {
-        return fileStore;
-    }
-
-    public void setFileStore(final FileStoreMapper fileStore) {
-        this.fileStore = fileStore;
-    }
-
     public Integer getScrewSize() {
         return screwSize;
     }
 
-    public void setScrewSize(Integer screwSize) {
+    public void setScrewSize(final Integer screwSize) {
         this.screwSize = screwSize;
     }
 
@@ -177,7 +132,7 @@ public class SewerageFieldInspectionDetails extends AbstractAuditable {
         return pipeLength;
     }
 
-    public void setPipeLength(double pipeLength) {
+    public void setPipeLength(final double pipeLength) {
         this.pipeLength = pipeLength;
     }
 
@@ -185,7 +140,7 @@ public class SewerageFieldInspectionDetails extends AbstractAuditable {
         return distance;
     }
 
-    public void setDistance(double distance) {
+    public void setDistance(final double distance) {
         this.distance = distance;
     }
 
@@ -193,7 +148,7 @@ public class SewerageFieldInspectionDetails extends AbstractAuditable {
         return roadLength;
     }
 
-    public void setRoadLength(Integer roadLength) {
+    public void setRoadLength(final Integer roadLength) {
         this.roadLength = roadLength;
     }
 
@@ -201,7 +156,7 @@ public class SewerageFieldInspectionDetails extends AbstractAuditable {
         return roadDigging;
     }
 
-    public void setRoadDigging(boolean roadDigging) {
+    public void setRoadDigging(final boolean roadDigging) {
         this.roadDigging = roadDigging;
     }
 
@@ -209,8 +164,16 @@ public class SewerageFieldInspectionDetails extends AbstractAuditable {
         return roadOwner;
     }
 
-    public void setRoadOwner(String roadOwner) {
+    public void setRoadOwner(final String roadOwner) {
         this.roadOwner = roadOwner;
+    }
+
+    public SewerageFieldInspection getFieldInspection() {
+        return fieldInspection;
+    }
+
+    public void setFieldInspection(final SewerageFieldInspection fieldInspection) {
+        this.fieldInspection = fieldInspection;
     }
 
 }

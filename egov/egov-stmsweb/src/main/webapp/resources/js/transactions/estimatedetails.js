@@ -39,6 +39,7 @@
 #-------------------------------------------------------------------------------*/
 $(document).ready(function()
 {	
+	showHideRoadInfo();
 	//addRow();
 	//add_Inspection_Row();
 	if($('#pipelineDistance') != null && $('#pipelineDistance').val() == 0.0)
@@ -123,15 +124,16 @@ $(document).ready(function()
         newCol = document.createElement("td");
 		newRow.appendChild(newCol);
         var cell4 = row.insertCell(3);
-        cell4.className="text-center";
-        var uom = document.createElement("input");
-        uom.setAttribute("class","form-control table-input patternvalidation");
-        uom.setAttribute("data-pattern","alphanumerichyphenbackslash");  
-        uom.type = "text";
-        uom.setAttribute("maxlength", "50");
+       // cell4.className="text-center";
+        var uom = document.createElement("select");
+        uom.setAttribute("class","form-control");
+       // uom.setAttribute("data-pattern","alphanumerichyphenbackslash");  
+       // uom.type = "text";
+       // uom.setAttribute("maxlength", "50");
         uom.setAttribute("name", "estimationDetails[" + elementIndex + "].unitOfMeasurement");
         uom.setAttribute("id", "estimationDetails"+elementIndex+"unitOfMeasurement");
         cell4.appendChild(uom);  
+        $('#estimationDetails'+elementIndex+'unitOfMeasurement').html($("#estimationDetails0unitOfMeasurement").html());
         
         newCol = document.createElement("td");
 		newRow.appendChild(newCol);
@@ -153,10 +155,12 @@ $(document).ready(function()
         var cell6 = row.insertCell(5); 
         cell6.className = "text-right";
         var total = document.createElement("input");
-        total.setAttribute("class","form-control table-input text-right");
+        total.setAttribute("class","form-control table-input text-right patternvalidation");
+        total.setAttribute("data-pattern","decimalvalue")
         total.type = "text";
+        total.setAttribute("name", "estimationDetails[" + elementIndex + "].amount");
         total.setAttribute("id", "estimationDetails"+elementIndex+"amount");
-        total.setAttribute("disabled", "disabled");
+        total.setAttribute("value", 0.00);
         cell6.appendChild(total);  
         
         newCol = document.createElement("td");
@@ -256,44 +260,125 @@ function add_Inspection_Row() {
     pipe.setAttribute("data-pattern","decimalvalue"); 
     pipe.type = "text";
     pipe.setAttribute("maxlength", "8");
-    pipe.setAttribute("name", "fieldInspectionDetails[" + elementIndex + "].noOfPipes");
+    pipe.setAttribute("name", "fieldInspections[0].fieldInspectionDetails[" + elementIndex + "].noOfPipes");
     pipe.setAttribute("id", "fieldInspectionDetails"+elementIndex+"noOfPipes");
     cell2.appendChild(pipe);
     
     newCol = document.createElement("td");
 	newRow.appendChild(newCol);
     var cell3 = row.insertCell(2);
-    cell3.className = "text-right";
-    var pipeSize = document.createElement("input");
-    pipeSize.setAttribute("class","form-control table-input text-right patternvalidation");
-    pipeSize.setAttribute("data-pattern","decimalvalue"); 
-    pipeSize.type = "text";
-    pipeSize.setAttribute("maxlength", "8");
-    pipeSize.setAttribute("name", "fieldInspectionDetails[" + elementIndex + "].pipeSize");
+   // cell3.className = "text-right";
+    var pipeSize = document.createElement("select");
+    pipeSize.setAttribute("class","form-control");
+    pipeSize.setAttribute("name", "fieldInspections[0].fieldInspectionDetails[" + elementIndex + "].pipeSize");
     pipeSize.setAttribute("id", "fieldInspectionDetails"+elementIndex+"pipeSize");
-    cell3.appendChild(pipeSize);  
+    cell3.appendChild(pipeSize); 
+    $('#fieldInspectionDetails'+elementIndex+'pipeSize').html($("#fieldInspectionDetails0pipeSize").html());
+    
+    newCol = document.createElement("td");        
+    newRow.appendChild(newCol);
+    var cell4 = row.insertCell(3);
+    cell4.className = "text-right";
+    var pipeLength = document.createElement("input");
+    pipeLength.setAttribute("class","form-control table-input text-right patternvalidation");
+    pipeLength.setAttribute("data-pattern","decimalvalue"); 
+    pipeLength.type = "text";
+    pipeLength.setAttribute("maxlength", "8");
+    pipeLength.setAttribute("name", "fieldInspections[0].fieldInspectionDetails[" + elementIndex + "].pipeLength");
+    pipeLength.setAttribute("id", "fieldInspectionDetails"+elementIndex+"pipeLength");
+    cell4.appendChild(pipeLength);
+    
     
     newCol = document.createElement("td");
 	newRow.appendChild(newCol);
-    var cell4 = row.insertCell(3);
-    cell4.className="text-right";
+    var cell5 = row.insertCell(4);
+    //cell5.className = "text-right";
+    var screwSize = document.createElement("select");
+    screwSize.setAttribute("class","form-control");
+    screwSize.setAttribute("name", "fieldInspections[0].fieldInspectionDetails[" + elementIndex + "].screwSize");
+    screwSize.setAttribute("id", "fieldInspectionDetails"+elementIndex+"screwSize");
+    cell5.appendChild(screwSize); 
+    $('#fieldInspectionDetails'+elementIndex+'screwSize').html($("#fieldInspectionDetails0screwSize").html());
+  
+    newCol = document.createElement("td");
+	newRow.appendChild(newCol);
+    var cell6 = row.insertCell(5);
+    cell6.className="text-right";
     var screw = document.createElement("input");
     screw.setAttribute("class","form-control table-input text-right patternvalidation");
     screw.setAttribute("data-pattern","decimalvalue");  
     screw.type = "text";
     screw.setAttribute("maxlength", "8");
-    screw.setAttribute("name", "fieldInspectionDetails[" + elementIndex + "].noOfScrews");
+    screw.setAttribute("name", "fieldInspections[0].fieldInspectionDetails[" + elementIndex + "].noOfScrews");
     screw.setAttribute("id", "fieldInspectionDetails"+elementIndex+"noOfScrews");
-    cell4.appendChild(screw);  
+    cell6.appendChild(screw); 
+    
+    
+    newCol = document.createElement("td");
+	newRow.appendChild(newCol);
+    var cell7 = row.insertCell(6);
+    cell7.className="text-right";
+    var distance = document.createElement("input");
+    distance.setAttribute("class","form-control table-input text-right patternvalidation");
+    distance.setAttribute("data-pattern","decimalvalue");  
+    distance.type = "text";
+    distance.setAttribute("maxlength", "8");
+    distance.setAttribute("name", "fieldInspections[0].fieldInspectionDetails[" + elementIndex + "].distance");
+    distance.setAttribute("id", "fieldInspectionDetails"+elementIndex+"distance");
+    cell7.appendChild(distance);
+    
+    newCol = document.createElement("td");
+	newRow.appendChild(newCol);
+    var cell8 = row.insertCell(7);
+    //cell8.className="text-right";
+    var roadDigging = document.createElement("input");
+    roadDigging.type= 'checkbox';
+    roadDigging.checked='';
+    roadDigging.value='false';
+   /* roadDigging.setAttribute("class","form-control table-input text-right patternvalidation");
+    roadDigging.setAttribute("data-pattern","decimalvalue");  
+    roadDigging.type = "text";
+    roadDigging.setAttribute("maxlength", "8");*/
+    roadDigging.setAttribute("class","form-control");
+    roadDigging.setAttribute("onclick","enableDisableRoadInfo(this)");
+    roadDigging.setAttribute("name", "fieldInspections[0].fieldInspectionDetails[" + elementIndex + "].roadDigging");
+    roadDigging.setAttribute("id", "fieldInspectionDetails"+elementIndex+"roadDigging");
+    cell8.appendChild(roadDigging);
+    
+    newCol = document.createElement("td");
+	newRow.appendChild(newCol);
+    var cell9 = row.insertCell(8);
+    cell9.className="text-right";
+    var roadLength = document.createElement("input");
+    roadLength.setAttribute("class","form-control table-input text-right patternvalidation"); 
+    roadLength.setAttribute("data-pattern","decimalvalue");  
+    roadLength.type = "text";
+    roadLength.setAttribute("maxlength", "8");
+    roadLength.setAttribute("disabled","true");
+    roadLength.setAttribute("name", "fieldInspections[0].fieldInspectionDetails[" + elementIndex + "].roadLength");
+    roadLength.setAttribute("id", "fieldInspectionDetails"+elementIndex+"roadLength");
+    cell9.appendChild(roadLength);
+    
+    newCol = document.createElement("td");
+	newRow.appendChild(newCol);
+    var cell10 = row.insertCell(9);
+    //cell10.className = "text-right";
+    var roadOwner = document.createElement("select");
+    roadOwner.setAttribute("class","form-control");
+    roadOwner.setAttribute("disabled","true");
+    roadOwner.setAttribute("name", "fieldInspections[0].fieldInspectionDetails[" + elementIndex + "].roadOwner");
+    roadOwner.setAttribute("id", "fieldInspectionDetails"+elementIndex+"roadOwner");
+    cell10.appendChild(roadOwner); 
+    $('#fieldInspectionDetails'+elementIndex+'roadOwner').html($("#fieldInspectionDetails0roadOwner").html());
     
     newCol = document.createElement("td");
 	newRow.appendChild(newCol); 
-    var cell5 = row.insertCell(4);
-    cell5.className = "text-center";
+    var cell11 = row.insertCell(10);
+    cell11.className = "text-center";
     var actions = document.createElement("span");
     actions.setAttribute("style","cursor:pointer");
    	actions.innerHTML = '<i class="fa fa-trash" id="delete_insp_row" ></i>';
-    cell5.appendChild(actions); 
+    cell11.appendChild(actions); 
     patternvalidation();
 }
 
@@ -310,14 +395,52 @@ $(document).on('click',"#delete_insp_row",function (){
     	var currentIndex = j-1; 
     	var noOfPipes = '#fieldInspectionDetails'+prevIndex+'noOfPipes';
     	var pipeSize = '#fieldInspectionDetails'+prevIndex+'pipeSize'; 
+    	var pipeLength = '#fieldInspectionDetails'+prevIndex+'pipeLength';
+    	var screwSize = '#fieldInspectionDetails'+prevIndex+'screwSize';
     	var noOfScrews = '#fieldInspectionDetails'+prevIndex+'noOfScrews';
+    	var distance = '#fieldInspectionDetails'+prevIndex+'distance';
+    	var roadDigging = '#fieldInspectionDetails'+prevIndex+'roadDigging'; 
+    	var roadLength = '#fieldInspectionDetails'+prevIndex+'roadLength';
+    	var roadOwner = '#fieldInspectionDetails'+prevIndex+'roadOwner';
     	if($(serialNo) != null && $(serialNo).html() != '' && $(serialNo).html() != undefined ) {
         	$(serialNo).html(j);
         	$(serialNo).attr("id", 'slNoInsp'+j); 
         	$(noOfPipes).attr("id", 'fieldInspectionDetails'+currentIndex+'noOfPipes'); 
-        	$(pipeSize).attr("id", 'fieldInspectionDetails'+currentIndex+'pipeSize'); 
+        	$(pipeSize).attr("id", 'fieldInspectionDetails'+currentIndex+'pipeSize');
+        	$(pipeLength).attr("id", 'fieldInspectionDetails'+currentIndex+'pipeLength'); 
+        	$(screwSize).attr("id", 'fieldInspectionDetails'+currentIndex+'screwSize'); 
         	$(noOfScrews).attr("id", 'fieldInspectionDetails'+currentIndex+'noOfScrews'); 
+        	$(distance).attr("id", 'fieldInspectionDetails'+currentIndex+'distance'); 
+        	$(roadDigging).attr("id", 'fieldInspectionDetails'+currentIndex+'roadDigging'); 
+        	$(roadLength).attr("id", 'fieldInspectionDetails'+currentIndex+'roadLength'); 
+          	$(roadOwner).attr("id", 'fieldInspectionDetails'+currentIndex+'roadOwner'); 
         	j++;
     	}
     }	
 });	
+
+
+function enableDisableRoadInfo(obj){ 
+	var rIndex = getRow(obj).rowIndex;
+	var tbl = document.getElementById('inspectionDetails');
+	var firmval=getControlInBranch(tbl.rows[rIndex],'fieldInspectionDetails'+(rIndex-1)+'roadDigging'); 
+	var roadLength=getControlInBranch(tbl.rows[rIndex],'fieldInspectionDetails'+(rIndex-1)+'roadLength');
+	var roadOwner=getControlInBranch(tbl.rows[rIndex],'fieldInspectionDetails'+(rIndex-1)+'roadOwner');
+	if(firmval.checked==true){
+		roadLength.disabled=false;
+		roadOwner.disabled=false;
+	} else {
+		roadLength.disabled=true;
+		roadOwner.disabled=true; 
+		roadLength.value="";
+		roadOwner.value=""; 
+	}
+}  
+
+function showHideRoadInfo(){
+	var tbl=document.getElementById("inspectionDetails");
+    var tabLength = (tbl.rows.length)-1;
+    for(var i=1;i<=tabLength;i++){
+    	enableDisableRoadInfo(getControlInBranch(tbl.rows[i],'fieldInspectionDetails'+(i-1)+'roadDigging'));
+    }
+}

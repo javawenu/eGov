@@ -76,7 +76,13 @@
 		</mvc:interceptor>
 	</mvc:interceptors>
 	
-	<bean id="conversionService" class="org.springframework.core.convert.support.DefaultConversionService"/>
+	<bean id="conversionService" class="org.springframework.format.support.FormattingConversionServiceFactoryBean">
+        <property name="formatters">
+            <set>
+                <ref bean="uomFormatter"/>                           
+            </set>
+        </property>
+    </bean>
 	
 	<bean class="org.springframework.beans.factory.config.MethodInvokingFactoryBean">
 		<property name="targetClass" value="org.springframework.core.convert.support.ConversionServiceFactory"/>

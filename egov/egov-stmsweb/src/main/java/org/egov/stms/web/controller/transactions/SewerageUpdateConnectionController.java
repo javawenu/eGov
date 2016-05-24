@@ -53,6 +53,7 @@ import javax.validation.Valid;
 import javax.validation.ValidationException;
 
 import org.apache.commons.lang3.ArrayUtils;
+import org.egov.commons.service.UOMService;
 import org.egov.eis.entity.Assignment;
 import org.egov.eis.service.AssignmentService;
 import org.egov.eis.web.contract.WorkflowContainer;
@@ -63,9 +64,13 @@ import org.egov.infra.exception.ApplicationRuntimeException;
 import org.egov.infra.filestore.entity.FileStoreMapper;
 import org.egov.infra.filestore.service.FileStoreService;
 import org.egov.infra.security.utils.SecurityUtils;
+import org.egov.stms.masters.entity.enums.OwnerOfTheRoad;
 import org.egov.stms.masters.entity.enums.PropertyType;
+import org.egov.stms.masters.service.FeesDetailMasterService;
 import org.egov.stms.transactions.entity.SewerageApplicationDetails;
 import org.egov.stms.transactions.entity.SewerageConnectionEstimationDetails;
+import org.egov.stms.transactions.entity.SewerageConnectionFee;
+import org.egov.stms.transactions.entity.SewerageFieldInspection;
 import org.egov.stms.transactions.entity.SewerageFieldInspectionDetails;
 import org.egov.stms.transactions.service.SewerageApplicationDetailsService;
 import org.egov.stms.utils.SewerageTaxUtils;
@@ -109,9 +114,15 @@ public class SewerageUpdateConnectionController extends GenericWorkFlowControlle
     protected FileStoreService fileStoreService;
 
     @Autowired
-    public SewerageUpdateConnectionController(final SewerageApplicationDetailsService sewerageApplicationDetailsService,
-            final DepartmentService departmentService,
-            final SmartValidator validator) {
+    private FeesDetailMasterService feesDetailMasterService;
+
+    @Autowired
+    private UOMService uOMService;
+
+    @Autowired
+    public SewerageUpdateConnectionController(
+            final SewerageApplicationDetailsService sewerageApplicationDetailsService,
+            final DepartmentService departmentService, final SmartValidator validator) {
         this.sewerageApplicationDetailsService = sewerageApplicationDetailsService;
         this.departmentService = departmentService;
     }
@@ -141,9 +152,15 @@ public class SewerageUpdateConnectionController extends GenericWorkFlowControlle
         prepareWorkflow(model, sewerageApplicationDetails, new WorkflowContainer());
 
         model.addAttribute("sewerageApplicationDetails", sewerageApplicationDetails);
-        model.addAttribute("applicationHistory", sewerageApplicationDetailsService.getHistory(sewerageApplicationDetails));
+        model.addAttribute("applicationHistory",
+                sewerageApplicationDetailsService.getHistory(sewerageApplicationDetails));
         model.addAttribute("approvalDepartmentList", departmentService.getAllDepartments());
 
+        model.addAttribute("pipeSize", SewerageTaxConstants.PIPE_SCREW_SIZE);
+        model.addAttribute("roadOwner", OwnerOfTheRoad.values());
+        model.addAttribute("feesDetails",
+                feesDetailMasterService.findAllFeesDetailByFeesCode(SewerageTaxConstants.FEES_ESTIMATIONCHARGES_CODE));
+        model.addAttribute("uomList", uOMService.findAllOrderByCategory());
         appendModeBasedOnApplicationCreator(model, request, sewerageApplicationDetails);
 
         final BigDecimal sewerageTaxDue = sewerageApplicationDetailsService.getTotalAmount(sewerageApplicationDetails);
@@ -154,33 +171,38 @@ public class SewerageUpdateConnectionController extends GenericWorkFlowControlle
 
     private void appendModeBasedOnApplicationCreator(final Model model, final HttpServletRequest request,
             final SewerageApplicationDetails sewerageApplicationDetails) {
-        final Boolean recordCreatedBYNonEmployee = sewerageTaxUtils.getCurrentUserRole(sewerageApplicationDetails.getCreatedBy());
+        final Boolean recordCreatedBYNonEmployee = sewerageTaxUtils.getCurrentUserRole(sewerageApplicationDetails
+                .getCreatedBy());
 
         if ((recordCreatedBYNonEmployee || userService.getUserById(sewerageApplicationDetails.getCreatedBy().getId())
                 .getUsername().equals("anonymous"))
                 && null == request.getAttribute("mode") && sewerageApplicationDetails.getState().getHistory().isEmpty()) {
             model.addAttribute("mode", "edit");
-            model.addAttribute("approvalPositionExist", sewerageApplicationDetailsService.getApprovalPositionByMatrixDesignation(
-                    sewerageApplicationDetails, 0l, sewerageApplicationDetails.getApplicationType().getCode(), "edit", ""));
+            model.addAttribute("approvalPositionExist", sewerageApplicationDetailsService
+                    .getApprovalPositionByMatrixDesignation(sewerageApplicationDetails, 0l, sewerageApplicationDetails
+                            .getApplicationType().getCode(), "edit", ""));
         }
 
-        if (recordCreatedBYNonEmployee && request.getAttribute("mode") == null
-                && sewerageApplicationDetails.getStatus().getCode().equals(SewerageTaxConstants.APPLICATION_STATUS_CREATED)
-                && sewerageApplicationDetails.getState().getHistory() != null || !recordCreatedBYNonEmployee
+        if (recordCreatedBYNonEmployee
+                && request.getAttribute("mode") == null
+                && sewerageApplicationDetails.getStatus().getCode()
+                .equals(SewerageTaxConstants.APPLICATION_STATUS_CREATED)
+                && sewerageApplicationDetails.getState().getHistory() != null
+                || !recordCreatedBYNonEmployee
                 && sewerageApplicationDetails.getStatus() != null
-                && sewerageApplicationDetails.getStatus().getCode().equals(SewerageTaxConstants.APPLICATION_STATUS_CREATED)) {
+                && sewerageApplicationDetails.getStatus().getCode()
+                .equals(SewerageTaxConstants.APPLICATION_STATUS_CREATED)) {
             model.addAttribute("mode", "fieldInspection");
             model.addAttribute("approvalPositionExist", sewerageApplicationDetailsService
                     .getApprovalPositionByMatrixDesignation(sewerageApplicationDetails, 0l, sewerageApplicationDetails
                             .getApplicationType().getCode(), "fieldInspection", ""));
-        }
-        else
+        } else
             model.addAttribute("approvalPositionExist", sewerageApplicationDetailsService
                     .getApprovalPositionByMatrixDesignation(sewerageApplicationDetails, 0l, sewerageApplicationDetails
                             .getApplicationType().getCode(), "", ""));
         if (sewerageApplicationDetails.getCurrentState().getValue().equals(SewerageTaxConstants.WF_STATE_REJECTED)
                 || sewerageApplicationDetails.getCurrentState().getValue()
-                        .equals(SewerageTaxConstants.WF_STATE_DEPUTY_EXE_APPROVED))
+                .equals(SewerageTaxConstants.WF_STATE_DEPUTY_EXE_APPROVED))
             model.addAttribute("mode", "");
     }
 
@@ -199,30 +221,19 @@ public class SewerageUpdateConnectionController extends GenericWorkFlowControlle
 
         request.getSession().setAttribute(SewerageTaxConstants.WORKFLOW_ACTION, workFlowAction);
 
-        if (sewerageApplicationDetails.getStatus().getCode().equalsIgnoreCase(SewerageTaxConstants.APPLICATION_STATUS_CREATED)
-                && mode.equalsIgnoreCase("fieldInspection")) {
+        if (sewerageApplicationDetails.getStatus().getCode()
+                .equalsIgnoreCase(SewerageTaxConstants.APPLICATION_STATUS_CREATED)
+                && mode.equalsIgnoreCase("fieldInspection"))
             if (workFlowAction.equalsIgnoreCase(SewerageTaxConstants.SUBMITWORKFLOWACTION)) {
-
                 populateEstimationDetails(sewerageApplicationDetails);
-                populateInspectionDetails(sewerageApplicationDetails);
+                populateInspectionDetails(sewerageApplicationDetails, request, files);
+                populateFeesDetails(sewerageApplicationDetails);
                 sewerageApplicationDetailsService.save(sewerageApplicationDetails);
-
-                final Set<FileStoreMapper> fileStoreSet = addToFileStore(files);
-                Iterator<FileStoreMapper> fsIterator = null;
-                if (fileStoreSet != null && !fileStoreSet.isEmpty())
-                    fsIterator = fileStoreSet.iterator();
-            
-                
-                //TODO: GET active/latest inspection detail and attach documents.
-                
-                /*   if (fsIterator != null && fsIterator.hasNext())
-                    sewerageApplicationDetails.getFieldInspectionDetails().setFileStore(fsIterator.next());
-              */
             } else if (workFlowAction.equalsIgnoreCase(SewerageTaxConstants.WFLOW_ACTION_STEP_REJECT)) {
                 sewerageApplicationDetailsService.getCurrentSession().evict(sewerageApplicationDetails);
-                sewerageApplicationDetails = sewerageApplicationDetailsService.findBy(sewerageApplicationDetails.getId());
+                sewerageApplicationDetails = sewerageApplicationDetailsService.findBy(sewerageApplicationDetails
+                        .getId());
             }
-        }
         Long approvalPosition = 0l;
         String approvalComment = "";
 
@@ -233,11 +244,10 @@ public class SewerageUpdateConnectionController extends GenericWorkFlowControlle
             approvalPosition = Long.valueOf(request.getParameter("approvalPosition"));
 
         // For Get Configured ApprovalPosition from workflow history
-        if (approvalPosition == null || approvalPosition.equals(Long.valueOf(0))) {
+        if (approvalPosition == null || approvalPosition.equals(Long.valueOf(0)))
             approvalPosition = sewerageApplicationDetailsService.getApprovalPositionByMatrixDesignation(
-                    sewerageApplicationDetails, approvalPosition, sewerageApplicationDetails.getApplicationType().getCode(),
-                    mode, workFlowAction);
-        }
+                    sewerageApplicationDetails, approvalPosition, sewerageApplicationDetails.getApplicationType()
+                    .getCode(), mode, workFlowAction);
 
         // To get modes to hide and show details in every user inbox
         request.getSession().setAttribute("APPROVAL_POSITION", approvalPosition);
@@ -247,42 +257,34 @@ public class SewerageUpdateConnectionController extends GenericWorkFlowControlle
                 && request.getParameter("approvalPosition") != null
                 && !request.getParameter("approvalPosition").isEmpty())
             approvalPosition = Long.valueOf(request.getParameter("approvalPosition"));
-        
+
         if (!resultBinder.hasErrors()) {
             try {
                 if (null != workFlowAction)
                     if (workFlowAction.equalsIgnoreCase(SewerageTaxConstants.PREVIEWWORKFLOWACTION)
-                            && (sewerageApplicationDetails.getApplicationType().getCode()
-                                    .equals(SewerageTaxConstants.NEWSEWERAGECONNECTION)))
+                            && sewerageApplicationDetails.getApplicationType().getCode()
+                            .equals(SewerageTaxConstants.NEWSEWERAGECONNECTION))
                         return "redirect:/transactions/workorder?pathVar="
-                                + sewerageApplicationDetails.getApplicationNumber();
+                        + sewerageApplicationDetails.getApplicationNumber();
 
-                sewerageApplicationDetailsService.updateSewerageApplicationDetails(sewerageApplicationDetails, approvalPosition,
-                        approvalComment, sewerageApplicationDetails.getApplicationType().getCode(), workFlowAction,
-                        mode, null);
+                sewerageApplicationDetailsService.updateSewerageApplicationDetails(sewerageApplicationDetails,
+                        approvalPosition, approvalComment, sewerageApplicationDetails.getApplicationType().getCode(),
+                        workFlowAction, mode, null);
             } catch (final ValidationException e) {
                 throw new ValidationException(e.getMessage());
             }
             if (workFlowAction != null && !workFlowAction.isEmpty()
-                    && workFlowAction.equalsIgnoreCase(SewerageTaxConstants.WF_ESTIMATION_NOTICE_BUTTON)) { /*
-                                                                                                             * For Generate
-                                                                                                             * Estimation Notice
-                                                                                                             */
-                return "redirect:/transactions/estimationnotice?pathVar=" + sewerageApplicationDetails.getApplicationNumber();
-            }
+                    && workFlowAction.equalsIgnoreCase(SewerageTaxConstants.WF_ESTIMATION_NOTICE_BUTTON))
+                return "redirect:/transactions/estimationnotice?pathVar="
+                + sewerageApplicationDetails.getApplicationNumber();
             if (null != workFlowAction && !workFlowAction.isEmpty()
-                    && workFlowAction.equalsIgnoreCase(SewerageTaxConstants.WF_WORKORDER_BUTTON)) { /* For Generate WorkOrder */
-                return "redirect:/transactions/workordernotice?pathVar=" + sewerageApplicationDetails.getApplicationNumber();
-            }
+                    && workFlowAction.equalsIgnoreCase(SewerageTaxConstants.WF_WORKORDER_BUTTON))
+                return "redirect:/transactions/workordernotice?pathVar="
+                + sewerageApplicationDetails.getApplicationNumber();
             if (workFlowAction != null && !workFlowAction.isEmpty()
-                    && workFlowAction.equalsIgnoreCase(SewerageTaxConstants.WF_CLOSERACKNOWLDGEENT_BUTTON)) { /*
-                                                                                                               * For Closure
-                                                                                                               * Connection
-                                                                                                               * Generate
-                                                                                                               * Acknowledgement
-                                                                                                               */
-                return "redirect:/applications/acknowlgementNotice?pathVar=" + sewerageApplicationDetails.getApplicationNumber();
-            }
+                    && workFlowAction.equalsIgnoreCase(SewerageTaxConstants.WF_CLOSERACKNOWLDGEENT_BUTTON))
+                return "redirect:/applications/acknowlgementNotice?pathVar="
+                + sewerageApplicationDetails.getApplicationNumber();
             final Assignment currentUserAssignment = assignmentService.getPrimaryAssignmentForGivenRange(securityUtils
                     .getCurrentUser().getId(), new Date(), new Date());
             String nextDesign = "";
@@ -302,40 +304,57 @@ public class SewerageUpdateConnectionController extends GenericWorkFlowControlle
                     + (currentUserAssignment != null ? currentUserAssignment.getDesignation().getName() : "") + ","
                     + (nextDesign != null ? nextDesign : "");
             return "redirect:/transactions/application-success?pathVars=" + pathVars;
-        } else {
+        } else
             return loadViewData(model, request, sewerageApplicationDetails);
-        }
     }
 
     private void populateEstimationDetails(final SewerageApplicationDetails sewerageApplicationDetails) {
         final List<SewerageConnectionEstimationDetails> sewerageConnectionEstimationDetailList = new ArrayList<SewerageConnectionEstimationDetails>();
         if (!sewerageApplicationDetails.getEstimationDetails().isEmpty())
             for (final SewerageConnectionEstimationDetails sewerageConnectionEstimationDetails : sewerageApplicationDetails
-                    .getEstimationDetails())
+                    .getEstimationDetails()) {
                 if (validSewerageConnectioEstimationDetail(sewerageConnectionEstimationDetails)) {
                     sewerageConnectionEstimationDetails.setApplicationDetails(sewerageApplicationDetails);
                     sewerageConnectionEstimationDetailList.add(sewerageConnectionEstimationDetails);
                 }
-
+            }
         sewerageApplicationDetails.getEstimationDetails().clear();
         sewerageApplicationDetails.setEstimationDetails(sewerageConnectionEstimationDetailList);
     }
-    
-    private void populateInspectionDetails(final SewerageApplicationDetails sewerageApplicationDetails) {
-        final List<SewerageFieldInspectionDetails> sewerageFieldInspectionDetailsList = new ArrayList<SewerageFieldInspectionDetails>();
-        if (!sewerageApplicationDetails.getFieldInspectionDetails().isEmpty())
-            for (final SewerageFieldInspectionDetails sewerageFieldInspectionDetails : sewerageApplicationDetails
-                    .getFieldInspectionDetails()){
-                    sewerageFieldInspectionDetails.setApplicationDetails(sewerageApplicationDetails);
-                    sewerageFieldInspectionDetails.setInspectionDate(new Date());
-                    sewerageFieldInspectionDetails.setPipeLength(0);
-                    sewerageFieldInspectionDetails.setScrewSize(0);
-                    sewerageFieldInspectionDetails.setDistance(0);
-                    sewerageFieldInspectionDetailsList.add(sewerageFieldInspectionDetails);
-                }
 
-        sewerageApplicationDetails.getFieldInspectionDetails().clear();
-        sewerageApplicationDetails.setFieldInspectionDetails(sewerageFieldInspectionDetailsList);
+    private void populateFeesDetails(final SewerageApplicationDetails sewerageApplicationDetails) {
+        final List<SewerageConnectionFee> sewerageConnectionFeeList = new ArrayList<SewerageConnectionFee>();
+        if (!sewerageApplicationDetails.getConnectionFees().isEmpty())
+            for (final SewerageConnectionFee scf : sewerageApplicationDetails.getConnectionFees()) {
+                scf.setApplicationDetails(sewerageApplicationDetails);
+                sewerageConnectionFeeList.add(scf);
+            }
+        sewerageApplicationDetails.getConnectionFees().clear();
+        sewerageApplicationDetails.setConnectionFees(sewerageConnectionFeeList);
+    }
+
+    private void populateInspectionDetails(final SewerageApplicationDetails sewerageApplicationDetails,
+            final HttpServletRequest request, final MultipartFile[] files) {
+        new ArrayList<SewerageFieldInspectionDetails>();
+        final String inspectionDate = request.getParameter("inspectionDate");
+        if (!sewerageApplicationDetails.getFieldInspections().isEmpty())
+            for (final SewerageFieldInspection sewerageFieldInspection : sewerageApplicationDetails
+                    .getFieldInspections()) {
+                sewerageFieldInspection.setApplicationDetails(sewerageApplicationDetails);
+                sewerageFieldInspection.setInspectionDate(new Date(inspectionDate));
+                final Set<FileStoreMapper> fileStoreSet = addToFileStore(files);
+                Iterator<FileStoreMapper> fsIterator = null;
+                if (fileStoreSet != null && !fileStoreSet.isEmpty())
+                    fsIterator = fileStoreSet.iterator();
+
+                if (fsIterator != null && fsIterator.hasNext())
+                    sewerageFieldInspection.setFileStore(fsIterator.next());
+
+                if (!sewerageApplicationDetails.getFieldInspections().isEmpty())
+                    for (final SewerageFieldInspectionDetails sewerageFieldInspectionDtl : sewerageFieldInspection
+                            .getFieldInspectionDetails())
+                        sewerageFieldInspectionDtl.setFieldInspection(sewerageFieldInspection);
+            }
     }
 
     private boolean validSewerageConnectioEstimationDetail(

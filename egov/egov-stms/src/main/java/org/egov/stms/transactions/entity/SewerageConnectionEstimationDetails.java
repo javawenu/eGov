@@ -39,6 +39,8 @@
  ******************************************************************************/
 package org.egov.stms.transactions.entity;
 
+import java.math.BigDecimal;
+
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
@@ -50,6 +52,7 @@ import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.validation.constraints.NotNull;
 
+import org.egov.common.entity.UOM;
 import org.egov.infra.persistence.entity.AbstractAuditable;
 import org.hibernate.validator.constraints.Length;
 import org.hibernate.validator.constraints.SafeHtml;
@@ -79,11 +82,15 @@ public class SewerageConnectionEstimationDetails extends AbstractAuditable {
 
     private double unitRate;
 
-    @SafeHtml
-    @Length(max = 50)
-    private String unitOfMeasurement;
+    @NotNull
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "unitofmeasurement", nullable = false)
+    private UOM unitOfMeasurement;
 
     private double quantity;
+    
+    @NotNull
+    private BigDecimal amount; 
 
     @Override
     public Long getId() {
@@ -119,20 +126,28 @@ public class SewerageConnectionEstimationDetails extends AbstractAuditable {
         this.unitRate = unitRate;
     }
 
-    public String getUnitOfMeasurement() {
-        return unitOfMeasurement;
-    }
-
-    public void setUnitOfMeasurement(final String unitOfMeasurement) {
-        this.unitOfMeasurement = unitOfMeasurement;
-    }
-
     public double getQuantity() {
         return quantity;
     }
 
     public void setQuantity(final double quantity) {
         this.quantity = quantity;
+    }
+
+    public BigDecimal getAmount() {
+        return amount;
+    }
+
+    public void setAmount(BigDecimal amount) {
+        this.amount = amount;
+    }
+
+    public UOM getUnitOfMeasurement() {
+        return unitOfMeasurement;
+    }
+
+    public void setUnitOfMeasurement(UOM unitOfMeasurement) {
+        this.unitOfMeasurement = unitOfMeasurement;
     }
 
 }

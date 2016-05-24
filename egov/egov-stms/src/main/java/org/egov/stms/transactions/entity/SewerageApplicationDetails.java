@@ -53,7 +53,6 @@ import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
-import javax.persistence.OneToOne;
 import javax.persistence.OrderBy;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
@@ -132,17 +131,17 @@ public class SewerageApplicationDetails extends StateAware {
 
     @OrderBy("id desc")
     @OneToMany(mappedBy = "applicationDetails", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private List<SewerageConnectionEstimationDetails> estimationDetails = new ArrayList<SewerageConnectionEstimationDetails>(0);
+    private List<SewerageConnectionEstimationDetails> estimationDetails = new ArrayList<SewerageConnectionEstimationDetails>(
+            0);
 
     @OrderBy("id desc")
     @OneToMany(mappedBy = "applicationDetails", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private List<SewerageFieldInspectionDetails> fieldInspectionDetails = new ArrayList<SewerageFieldInspectionDetails>(0);
-    
+    private List<SewerageFieldInspection> fieldInspections = new ArrayList<SewerageFieldInspection>(0);
+
     @OrderBy("id desc")
     @OneToMany(mappedBy = "applicationDetails", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<SewerageConnectionFee> connectionFees = new ArrayList<SewerageConnectionFee>(0);
 
-    
     @Transient
     private Long approvalDepartment;
 
@@ -255,12 +254,11 @@ public class SewerageApplicationDetails extends StateAware {
         this.estimationDetails = estimationDetails;
     }
 
-     
     public Long getApprovalDepartment() {
         return approvalDepartment;
     }
 
-    public void setApprovalDepartment(Long approvalDepartment) {
+    public void setApprovalDepartment(final Long approvalDepartment) {
         this.approvalDepartment = approvalDepartment;
     }
 
@@ -268,7 +266,7 @@ public class SewerageApplicationDetails extends StateAware {
         return approvalComent;
     }
 
-    public void setApprovalComent(String approvalComent) {
+    public void setApprovalComent(final String approvalComent) {
         this.approvalComent = approvalComent;
     }
 
@@ -283,14 +281,14 @@ public class SewerageApplicationDetails extends StateAware {
         final SimpleDateFormat formatter = new SimpleDateFormat("dd-MM-yyyy");
         return String.format("Sewerage Application Number %s with application date %s.",
                 applicationNumber != null ? applicationNumber : connection.getDhscNumber(),
-                applicationDate != null ? formatter.format(applicationDate) : formatter.format(new Date()));
+                        applicationDate != null ? formatter.format(applicationDate) : formatter.format(new Date()));
     }
 
     public List<SewerageConnectionFee> getConnectionFees() {
         return connectionFees;
     }
 
-    public void setConnectionFees(List<SewerageConnectionFee> connectionFees) {
+    public void setConnectionFees(final List<SewerageConnectionFee> connectionFees) {
         this.connectionFees = connectionFees;
     }
     public void addConnectionFees(SewerageConnectionFee connectionFees) {
@@ -303,16 +301,15 @@ public class SewerageApplicationDetails extends StateAware {
         return isActive;
     }
 
-    public void setActive(boolean isActive) {
+    public void setActive(final boolean isActive) {
         this.isActive = isActive;
     }
 
-    public List<SewerageFieldInspectionDetails> getFieldInspectionDetails() {
-        return fieldInspectionDetails;
+    public List<SewerageFieldInspection> getFieldInspections() {
+        return fieldInspections;
     }
 
-    public void setFieldInspectionDetails(List<SewerageFieldInspectionDetails> fieldInspectionDetails) {
-        this.fieldInspectionDetails = fieldInspectionDetails;
+    public void setFieldInspections(final List<SewerageFieldInspection> fieldInspections) {
+        this.fieldInspections = fieldInspections;
     }
-
 }
